@@ -3,519 +3,854 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tenant Management - Platform Admin</title>
+    <title>Tenant Management | Platform Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="common.css">
     <script src="api.js"></script>
-    <script src="common.js"></script>
     <style>
+        :root {
+            --primary: #0f766e;
+            --primary-hover: #115e59;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --info: #2563eb;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; background: #f9fafb; }
-        .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 2rem; }
-        .header-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-        .header h1 { font-size: 1.8rem; display: flex; align-items: center; gap: 0.75rem; }
-        .header-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
-        .btn { padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
-        .btn-white { background: white; color: #059669; }
-        .btn-white:hover { background: #f0fdf4; }
-        .btn-outline { background: transparent; color: white; border: 2px solid white; }
-        .btn-outline:hover { background: white; color: #059669; }
-        .btn-primary { background: #10b981; color: white; }
-        .btn-primary:hover { background: #059669; }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-danger:hover { background: #dc2626; }
-        .btn-secondary { background: #6b7280; color: white; }
-        .btn-secondary:hover { background: #4b5563; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-        .login-section { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
-        .login-section input { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; }
-        .login-section input:focus { outline: none; border-color: #10b981; }
-        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .tab { padding: 0.5rem 1rem; background: white; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-weight: 500; }
-        .tab.active { background: #10b981; color: white; border-color: #10b981; }
-        .tab:hover { border-color: #10b981; }
-        .card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
-        .card-title { font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
-        .filters { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
-        .filters input, .filters select { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; }
-        .filters input:focus, .filters select:focus { outline: none; border-color: #10b981; }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-        thead { background: #f9fafb; }
-        th { padding: 0.75rem; text-align: left; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; white-space: nowrap; }
-        td { padding: 0.75rem; border-bottom: 1px solid #f3f4f6; }
-        tbody tr:hover { background: #f9fafb; }
-        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
-        .badge-success { background: #d1fae5; color: #065f46; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, #134e4a 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-brand h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.875rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: #f1f5f9;
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #047857;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #b45309;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8125rem;
+        }
+
+        .main {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .auth-card {
+            max-width: 400px;
+            margin: 4rem auto;
+            background: var(--surface);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .auth-header {
+            padding: 2rem 2rem 1.5rem;
+            text-align: center;
+        }
+
+        .auth-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.375rem;
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .auth-body {
+            padding: 0 2rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+        }
+
+        .app-content { display: none; }
+        .app-content.active { display: block; }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-tab {
+            padding: 0.75rem 1rem;
+            background: none;
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.15s ease;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stat-icon.blue { background: #dbeafe; color: var(--info); }
+        .stat-icon.green { background: #d1fae5; color: var(--success); }
+        .stat-icon.orange { background: #fef3c7; color: var(--warning); }
+        .stat-icon.red { background: #fee2e2; color: var(--danger); }
+
+        .stat-content { flex: 1; }
+        .stat-value { font-size: 1.5rem; font-weight: 600; }
+        .stat-label { font-size: 0.875rem; color: var(--text-secondary); }
+
+        .card {
+            background: var(--surface);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body { padding: 1.5rem; }
+
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8fafc;
+        }
+
+        th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.625rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-success { background: #dcfce7; color: #166534; }
         .badge-warning { background: #fef3c7; color: #92400e; }
         .badge-danger { background: #fee2e2; color: #991b1b; }
         .badge-info { background: #dbeafe; color: #1e40af; }
-        .badge-secondary { background: #f3f4f6; color: #374151; }
-        .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .badge-neutral { background: #f1f5f9; color: #475569; }
+
+        .actions {
+            display: flex;
+            gap: 0.375rem;
+            flex-wrap: wrap;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
         .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .modal-title { font-size: 1.25rem; font-weight: 600; }
-        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; }
-        .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; margin-bottom: 0.375rem; font-weight: 500; font-size: 0.875rem; color: #374151; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; font-family: inherit; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #10b981; }
-        .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; background: #10b981; color: white; border-radius: 8px; display: none; z-index: 1001; font-weight: 500; }
-        .toast.show { display: block; animation: slideIn 0.3s ease; }
-        .toast.error { background: #ef4444; }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 8px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--success);
+            color: white;
+            border-radius: 6px;
+            display: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+        }
+
+        .toast.active {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        .toast.error { background: var(--danger); }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
         .hidden { display: none !important; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .stat-card { background: white; padding: 1rem; border-radius: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .stat-value { font-size: 1.5rem; font-weight: 700; color: #10b981; }
-        .stat-label { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-content">
-            <h1><i class="fas fa-building"></i> Platform Admin - Tenant Management</h1>
+    <header class="header">
+        <div class="header-container">
+            <div class="header-brand">
+                <i class="fas fa-shield-alt" style="font-size: 1.5rem;"></i>
+                <h1>Platform Administration</h1>
+            </div>
             <div class="header-actions">
-                <span id="platformStatus" style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-circle" style="color: #fbbf24;"></i> Not logged in</span>
-                <button class="btn btn-outline" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                <a href="platform.html" class="btn btn-white"><i class="fas fa-arrow-left"></i> Back to Platform</a>
+                <div class="user-badge hidden" id="userBadge">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName"></span>
+                </div>
+                <button class="btn btn-ghost" onclick="logout()" id="logoutBtn" style="display: none;">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </button>
+                <a href="platform.html" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Platform
+                </a>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div class="container">
-        <div class="login-section" id="loginSection">
-            <input type="text" id="loginUsername" placeholder="Platform username" value="shedrack">
-            <input type="password" id="loginPassword" placeholder="Password" value="admin123">
-            <button class="btn btn-primary" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
+    <main class="main">
+        <div id="authSection" class="auth-card">
+            <div class="auth-header">
+                <h2>Platform Authentication</h2>
+                <p>Sign in to manage tenants and subscriptions</p>
+            </div>
+            <div class="auth-body">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="loginUser" value="shedrack">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="loginPass" value="admin123">
+                </div>
+                <button class="btn btn-success" onclick="authenticate()" style="width: 100%; justify-content: center;">
+                    <i class="fas fa-lock"></i> Sign In
+                </button>
+            </div>
         </div>
 
-        <div id="mainContent" class="hidden">
-            <div class="tabs">
-                <div class="tab active" onclick="switchTab('tenants', this)"><i class="fas fa-store"></i> Tenants</div>
-                <div class="tab" onclick="switchTab('payments', this)"><i class="fas fa-credit-card"></i> Payments</div>
-                <div class="tab" onclick="switchTab('plans', this)"><i class="fas fa-box"></i> Plans</div>
+        <div id="appSection" class="app-content">
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="showTab('tenants')">
+                    <i class="fas fa-store"></i> Tenants
+                </button>
+                <button class="nav-tab" onclick="showTab('payments')">
+                    <i class="fas fa-credit-card"></i> Payments
+                </button>
+                <button class="nav-tab" onclick="showTab('plans')">
+                    <i class="fas fa-layer-group"></i> Subscription Plans
+                </button>
             </div>
 
-            <div id="tab-tenants">
-                <div class="stats" id="stats"></div>
+            <div id="tab-tenants" class="tab-pane active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-store"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statTotal">0</div>
+                            <div class="stat-label">Total Tenants</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statActive">0</div>
+                            <div class="stat-label">Active</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><i class="fas fa-pause-circle"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statSuspended">0</div>
+                            <div class="stat-label">Suspended</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red"><i class="fas fa-clock"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statPending">0</div>
+                            <div class="stat-label">Pending Setup</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title"><i class="fas fa-list"></i> All Tenants</div>
-                        <button class="btn btn-primary" onclick="openCreateStoreModal()"><i class="fas fa-plus"></i> Create Store</button>
-                        <button class="btn btn-secondary" onclick="refreshTenants()"><i class="fas fa-sync"></i> Refresh</button>
+                        <div class="card-title">
+                            <i class="fas fa-list"></i>
+                            Tenant Directory
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary btn-sm" onclick="autoSuspendExpired()">
+                                <i class="fas fa-exclamation-triangle"></i> Auto-Suspend Expired
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="exportTenants()">
+                                <i class="fas fa-download"></i> Export CSV
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="loadTenants()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
                     </div>
-                    <div class="filters">
-                        <input type="text" id="searchFilter" placeholder="Search tenants..." onkeyup="filterTenants()">
-                        <select id="statusFilter" onchange="filterTenants()">
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="suspended">Suspended</option>
-                            <option value="pending">Pending</option>
-                        </select>
-                        <button class="btn btn-secondary" onclick="autoSuspend()"><i class="fas fa-pause-circle"></i> Auto-Suspend Expired</button>
-                        <button class="btn btn-secondary" onclick="exportCsv()"><i class="fas fa-download"></i> Export CSV</button>
-                    </div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Business Type</th>
-                                    <th>Plan</th>
-                                    <th>Subscription</th>
-                                    <th>Status</th>
-                                    <th>Users</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tenantsTableBody">
-                                <tr><td colspan="9" style="text-align: center; padding: 2rem;">Loading...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="card-body">
+                        <div class="filters">
+                            <input type="text" class="form-input" id="tenantSearch" placeholder="Search by name..." oninput="filterTenants()" style="max-width: 300px;">
+                            <select class="form-input" id="tenantStatusFilter" onchange="filterTenants()" style="max-width: 200px;">
+                                <option value="">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Business Name</th>
+                                        <th>Type</th>
+                                        <th>Plan</th>
+                                        <th>Subscription</th>
+                                        <th>Status</th>
+                                        <th>Users</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tenantsBody">
+                                    <tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div id="tab-payments" class="hidden">
+            <div id="tab-payments" class="tab-pane">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title"><i class="fas fa-credit-card"></i> Payments</div>
-                        <button class="btn btn-primary" onclick="openPaymentModal()"><i class="fas fa-plus"></i> Record Payment</button>
+                        <div class="card-title">
+                            <i class="fas fa-credit-card"></i>
+                            Payment History
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="openPaymentModal()">
+                            <i class="fas fa-plus"></i> Record Payment
+                        </button>
                     </div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Tenant</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Reference</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody id="paymentsTableBody">
-                                <tr><td colspan="6" style="text-align: center; padding: 2rem;">Loading...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Tenant</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Reference</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentsBody">
+                                    <tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div id="tab-plans" class="hidden">
+            <div id="tab-plans" class="tab-pane">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title"><i class="fas fa-box"></i> Subscription Plans</div>
-                        <button class="btn btn-primary" onclick="openPlanModal()"><i class="fas fa-plus"></i> Add Plan</button>
+                        <div class="card-title">
+                            <i class="fas fa-layer-group"></i>
+                            Subscription Plans
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="openPlanModal()">
+                            <i class="fas fa-plus"></i> Add Plan
+                        </button>
                     </div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Price/Month</th>
-                                    <th>Price/Year</th>
-                                    <th>Max Users</th>
-                                    <th>Max Products</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="plansTableBody">
-                                <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Plan Name</th>
+                                        <th>Monthly</th>
+                                        <th>Yearly</th>
+                                        <th>Max Users</th>
+                                        <th>Max Products</th>
+                                        <th>Max Branches</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="plansBody">
+                                    <tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div id="createStoreModal" class="modal">
-        <div class="modal-content" style="max-width:620px;">
-            <div class="modal-header">
-                <h2 class="modal-title"><i class="fas fa-store"></i> Create Store Account</h2>
-                <button class="close-btn" onclick="closeModal('createStoreModal')">&times;</button>
-            </div>
-            <p style="font-size:.85rem;color:#6b7280;margin-bottom:1rem;">The store is created as <strong>pending</strong>. The store administrator sets their own login on the setup page next.</p>
-            <div class="form-row">
-                <div class="form-group" style="grid-column:1/-1;">
-                    <label>Business Name *</label>
-                    <input type="text" id="csName" required placeholder="e.g. Shanks Shop Ikeja">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Business Type *</label>
-                    <select id="csType" required>
-                        <option value="pharmacy">Pharmacy / Health Store</option>
-                        <option value="retail">Retail Store</option>
-                        <option value="supermarket">Supermarket</option>
-                        <option value="boutique">Boutique / Fashion</option>
-                        <option value="electronics">Electronics / Gadgets</option>
-                        <option value="hardware">Hardware / Building Materials</option>
-                        <option value="restaurant">Restaurant / Cafe</option>
-                        <label>Services / Salon / Clinic</label>
-                        <option value="services">Services / Salon / Clinic</option>
-                        <option value="general">General Business</option>
-                        <option value="other">Other Business</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="csEmail" placeholder="admin@yourbusiness.com">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Address</label>
-                    <input type="text" id="csAddress" placeholder="e.g. 45 Broad Street, Lagos">
-                </div>
-                <div class="form-group">
-                    <label>Phone</label>
-                    <input type="tel" id="csPhone" placeholder="+234 801 234 5678">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Staff Logins (optional)</label>
-                <p class="field-hint" style="margin-bottom:0.6rem;font-size:.8rem;color:#6b7280;">Optional extra logins for this store. The administrator sets their own login on the next page.</p>
-                <div id="csExtraAccounts"></div>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="addCsAccount()"><i class="fas fa-plus"></i> Add account</button>
-            </div>
-            <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem;">
-                <button class="btn btn-secondary" onclick="closeModal('createStoreModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="submitCreateStore()"><i class="fas fa-store"></i> Create Store</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="setupLinkModal" class="modal">
-        <div class="modal-content" style="max-width:560px;">
-            <div class="modal-header">
-                <h2 class="modal-title"><i class="fas fa-link"></i> Setup Link</h2>
-                <button class="close-btn" onclick="closeModal('setupLinkModal')">&times;</button>
-            </div>
-            <p style="font-size:.9rem;color:#374151;margin-bottom:1rem;">The store is created as <strong>pending</strong>. Send this link to the store administrator — they set their own login there and the account becomes active.</p>
-            <div class="form-group">
-                <label>Setup Link</label>
-                <input type="text" id="setupLinkField" readonly style="width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:8px;font-size:.85rem;background:#f9fafb;">
-            </div>
-            <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem;">
-                <button class="btn btn-secondary" onclick="closeModal('setupLinkModal')">Close</button>
-                <button class="btn btn-primary" onclick="copySetupLink()"><i class="fas fa-copy"></i> Copy</button>
-            </div>
-        </div>
-    </div>
+    </main>
 
     <div id="paymentModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Record Payment</h2>
-                <button class="close-btn" onclick="closeModal('paymentModal')">&times;</button>
+                <h3 class="modal-title">Record Payment</h3>
+                <button class="modal-close" onclick="closeModal('paymentModal')">&times;</button>
             </div>
-            <div class="form-group">
-                <label>Tenant</label>
-                <select id="paymentTenant"></select>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Tenant</label>
+                    <select class="form-input" id="paymentTenant"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (₦)</label>
+                    <input type="number" class="form-input" id="paymentAmount">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <input type="text" class="form-input" id="paymentMethod" placeholder="Bank Transfer, Cash, etc.">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reference</label>
+                    <input type="text" class="form-input" id="paymentRef">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Amount</label>
-                <input type="number" id="paymentAmount">
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('paymentModal')">Cancel</button>
+                <button class="btn btn-success" onclick="savePayment()">Save Payment</button>
             </div>
-            <div class="form-group">
-                <label>Method</label>
-                <input type="text" id="paymentMethod" placeholder="e.g., Bank Transfer, Cash">
-            </div>
-            <div class="form-group">
-                <label>Reference</label>
-                <input type="text" id="paymentRef">
-            </div>
-            <button class="btn btn-primary" onclick="savePayment()">Save Payment</button>
         </div>
     </div>
 
     <div id="planModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="planModalTitle">Add Plan</h2>
-                <button class="close-btn" onclick="closeModal('planModal')">&times;</button>
+                <h3 class="modal-title">Add Subscription Plan</h3>
+                <button class="modal-close" onclick="closeModal('planModal')">&times;</button>
             </div>
-            <input type="hidden" id="planId">
-            <div class="form-group">
-                <label>Plan Name</label>
-                <input type="text" id="planName">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Plan Name</label>
+                    <input type="text" class="form-input" id="planName">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Slug</label>
+                    <input type="text" class="form-input" id="planSlug">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Monthly Price (₦)</label>
+                    <input type="number" class="form-input" id="planMonthly">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Yearly Price (₦)</label>
+                    <input type="number" class="form-input" id="planYearly">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Users</label>
+                    <input type="number" class="form-input" id="planUsers">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Products</label>
+                    <input type="number" class="form-input" id="planProducts">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Branches</label>
+                    <input type="number" class="form-input" id="planBranches">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Slug</label>
-                <input type="text" id="planSlug">
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('planModal')">Cancel</button>
+                <button class="btn btn-success" onclick="createPlan()">Create Plan</button>
             </div>
-            <div class="form-group">
-                <label>Monthly Price</label>
-                <input type="number" id="planMonthly">
-            </div>
-            <div class="form-group">
-                <label>Yearly Price</label>
-                <input type="number" id="planYearly">
-            </div>
-            <div class="form-group">
-                <label>Max Users</label>
-                <input type="number" id="planUsers">
-            </div>
-            <div class="form-group">
-                <label>Max Products</label>
-                <input type="number" id="planProducts">
-            </div>
-            <div class="form-group">
-                <label>Max Branches</label>
-                <input type="number" id="planBranches">
-            </div>
-            <button class="btn btn-primary" onclick="savePlan()">Save Plan</button>
         </div>
     </div>
 
     <div id="toast" class="toast"></div>
 
     <script>
-        let tenants = [];
-        let plans = [];
-        let payments = [];
+        let allTenants = [];
+        let allPlans = [];
+        let allPayments = [];
 
-        function showToast(msg, error = false) {
+        function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = 'toast show' + (error ? ' error' : '');
-            setTimeout(() => { toast.className = 'toast'; }, 3000);
+            toast.textContent = message;
+            toast.className = 'toast active' + (isError ? ' error' : '');
+            setTimeout(() => toast.classList.remove('active'), 3000);
         }
 
-        async function doLogin() {
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            const res = await API.platformLogin(username, password);
+        async function authenticate() {
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+            const res = await API.platformLogin(user, pass);
             if (res && res.error) {
                 showToast(res.error, true);
                 return;
             }
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('platformStatus').innerHTML = '<i class="fas fa-circle" style="color: #10b981;"></i> Logged in as ' + username;
-            loadAll();
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('appSection').classList.add('active');
+            document.getElementById('userBadge').classList.remove('hidden');
+            document.getElementById('userName').textContent = user;
+            document.getElementById('logoutBtn').style.display = 'inline-flex';
+            loadAllData();
         }
 
         function logout() {
             API.clearPlatformSession();
-            document.getElementById('loginSection').classList.remove('hidden');
-            document.getElementById('mainContent').classList.add('hidden');
-            document.getElementById('platformStatus').innerHTML = '<i class="fas fa-circle" style="color: #fbbf24;"></i> Not logged in';
+            location.reload();
         }
 
-        function switchTab(tab, el) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('tab-tenants').classList.add('hidden');
-            document.getElementById('tab-payments').classList.add('hidden');
-            document.getElementById('tab-plans').classList.add('hidden');
-            document.getElementById('tab-' + tab).classList.remove('hidden');
+        function showTab(tab) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
             if (tab === 'payments') loadPayments();
             if (tab === 'plans') loadPlans();
         }
 
-        async function loadAll() {
-            await refreshTenants();
+        async function loadAllData() {
+            await loadTenants();
             await loadPlans();
             await loadPayments();
         }
 
-
-        function openCreateStoreModal() {
-            document.getElementById('csName').value = '';
-            document.getElementById('csType').value = 'pharmacy';
-            document.getElementById('csAddress').value = '';
-            document.getElementById('csPhone').value = '';
-            document.getElementById('csEmail').value = '';
-            document.getElementById('csExtraAccounts').innerHTML = '';
-            openModal('createStoreModal');
-        }
-
-        function addCsAccount() {
-            var box = document.getElementById('csExtraAccounts');
-            var row = document.createElement('div');
-            row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.5rem;';
-            row.innerHTML = '<input type="text" placeholder="Username" class="cs-acc-username" style="padding:.4rem .6rem;border:1px solid #d1d5db;border-radius:6px;font-size:.85rem;">' +
-                '<input type="password" placeholder="Password" class="cs-acc-password" style="padding:.4rem .6rem;border:1px solid #d1d5db;border-radius:6px;font-size:.85rem;">' +
-                '<input type="text" placeholder="Full name" class="cs-acc-name" style="padding:.4rem .6rem;border:1px solid #d1d5db;border-radius:6px;font-size:.85rem;">';
-            box.appendChild(row);
-        }
-
-        async function submitCreateStore() {
-            var name = document.getElementById('csName').value.trim();
-            var businessType = document.getElementById('csType').value;
-            var address = document.getElementById('csAddress').value.trim();
-            var phone = document.getElementById('csPhone').value.trim();
-            var email = document.getElementById('csEmail').value.trim();
-            if (!name) { showToast('Business name is required', true); return; }
-            if (!businessType) { showToast('Business type is required', true); return; }
-
-            var accounts = [];
-            var rows = document.querySelectorAll('#csExtraAccounts > div');
-            for (var i = 0; i < rows.length; i++) {
-                var u = rows[i].querySelector('.cs-acc-username').value.trim();
-                var p = rows[i].querySelector('.cs-acc-password').value;
-                var n = rows[i].querySelector('.cs-acc-name').value.trim();
-                if (!u && !p) continue;
-                if (!u || !p) { showToast('Every account needs a username and a password', true); return; }
-                if (p.length < 4) { showToast('Password must be at least 4 characters', true); return; }
-                accounts.push({ username: u, password: p, name: n || u, role: 'staff' });
-            }
-
-            try {
-                var token = API.platformToken();
-                var res = await API.registerPharmacy({
-                    name: name,
-                    business_type: businessType,
-                    address: address,
-                    phone: phone,
-                    email: email,
-                    accounts: accounts
-                });
-                if (res.error) { showToast(res.error, true); return; }
-                closeModal('createStoreModal');
-                document.getElementById('setupLinkField').value = window.location.origin + (res.setup_path || ('/admin-setup.html?token=' + res.setup_token));
-                openModal('setupLinkModal');
-                refreshTenants();
-            } catch (e) {
-                showToast('Failed to create store: ' + (e.message || 'unknown error'), true);
-            }
-        }
-
-        function copySetupLink() {
-            var field = document.getElementById('setupLinkField');
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(field.value).then(function() { showToast('Setup link copied'); });
-            } else {
-                field.select(); document.execCommand('copy'); showToast('Setup link copied');
-            }
-        }
-
-        async function refreshTenants() {
+        async function loadTenants() {
             const token = API.platformToken();
-            if (!token) return;
             try {
-                tenants = await API.getAdminTenants(token);
-                if (!Array.isArray(tenants)) tenants = [];
+                allTenants = await API.getAdminTenants(token);
+                if (!Array.isArray(allTenants)) allTenants = [];
                 renderTenants();
-                renderStats();
+                updateStats();
             } catch (e) {
                 showToast('Failed to load tenants', true);
             }
         }
 
-        function renderStats() {
-            const stats = document.getElementById('stats');
-            const total = tenants.length;
-            const active = tenants.filter(t => t.status === 'active').length;
-            const suspended = tenants.filter(t => t.status === 'suspended').length;
-            const pending = tenants.filter(t => t.status === 'pending').length;
-            stats.innerHTML = `
-                <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Total Tenants</div></div>
-                <div class="stat-card"><div class="stat-value">${active}</div><div class="stat-label">Active</div></div>
-                <div class="stat-card"><div class="stat-value">${suspended}</div><div class="stat-label">Suspended</div></div>
-                <div class="stat-card"><div class="stat-value">${pending}</div><div class="stat-label">Pending</div></div>
-            `;
+        function updateStats() {
+            document.getElementById('statTotal').textContent = allTenants.length;
+            document.getElementById('statActive').textContent = allTenants.filter(t => t.status === 'active').length;
+            document.getElementById('statSuspended').textContent = allTenants.filter(t => t.status === 'suspended').length;
+            document.getElementById('statPending').textContent = allTenants.filter(t => t.status === 'pending').length;
         }
 
         function renderTenants() {
-            const tbody = document.getElementById('tenantsTableBody');
-            const search = document.getElementById('searchFilter').value.toLowerCase();
-            const status = document.getElementById('statusFilter').value;
-            let filtered = tenants.filter(t => {
+            const tbody = document.getElementById('tenantsBody');
+            const search = document.getElementById('tenantSearch').value.toLowerCase();
+            const status = document.getElementById('tenantStatusFilter').value;
+            let filtered = allTenants.filter(t => {
                 const matchSearch = !search || (t.name && t.name.toLowerCase().includes(search));
                 const matchStatus = !status || t.status === status;
                 return matchSearch && matchStatus;
             });
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">No tenants found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">No tenants found</td></tr>';
                 return;
             }
             tbody.innerHTML = filtered.map(t => `
                 <tr>
                     <td>${t.id}</td>
-                    <td><strong>${escapeHtml(t.name || '')}</strong></td>
-                    <td>${escapeHtml(t.business_label || t.business_type || '-')}</td>
+                    <td><strong>${escapeHtml(t.name || '-')}</strong></td>
+                    <td>${escapeHtml(t.business_label || '-')}</td>
                     <td>${escapeHtml(t.plan_name || '-')}</td>
-                    <td><span class="badge badge-${t.sub_status === 'active' ? 'success' : t.sub_status === 'trial' ? 'warning' : 'secondary'}">${t.sub_status || 'none'}</span></td>
-                    <td>${t.status === 'pending' ? '<span class="badge badge-warning">pending setup</span>' + (t.setup_path ? ' <button class="btn btn-outline btn-sm" onclick="copySetup(\'' + (t.setup_path||'').replace(/'/g, "\\'") + '\')"><i class="fas fa-copy"></i> Copy setup link</button>' : '') : '<span class="badge badge-' + (t.status === 'active' ? 'success' : t.status === 'suspended' ? 'danger' : 'warning') + '">' + t.status + '</span>'}</td>
+                    <td><span class="badge badge-${t.sub_status === 'active' ? 'success' : t.sub_status === 'trial' ? 'warning' : 'neutral'}">${t.sub_status || 'none'}</span></td>
+                    <td><span class="badge badge-${t.status === 'active' ? 'success' : t.status === 'suspended' ? 'danger' : 'warning'}">${t.status}</span></td>
                     <td>${t.user_count || 0}</td>
                     <td>${t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}</td>
                     <td>
                         <div class="actions">
-                            ${t.status === 'suspended' ? `<button class="btn btn-primary" onclick="reactivate(${t.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"><i class="fas fa-play"></i> Reactivate</button>` : `<button class="btn btn-danger" onclick="suspend(${t.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"><i class="fas fa-pause"></i> Suspend</button>`}
-                            <button class="btn btn-secondary" onclick="notify(${t.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"><i class="fas fa-bell"></i> Notify</button>
-                            <button class="btn btn-secondary" onclick="deleteTenant(${t.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"><i class="fas fa-trash"></i> Delete</button>
+                            ${t.status === 'suspended' ? `<button class="btn btn-success btn-sm" onclick="reactivateTenant(${t.id})"><i class="fas fa-play"></i></button>` : `<button class="btn btn-warning btn-sm" onclick="suspendTenant(${t.id})"><i class="fas fa-pause"></i></button>`}
+                            <button class="btn btn-secondary btn-sm" onclick="notifyTenant(${t.id})"><i class="fas fa-bell"></i></button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTenant(${t.id})"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -524,45 +859,45 @@
 
         function filterTenants() { renderTenants(); }
 
-        async function suspend(id) {
+        async function suspendTenant(id) {
             const token = API.platformToken();
             await API.suspendAdminTenant(id, token);
             showToast('Tenant suspended');
-            refreshTenants();
+            loadTenants();
         }
 
-        async function reactivate(id) {
+        async function reactivateTenant(id) {
             const token = API.platformToken();
             await API.reactivateAdminTenant(id, token);
             showToast('Tenant reactivated');
-            refreshTenants();
+            loadTenants();
         }
 
-        async function notify(id) {
+        async function notifyTenant(id) {
             const token = API.platformToken();
-            const subject = prompt('Subject:', 'Subscription Reminder');
-            const body = prompt('Message:', 'Please renew your subscription to avoid service interruption.');
+            const subject = prompt('Notification Subject:', 'Subscription Reminder');
+            const body = prompt('Message:', 'Please renew your subscription.');
             if (!subject || !body) return;
             await API.notifySubscription(id, { subject, body }, token);
             showToast('Notification sent');
         }
 
         async function deleteTenant(id) {
-            if (!confirm('Delete this tenant? This cannot be undone.')) return;
+            if (!confirm('Are you sure you want to delete this tenant? This action cannot be undone.')) return;
             const token = API.platformToken();
             await API.deleteAdminTenant(id, token);
             showToast('Tenant deleted');
-            refreshTenants();
+            loadTenants();
         }
 
-        async function autoSuspend() {
+        async function autoSuspendExpired() {
             const token = API.platformToken();
             const res = await API.autoSuspendExpired(token);
-            showToast(`Suspended ${res.suspended || 0} tenants`);
-            refreshTenants();
+            showToast(`Suspended ${res.suspended || 0} expired tenant(s)`);
+            loadTenants();
         }
 
-        async function exportCsv() {
+        async function exportTenants() {
             const token = API.platformToken();
             window.open('/api/admin/tenants/export?platform_token=' + token, '_blank');
         }
@@ -570,18 +905,18 @@
         async function loadPayments() {
             const token = API.platformToken();
             try {
-                payments = await API.listAdminPayments(token);
-                if (!Array.isArray(payments)) payments = [];
-                const tbody = document.getElementById('paymentsTableBody');
-                if (payments.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No payments</td></tr>';
+                allPayments = await API.listAdminPayments(token);
+                if (!Array.isArray(allPayments)) allPayments = [];
+                const tbody = document.getElementById('paymentsBody');
+                if (allPayments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">No payments recorded</td></tr>';
                     return;
                 }
-                tbody.innerHTML = payments.map(p => `
+                tbody.innerHTML = allPayments.map(p => `
                     <tr>
                         <td>${p.date ? new Date(p.date).toLocaleDateString() : '-'}</td>
                         <td>${p.pharmacy_id}</td>
-                        <td>₦${p.amount || 0}</td>
+                        <td>₦${Number(p.amount || 0).toLocaleString()}</td>
                         <td>${p.method || '-'}</td>
                         <td>${p.reference || '-'}</td>
                         <td>${p.description || '-'}</td>
@@ -594,7 +929,7 @@
 
         function openPaymentModal() {
             const select = document.getElementById('paymentTenant');
-            select.innerHTML = tenants.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+            select.innerHTML = allTenants.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
             document.getElementById('paymentModal').classList.add('active');
         }
 
@@ -604,10 +939,11 @@
                 pharmacy_id: parseInt(document.getElementById('paymentTenant').value),
                 amount: parseFloat(document.getElementById('paymentAmount').value),
                 method: document.getElementById('paymentMethod').value,
-                reference: document.getElementById('paymentRef').value
+                reference: document.getElementById('paymentRef').value,
+                description: 'Subscription payment'
             };
             await API.recordAdminPayment(data, token);
-            showToast('Payment recorded');
+            showToast('Payment recorded successfully');
             closeModal('paymentModal');
             loadPayments();
         }
@@ -615,22 +951,23 @@
         async function loadPlans() {
             const token = API.platformToken();
             try {
-                plans = await API.platformListPlans(token);
-                if (!Array.isArray(plans)) plans = [];
-                const tbody = document.getElementById('plansTableBody');
-                if (plans.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No plans</td></tr>';
+                allPlans = await API.platformListPlans(token);
+                if (!Array.isArray(allPlans)) allPlans = [];
+                const tbody = document.getElementById('plansBody');
+                if (allPlans.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">No plans available</td></tr>';
                     return;
                 }
-                tbody.innerHTML = plans.map(p => `
+                tbody.innerHTML = allPlans.map(p => `
                     <tr>
                         <td><strong>${escapeHtml(p.name)}</strong></td>
-                        <td>₦${p.price_monthly || 0}</td>
-                        <td>₦${p.price_yearly || 0}</td>
+                        <td>₦${Number(p.price_monthly || 0).toLocaleString()}</td>
+                        <td>₦${Number(p.price_yearly || 0).toLocaleString()}</td>
                         <td>${p.max_users || 0}</td>
                         <td>${p.max_products || 0}</td>
-                        <td><span class="badge badge-${p.is_active ? 'success' : 'secondary'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
-                        <td><button class="btn btn-danger" onclick="deletePlan(${p.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"><i class="fas fa-trash"></i> Delete</button></td>
+                        <td>${p.max_branches || 0}</td>
+                        <td><span class="badge badge-${p.is_active ? 'success' : 'neutral'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deletePlan(${p.id})"><i class="fas fa-trash"></i> Delete</button></td>
                     </tr>
                 `).join('');
             } catch (e) {
@@ -639,19 +976,10 @@
         }
 
         function openPlanModal() {
-            document.getElementById('planModalTitle').textContent = 'Add Plan';
-            document.getElementById('planId').value = '';
-            document.getElementById('planName').value = '';
-            document.getElementById('planSlug').value = '';
-            document.getElementById('planMonthly').value = '';
-            document.getElementById('planYearly').value = '';
-            document.getElementById('planUsers').value = '';
-            document.getElementById('planProducts').value = '';
-            document.getElementById('planBranches').value = '';
             document.getElementById('planModal').classList.add('active');
         }
 
-        async function savePlan() {
+        async function createPlan() {
             const token = API.platformToken();
             const data = {
                 name: document.getElementById('planName').value,
@@ -664,7 +992,7 @@
                 is_active: 1
             };
             await API.platformCreatePlan(data, token);
-            showToast('Plan saved');
+            showToast('Plan created successfully');
             closeModal('planModal');
             loadPlans();
         }
@@ -683,15 +1011,17 @@
 
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = text || '';
             return div.innerHTML;
         }
 
         if (API.platformToken()) {
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('platformStatus').innerHTML = '<i class="fas fa-circle" style="color: #10b981;"></i> Logged in';
-            loadAll();
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('appSection').classList.add('active');
+            document.getElementById('userBadge').classList.remove('hidden');
+            document.getElementById('userName').textContent = API.platformUser();
+            document.getElementById('logoutBtn').style.display = 'inline-flex';
+            loadAllData();
         }
     </script>
 </body>
