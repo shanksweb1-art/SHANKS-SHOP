@@ -12,9 +12,9 @@ services:
       - key: DB_PATH
         value: /var/data/danzona_pos.db
       - key: PLATFORM_ADMIN_USERNAME
-        value: platformadmin
+        value: shedrack
       - key: PLATFORM_ADMIN_PASSWORD
-        value: "PlatformAdmin123!"
+        value: "admin123"
       - key: PLATFORM_TOKEN_TTL
         value: "28800"
       - key: SUPER_ADMIN_API_KEY
