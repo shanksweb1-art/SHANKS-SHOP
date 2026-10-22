@@ -1,0 +1,230 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHANKS SHOP MANAGEMENT - Admin Setup</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #2c3e50, #1a2533); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-container { background: white; border-radius: 10px; padding: 2.5rem; width: 100%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .brand-logo { width: 88px; height: 88px; object-fit: contain; display: block; margin: 0 auto 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 22px; padding: 9px; box-shadow: 0 8px 20px rgba(15,23,42,.08); }
+    .login-container h2 { color: #2c3e50; margin-bottom: 0.5rem; text-align: center; }
+    .login-container .subtitle { color: #718096; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.4rem; color: #4a5568; font-weight: 500; font-size: 0.9rem; }
+    .form-group input { width: 100%; padding: 0.75rem; border: 1.5px solid #ddd; border-radius: 5px; font-size: 0.95rem; transition: border-color 0.3s; }
+    .form-group input:focus { outline: none; border-color: #3498db; }
+    .form-group .readonly-field { background: #f7fafc; color: #4a5568; }
+    .login-btn { width: 100%; padding: 0.85rem; background: #3498db; color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; margin-top: 0.5rem; }
+    .login-btn:hover { background: #2980b9; }
+    .back-link { display: block; text-align: center; margin-top: 1.5rem; color: #3498db; text-decoration: none; cursor: pointer; font-size: 0.9rem; }
+    .notification-toast { position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 5px; display: none; z-index: 1000; color: white; font-weight: 500; }
+    .notification-toast.success { background: #48bb78; }
+    .notification-toast.error { background: #f56565; }
+    .notification-toast.info { background: #4299e1; }
+    .info-box { background: #ebf8ff; border: 1px solid #bee3f8; padding: 12px; border-radius: 6px; margin-bottom: 1.2rem; font-size: 0.85rem; color: #2b6cb0; }
+    .info-box strong { display: block; margin-bottom: 4px; }
+    .summary { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 1.2rem; font-size: 0.85rem; color: #4a5568; }
+    .summary div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+    .summary span:last-child { font-weight: 600; color: #2c3e50; text-align: right; }
+    .steps { display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 1.4rem; font-size: 0.78rem; font-weight: 600; }
+    .step { display: flex; align-items: center; gap: 6px; color: #a0aec0; }
+    .step i { width: 22px; height: 22px; border-radius: 50%; background: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+    .step.done { color: #2f855a; }
+    .step.done i { background: #48bb78; color: #fff; }
+    .step.active { color: #2c3e50; }
+    .step.active i { background: #3498db; color: #fff; }
+    .step-line { width: 28px; height: 2px; background: #e2e8f0; }
+    .password-hint { font-size: 0.78rem; color: #718096; margin-top: 5px; }
+    .strength { height: 4px; border-radius: 2px; background: #e2e8f0; margin-top: 8px; overflow: hidden; }
+    .strength span { display: block; height: 100%; width: 0; background: #ef4444; transition: width .2s, background .2s; }
+    .back-link.disabled { color: #a0aec0; pointer-events: none; }
+</style>
+</head>
+<body>
+    <div class="login-container">
+        <img class="brand-logo" src="brand-logo.png" alt="Shanks Shop Management logo">
+        <h2>SHANKS SHOP MANAGEMENT</h2>
+        <p class="subtitle">Administrator Setup — Create your own login</p>
+
+        <div class="steps">
+            <div class="step done"><i class="fas fa-check"></i> Store</div>
+            <div class="step-line"></div>
+            <div class="step active"><i class="fas fa-user-shield"></i> Your login</div>
+            <div class="step-line"></div>
+            <div class="step"><i class="fas fa-flag"></i> Active</div>
+        </div>
+
+        <div class="info-box">
+            <strong><i class="fas fa-store"></i> The store has been created</strong>
+            <span id="pharmNameDisplay">Loading business info...</span>
+        </div>
+
+        <div class="summary" id="storeSummary"></div>
+
+        <form onsubmit="completeSetup(event)">
+            <input type="hidden" id="setupTokenField">
+            <div class="form-group">
+                <label><i class="fas fa-id-badge"></i> Your Full Name</label>
+                <input type="text" id="adminName" required placeholder="e.g. Business Owner">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user-shield"></i> Administrator Username</label>
+                <input type="text" id="adminUser" required placeholder="Choose a username you will sign in with" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Administrator Password</label>
+                <input type="password" id="adminPass" required minlength="4" placeholder="Min. 4 characters" autocomplete="new-password" oninput="checkStrength()">
+                <div class="strength"><span id="strengthBar"></span></div>
+                <div class="password-hint" id="strengthHint">Use at least 4 characters.</div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Confirm Password</label>
+                <input type="password" id="adminPass2" required minlength="4" placeholder="Re-enter your password" autocomplete="new-password">
+            </div>
+            <button type="submit" class="login-btn" id="setupBtn"><i class="fas fa-user-plus"></i> Create Account &amp; Sign In</button>
+        </form>
+
+        <p style="font-size:.82rem;color:#718096;text-align:center;margin-top:.9rem;line-height:1.6;">
+            These are the store's own administrator credentials. The platform administrator that
+            created this store is a separate account and cannot sign in here.
+        </p>
+
+        <a class="back-link" id="backLink" onclick="window.location.href='login.html'"><i class="fas fa-arrow-left"></i> Back to Login</a>
+    </div>
+    <div class="notification-toast" id="toast"></div>
+
+    <script src="api.js"></script>
+    <script>
+    var API_URL = window.location.origin || '';
+
+    function showToast(msg, type) {
+        var t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'notification-toast ' + (type || 'success');
+        t.style.display = 'block';
+        setTimeout(function() { t.style.display = 'none'; }, 4000);
+    }
+
+    function getQueryParameter(name) {
+        return new URLSearchParams(window.location.search).get(name) || '';
+    }
+
+    function checkStrength() {
+        var val = document.getElementById('adminPass').value;
+        var bar = document.getElementById('strengthBar');
+        var hint = document.getElementById('strengthHint');
+        var score = 0;
+        if (val.length >= 4) score++;
+        if (val.length >= 8) score++;
+        if (/[A-Za-z]/.test(val) && /[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+        var pct = [0, 25, 45, 70, 100][score];
+        var color = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e'][score];
+        var text = ['Use at least 4 characters.', 'Weak password', 'Fair password', 'Good password', 'Strong password'][score];
+        bar.style.width = pct + '%';
+        bar.style.background = color;
+        hint.textContent = val ? text : 'Use at least 4 characters.';
+    }
+
+    function completeSetup(e) {
+        e.preventDefault();
+        var adminName = document.getElementById('adminName').value.trim();
+        var adminUser = document.getElementById('adminUser').value.trim();
+        var adminPass = document.getElementById('adminPass').value;
+        var adminPass2 = document.getElementById('adminPass2').value;
+        var setupToken = document.getElementById('setupTokenField').value.trim();
+
+        if (!setupToken) {
+            showToast('This setup link is incomplete. Please create the store account again.', 'error');
+            return;
+        }
+        if (!adminUser || !adminPass) {
+            showToast('Please enter a username and a password', 'error');
+            return;
+        }
+        if (adminPass.length < 4) {
+            showToast('Password must be at least 4 characters', 'error');
+            return;
+        }
+        if (adminPass !== adminPass2) {
+            showToast('Passwords do not match', 'error');
+            return;
+        }
+
+        var btn = document.getElementById('setupBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating your account...';
+        showToast('Creating your account...', 'info');
+
+        API.completeStoreSetup({
+            setup_token: setupToken,
+            admin_username: adminUser,
+            admin_password: adminPass,
+            admin_name: adminName
+        }).then(function(res) {
+            if (res.error) {
+                showToast(res.error, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account &amp; Sign In';
+                return;
+            }
+            if (res.pharmacy) {
+                API.setBusiness(res.pharmacy);
+                var storeId = res.pharmacy.address ? res.pharmacy.address.trim() : '';
+                if (!storeId) storeId = res.pharmacy.id;
+                API.init(res.pharmacy.api_key || '', res.user.username, res.pharmacy.name, res.user, storeId);
+            } else {
+                API.init('', res.user.username, '', res.user, '');
+            }
+            var roleName = res.user.role ? res.user.role.toUpperCase() : 'USER';
+            showToast('Welcome, ' + res.user.name + ' (' + roleName + ')!', 'success');
+            setTimeout(function() {
+                window.location.href = 'dashboard.html';
+            }, 1000);
+        }).catch(function(err) {
+            showToast('Connection error. Is the server running?', 'error');
+            console.error(err);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account &amp; Sign In';
+        });
+    }
+
+    (function init() {
+        var businessName = getQueryParameter('business_name') || getQueryParameter('pharmacy_name');
+        var businessType = getQueryParameter('business_type');
+        var setupToken = getQueryParameter('token') || getQueryParameter('setup_token');
+        var displayName = document.getElementById('pharmNameDisplay');
+        var tokenField = document.getElementById('setupTokenField');
+
+        tokenField.value = setupToken;
+
+        if (businessName) {
+            displayName.innerHTML = '<strong>Business:</strong> ' + businessName +
+                (businessType ? ' <span style="opacity:.75">(' + businessType + ')</span>' : '');
+        } else {
+            displayName.innerHTML = 'Your business has been created. Set your administrator login below to activate the account.';
+        }
+
+        var summary = document.getElementById('storeSummary');
+        if (!setupToken) {
+            summary.innerHTML = '<div style="color:#c53030;font-weight:600;">This setup link is missing its setup code. Please ask your platform administrator for a fresh link, or create the store account again.</div>';
+            document.getElementById('setupBtn').disabled = true;
+            document.getElementById('setupBtn').style.opacity = '.5';
+        } else {
+            summary.innerHTML = '<div><span>Store</span><span>' + (businessName || 'Your business') + '</span></div>' +
+                (businessType ? '<div><span>Business type</span><span>' + businessType + '</span></div>' : '') +
+                '<div><span>What happens next</span><span>Your login is created and the store is switched on</span></div>';
+        }
+    })();
+    </script>
+</body>
+</html>
+
+

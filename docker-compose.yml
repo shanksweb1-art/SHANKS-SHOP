@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./danzona_pos.db:/app/danzona_pos.db
+    restart: always
+    environment:
+      - PORT=5000
+      - DB_PATH=/app/danzona_pos.db

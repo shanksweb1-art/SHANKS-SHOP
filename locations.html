@@ -1,0 +1,223 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Locations - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-store"></i> Locations</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-store"></i> Total Locations</div>
+                <div class="kpi-value" id="kpiTotal">0</div>
+                <div class="kpi-sub">Store branches</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-circle-check"></i> Active</div>
+                <div class="kpi-value" style="color:#10b981;" id="kpiActive">0</div>
+                <div class="kpi-sub">Operating</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-times-circle"></i> Inactive</div>
+                <div class="kpi-value" style="color:#ef4444;" id="kpiInactive">0</div>
+                <div class="kpi-sub">Closed</div>
+            </div>
+        </div>
+        <div class="page-head">
+            <div>
+                <h3>Store Locations</h3>
+                <p>Manage all pharmacy branch locations.</p>
+            </div>
+            <button class="btn btn-primary" onclick="showAddLocationForm()"><i class="fas fa-plus"></i> Add Location</button>
+        </div>
+        <div class="panel">
+            <div class="toolbar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search locations..." oninput="renderLocations()">
+                <select id="statusFilter" class="form-select" onchange="renderLocations()">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+        <div id="locationModal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="modalTitle">Add Location</h3>
+                    <button class="modal-close" onclick="POS.closeModal('locationModal')">&times;</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">Location Name</label>
+                        <input type="text" id="locName" class="form-control" placeholder="Enter location name">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="locPhone" class="form-control" placeholder="Enter phone number">
+                    </div>
+                    <div class="form-group full">
+                        <label class="required">Address</label>
+                        <input type="text" id="locAddress" class="form-control" placeholder="Enter address">
+                    </div>
+                    <div class="form-group">
+                        <label>Manager</label>
+                        <input type="text" id="locManager" class="form-control" placeholder="Enter manager name">
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="locStatus" class="form-select">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="POS.closeModal('locationModal')">Cancel</button>
+                    <button class="btn btn-success" id="saveBtn" onclick="saveLocation()">Save Location</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-panel" id="tableView" style="display:none;">
+            <div class="table-top"><strong><i class="fas fa-list"></i> Location Directory</strong><span id="locCount">0 locations</span></div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Address</th>
+                            <th>Phone</th>
+                            <th>Manager</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="locationsBody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var locations = [];
+var filteredLocations = [];
+var editId = null;
+function $id(id) { return document.getElementById(id); }
+function updateKPIs() {
+    $id('kpiTotal').textContent = locations.length;
+    $id('kpiActive').textContent = locations.filter(function(l) { return l.status === 'active'; }).length;
+    $id('kpiInactive').textContent = locations.filter(function(l) { return l.status === 'inactive'; }).length;
+}
+function showAddLocationForm() {
+    editId = null;
+    $id('modalTitle').textContent = 'Add Location';
+    $id('saveBtn').textContent = 'Save Location';
+    $id('locName').value = '';
+    $id('locAddress').value = '';
+    $id('locPhone').value = '';
+    $id('locManager').value = '';
+    $id('locStatus').value = 'active';
+    $id('locationModal').classList.add('open');
+}
+async function saveLocation() {
+    var name = $id('locName').value.trim();
+    var address = $id('locAddress').value.trim();
+    var phone = $id('locPhone').value.trim();
+    var manager = $id('locManager').value.trim();
+    var status = $id('locStatus').value;
+    if (!name || !address) {
+        POS.showToast('Name and address are required', true);
+        return;
+    }
+    try {
+        if (editId) {
+            await API.updateLocation(editId, { name: name, address: address, phone: phone, manager: manager, status: status });
+            POS.showToast('Location updated!');
+        } else {
+            var newId = locations.length > 0 ? Math.max.apply(null, locations.map(function(l) { return l.id; })) + 1 : 1;
+            await API.saveLocation({ id: newId, name: name, address: address, phone: phone, manager: manager, status: status });
+            POS.showToast('Location added!');
+        }
+        await loadLocations();
+        POS.closeModal('locationModal');
+    } catch (err) {
+        POS.showToast(err.message || 'Failed to save location', true);
+    }
+}
+async function loadLocations() {
+    try {
+        locations = await API.getLocations() || [];
+        filteredLocations = [...locations];
+    } catch (err) {
+        locations = [];
+        POS.showToast('Failed to load locations', true);
+    }
+    updateKPIs();
+    renderLocations();
+}
+function renderLocations() {
+    var q = $id('searchInput').value.toLowerCase();
+    var st = $id('statusFilter').value;
+    filteredLocations = locations.filter(function(l) {
+        var text = [(l.name || ''), (l.address || ''), (l.phone || ''), (l.manager || '')].join(' ').toLowerCase();
+        var matchesSearch = !q || text.indexOf(q) > -1;
+        var matchesStatus = st === 'all' || l.status === st;
+        return matchesSearch && matchesStatus;
+    });
+    $id('locCount').textContent = filteredLocations.length + ' locations';
+    var tbody = $id('locationsBody');
+    tbody.innerHTML = filteredLocations.map(function(l) {
+        return '<tr><td><strong>' + POS.esc(l.name || '') + '</strong></td><td>' + POS.esc(l.address || '') + '</td><td>' + POS.esc(l.phone || '') + '</td><td>' + POS.esc(l.manager || '') + '</td><td>' + POS.statusBadge(l.status || 'active') + '</td><td class="action-btns"><button class="icon-btn edit" onclick="editLocation(' + l.id + ')"><i class="fas fa-edit"></i></button><button class="icon-btn delete" onclick="deleteLocation(' + l.id + ')"><i class="fas fa-trash"></i></button></td></tr>';
+    }).join('') || '<tr><td colspan="6" class="empty-state">No locations found</td></tr>';
+}
+function editLocation(id) {
+    var loc = locations.find(function(l) { return l.id == id; });
+    if (!loc) return;
+    editId = id;
+    $id('modalTitle').textContent = 'Edit Location';
+    $id('saveBtn').textContent = 'Update Location';
+    $id('locName').value = loc.name || '';
+    $id('locAddress').value = loc.address || '';
+    $id('locPhone').value = loc.phone || '';
+    $id('locManager').value = loc.manager || '';
+    $id('locStatus').value = loc.status || 'active';
+    $id('locationModal').classList.add('open');
+}
+async function deleteLocation(id) {
+    if (!confirm('Delete this location?')) return;
+    try {
+        await API.deleteLocation(id);
+        POS.showToast('Location deleted!');
+        loadLocations();
+    } catch (err) {
+        POS.showToast(err.message || 'Delete failed', true);
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    if (!POS.requireAuth()) return;
+    POS.renderSidebar();
+    POS.renderUserMenu();
+    loadLocations();
+});
+</script>
+</body>
+</html>
+
+
+

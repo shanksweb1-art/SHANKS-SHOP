@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Sales Summary - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-calendar-day"></i> Daily Sales Summary</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="summaryDate" class="form-control" onchange="loadSummary()">
+                </div>
+                <div class="form-group">
+                    <label>Cashier</label>
+                    <input type="text" id="summaryCashier" class="form-control" placeholder="All / name" oninput="loadSummary()">
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;">
+                    <button class="btn btn-outline" onclick="printSummary()"><i class="fas fa-print"></i> Print Z-Read</button>
+                </div>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-chart-pie"></i> Overview</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Total Transactions</label>
+                    <input type="text" id="sumTxCount" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Gross Sales</label>
+                    <input type="text" id="sumGross" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Discounts</label>
+                    <input type="text" id="sumDisc" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Net Sales</label>
+                    <input type="text" id="sumNet" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Cost of Goods</label>
+                    <input type="text" id="sumCost" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Profit</label>
+                    <input type="text" id="sumProfit" class="form-control" readonly>
+                </div>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-list"></i> Transactions</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Time</th><th>Receipt</th><th>Cashier</th><th>Customer</th><th>Payment</th><th>Total</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="summaryBody">
+                        <tr><td colspan="7" class="empty-state">No transactions for selected date</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function fmt(n){ try { return StoreConfig.formatCurrency(n); } catch(e) { return '₦' + (parseFloat(n)||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2}); } }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){t.style.display='none';},3000); }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function loadSummary(){
+    var date = $('summaryDate').value || today();
+    var cashierQ = ($('summaryCashier').value||'').toLowerCase();
+    var sales = [];
+    try { sales = JSON.parse(localStorage.getItem('SHEDS_completed_sales')||localStorage.getItem('SHEDS_sales')||localStorage.getItem('sales')||'[]'); } catch(e){ sales=[]; }
+    var list = sales.filter(function(s){
+        var d = s.date ? POS.getDatePart(s.date) : '';
+        var c = (s.cashier||'').toLowerCase();
+        return d===date && (!cashierQ || c.indexOf(cashierQ)>-1);
+    });
+    var gross = list.reduce(function(a,b){ return a+(parseFloat(b.total)||0); },0);
+    var disc = list.reduce(function(a,b){ return a+(parseFloat(b.discount_amount)||0); },0);
+    var products = [];
+    try { products = JSON.parse(localStorage.getItem('danzona_products')||'[]'); } catch(e){ products=[]; }
+    if(!Array.isArray(products)) products=[];
+    var summary = POS.profitSummary(list, products);
+    $('summaryDate').value = date;
+    $('sumTxCount').value = list.length + ' transactions';
+    $('sumGross').value = fmt(gross);
+    $('sumDisc').value = fmt(disc);
+    $('sumNet').value = fmt(gross-disc);
+    $('sumCost').value = fmt(summary.cogs);
+    $('sumProfit').value = fmt(summary.profit);
+    var tbody=$('summaryBody');
+    if(!list.length){ tbody.innerHTML='<tr><td colspan="7" class="empty-state">No transactions for selected date</td></tr>'; return; }
+    tbody.innerHTML = list.slice(0,200).map(function(s){
+        var time = s.date ? new Date(s.date).toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'}) : '--';
+        var method = (s.payment_method||'cash').replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase();});
+        return '<tr><td>'+esc(time)+'</td><td>#'+esc(s.id||'-')+'</td><td>'+esc(s.cashier||'-')+'</td><td>'+esc(s.customer_name||'Walk-in')+'</td><td>'+esc(method)+'</td><td style="font-weight:900;">'+fmt(s.total)+'</td><td><span class="badge badge-approved">Completed</span></td></tr>';
+    }).join('');
+}
+function printSummary(){
+    var title='Daily Sales Summary - ' + ($('summaryDate').value || today());
+    var headers=['Time','Receipt','Cashier','Customer','Payment','Total'];
+    var rows=[];
+    document.querySelectorAll('#summaryBody tr').forEach(function(tr){
+        var cells=tr.querySelectorAll('td');
+        if(cells.length===headers.length){
+            rows.push({Time:cells[0].textContent,Receipt:cells[1].textContent,Cashier:cells[2].textContent,Customer:cells[3].textContent,Payment:cells[4].textContent,Total:cells[5].textContent});
+        }
+    });
+    POS.printTable(title, headers, rows);
+}
+document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; $('summaryDate').value=today(); loadSummary(); });
+</script>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,296 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-calendar"></i> Appointments</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-calendar"></i> Total Appointments</div>
+                <div class="kpi-value" id="kpiTotal">0</div>
+                <div class="kpi-sub">All records</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-clock"></i> Scheduled</div>
+                <div class="kpi-value" style="color:#3b82f6;" id="kpiScheduled">0</div>
+                <div class="kpi-sub">Upcoming</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-check-circle"></i> Completed</div>
+                <div class="kpi-value" style="color:#10b981;" id="kpiCompleted">0</div>
+                <div class="kpi-sub">Done</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-times-circle"></i> Cancelled</div>
+                <div class="kpi-value" style="color:#ef4444;" id="kpiCancelled">0</div>
+                <div class="kpi-sub">Cancelled</div>
+            </div>
+        </div>
+        <div class="page-head">
+            <div>
+                <h3>Appointment Management</h3>
+                <p>Schedule and track patient appointments.</p>
+            </div>
+            <button class="btn btn-primary" onclick="showAddAppointmentForm()"><i class="fas fa-plus"></i> Schedule Appointment</button>
+        </div>
+        <div class="panel">
+            <div class="toolbar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search patient or doctor..." oninput="renderAppointments()">
+                <select id="statusFilter" class="form-select" onchange="renderAppointments()">
+                    <option value="all">All Status</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <button class="btn btn-info" onclick="exportAppointmentsCSV()"><i class="fas fa-file-export"></i> Export CSV</button>
+                <button class="btn btn-secondary" onclick="printAppointments()"><i class="fas fa-print"></i> Print</button>
+            </div>
+        </div>
+        <div id="addAppointmentForm" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="appointmentFormTitle">Schedule New Appointment</h3>
+                    <button class="modal-close" onclick="POS.closeModal('addAppointmentForm')">&times;</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">Patient Name</label>
+                        <input type="text" id="patientName" class="form-control" placeholder="Enter patient name">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Doctor</label>
+                        <select id="doctorSelect" class="form-select">
+                            <option value="">Select Doctor</option>
+                            <option value="Dr. Adebayo">Dr. Adebayo</option>
+                            <option value="Dr. Ibrahim">Dr. Ibrahim</option>
+                            <option value="Dr. Okafor">Dr. Okafor</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Appointment Date</label>
+                        <input type="date" id="appointmentDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" id="appointmentTime" class="form-control">
+                    </div>
+                    <div class="form-group full">
+                        <label>Reason for Visit</label>
+                        <textarea id="reason" class="form-control" placeholder="Reason for appointment"></textarea>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="POS.closeModal('addAppointmentForm')">Cancel</button>
+                    <button class="btn btn-success" onclick="scheduleAppointment()">Save Appointment</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-panel">
+            <div class="table-top">
+                <strong><i class="fas fa-list"></i> Appointment List</strong>
+                <span id="appointmentCount">0 appointments</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentsTableBody">
+                        <tr><td colspan="7" class="empty-state">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var appointments = [];
+var filteredAppointments = [];
+var editAppointmentId = null;
+function $id(id) { return document.getElementById(id); }
+function updateKPIs() {
+    $id('kpiTotal').textContent = appointments.length;
+    $id('kpiScheduled').textContent = appointments.filter(function(a) { return a.status === 'scheduled'; }).length;
+    $id('kpiCompleted').textContent = appointments.filter(function(a) { return a.status === 'completed'; }).length;
+    $id('kpiCancelled').textContent = appointments.filter(function(a) { return a.status === 'cancelled'; }).length;
+}
+function showAddAppointmentForm() {
+    editAppointmentId = null;
+    $id('addAppointmentForm').classList.add('open');
+    $id('appointmentFormTitle').textContent = 'Schedule New Appointment';
+    $id('patientName').value = '';
+    $id('doctorSelect').value = '';
+    $id('appointmentDate').value = new Date().toISOString().split('T')[0];
+    $id('appointmentTime').value = '';
+    $id('reason').value = '';
+}
+async function scheduleAppointment() {
+    var patientName = $id('patientName').value.trim();
+    var doctor = $id('doctorSelect').value;
+    var date = $id('appointmentDate').value;
+    var time = $id('appointmentTime').value;
+    var reason = $id('reason').value.trim();
+    if (!patientName || !doctor || !date) {
+        POS.showToast('Please enter patient name, select doctor, and appointment date', true);
+        return;
+    }
+    try {
+        if (editAppointmentId !== null) {
+            await API.updateAppointment(editAppointmentId, { patient: patientName, doctor: doctor, date: date, time: time, reason: reason });
+            POS.showToast('Appointment updated!');
+        } else {
+            var newId = appointments.length > 0 ? Math.max.apply(null, appointments.map(function(a) { return a.id; })) + 1 : 1;
+            var aptId = 'APT-' + String(newId).padStart(3, '0');
+            await API.saveAppointment({ id: newId, aptId: aptId, patient: patientName, doctor: doctor, date: date, time: time, reason: reason, status: 'scheduled' });
+            POS.showToast('Appointment scheduled successfully!');
+        }
+        POS.closeModal('addAppointmentForm');
+        renderAppointments();
+    } catch (err) {
+        POS.showToast(err.message || 'Failed to schedule appointment', true);
+    }
+}
+async function renderAppointments() {
+    try {
+        appointments = await API.getAppointments() || [];
+        filteredAppointments = [...appointments];
+    } catch (err) {
+        appointments = [];
+        POS.showToast('Failed to load appointments', true);
+    }
+    updateKPIs();
+    var q = $id('searchInput').value.toLowerCase();
+    var st = $id('statusFilter').value;
+    filteredAppointments = appointments.filter(function(a) {
+        var text = [(a.patient || ''), (a.doctor || '')].join(' ').toLowerCase();
+        var matchesSearch = !q || text.indexOf(q) > -1;
+        var matchesStatus = st === 'all' || a.status === st;
+        return matchesSearch && matchesStatus;
+    });
+    $id('appointmentCount').textContent = filteredAppointments.length + ' appointments';
+    var tbody = $id('appointmentsTableBody');
+    tbody.innerHTML = filteredAppointments.map(function(a) {
+        return '<tr>' +
+            '<td>' + POS.esc(a.aptId || '') + '</td>' +
+            '<td>' + POS.esc(a.patient || '') + '</td>' +
+            '<td>' + POS.esc(a.doctor || '') + '</td>' +
+            '<td>' + POS.formatDate(a.date) + '</td>' +
+            '<td>' + POS.esc(a.time || '') + '</td>' +
+            '<td>' + POS.statusBadge(a.status || 'scheduled') + '</td>' +
+            '<td class="action-btns">' +
+            '<button class="icon-btn view" onclick="viewAppointment(' + a.id + ')"><i class="fas fa-eye"></i></button>' +
+            '<button class="icon-btn edit" onclick="editAppointment(' + a.id + ')"><i class="fas fa-edit"></i></button>' +
+            '<button class="icon-btn delete" onclick="deleteAppointment(' + a.id + ')"><i class="fas fa-trash"></i></button>' +
+            '</td></tr>';
+    }).join('');
+}
+function viewAppointment(id) {
+    var a = appointments.find(function(apt) { return apt.id == id; });
+    if (!a) return;
+    var modalHtml = '<div class="modal-overlay open" id="viewModal">' +
+        '<div class="modal"><div class="modal-header"><h3>Appointment Details</h3><button class="modal-close" onclick="POS.closeModal(\'viewModal\')">&times;</button></div>' +
+        '<div class="kpi-grid">' +
+        '<div class="kpi-card"><div class="kpi-label">Patient</div><div class="kpi-value">' + POS.esc(a.patient) + '</div></div>' +
+        '<div class="kpi-card"><div class="kpi-label">Doctor</div><div class="kpi-value">' + POS.esc(a.doctor) + '</div></div>' +
+        '</div>' +
+        '<div class="form-row" style="margin-top:15px;">' +
+        '<div class="form-group"><label>Date</label><span>' + POS.formatDate(a.date) + '</span></div>' +
+        '<div class="form-group"><label>Time</label><span>' + POS.esc(a.time || '-') + '</span></div>' +
+        '</div>' +
+        '<div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal(\'viewModal\')">Close</button></div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+function editAppointment(id) {
+    var a = appointments.find(function(apt) { return apt.id == id; });
+    if (!a) return;
+    editAppointmentId = id;
+    $id('addAppointmentForm').classList.add('open');
+    $id('appointmentFormTitle').textContent = 'Edit Appointment';
+    $id('patientName').value = a.patient || '';
+    $id('doctorSelect').value = a.doctor || '';
+    $id('appointmentDate').value = a.date || '';
+    $id('appointmentTime').value = a.time || '';
+    $id('reason').value = a.reason || '';
+}
+async function deleteAppointment(id) {
+    if (!confirm('Delete this appointment?')) return;
+    try {
+        await API.deleteAppointment(id);
+        POS.showToast('Appointment deleted!');
+        renderAppointments();
+    } catch (err) {
+        POS.showToast(err.message || 'Delete failed', true);
+    }
+}
+function exportAppointmentsCSV() {
+    var data = filteredAppointments.length > 0 ? filteredAppointments : appointments;
+    POS.exportCSV('appointments_' + POS.today() + '.csv',
+        ['ID', 'Patient', 'Doctor', 'Date', 'Time', 'Status', 'Reason'],
+        data.map(function(a) {
+            return {
+                ID: a.aptId || '',
+                Patient: a.patient || '',
+                Doctor: a.doctor || '',
+                Date: POS.formatDate(a.date),
+                Time: a.time || '',
+                Status: a.status || '',
+                Reason: a.reason || ''
+            };
+        })
+    );
+}
+function printAppointments() {
+    var data = filteredAppointments.length > 0 ? filteredAppointments : appointments;
+    POS.printTable('SHANKS SHOP MANAGEMENT Appointments Report',
+        ['ID', 'Patient', 'Doctor', 'Date', 'Time', 'Status'],
+        data.map(function(a) {
+            return {
+                ID: a.aptId || '',
+                Patient: a.patient || '',
+                Doctor: a.doctor || '',
+                Date: POS.formatDate(a.date),
+                Time: a.time || '',
+                Status: a.status || ''
+            };
+        })
+    );
+}
+document.addEventListener('DOMContentLoaded', function() {
+    if (!POS.requireAuth()) return;
+    POS.renderSidebar();
+    POS.renderUserMenu();
+    renderAppointments();
+});
+</script>
+</body>
+</html>
+
+
+

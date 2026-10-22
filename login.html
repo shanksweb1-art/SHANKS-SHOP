@@ -1,0 +1,492 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHANKS SHOP MANAGEMENT - Multi-Business Login</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #2c3e50, #1a2533); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-container { background: white; border-radius: 10px; padding: 2.5rem; width: 100%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .brand-logo { width: 88px; height: 88px; object-fit: contain; display: block; margin: 0 auto 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 22px; padding: 9px; box-shadow: 0 8px 20px rgba(15,23,42,.08); }
+    .login-container h2 { color: #2c3e50; margin-bottom: 0.5rem; text-align: center; }
+    .login-container .subtitle { color: #718096; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .tab-switch { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; }
+    .tab-switch button { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; font-size: 1rem; font-weight: 500; color: #a0aec0; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab-switch button.active { color: #3498db; border-bottom-color: #3498db; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.4rem; color: #4a5568; font-weight: 500; font-size: 0.9rem; }
+    .form-group input, .form-group select { width: 100%; padding: 0.75rem; border: 1.5px solid #ddd; border-radius: 5px; font-size: 0.95rem; transition: border-color 0.3s; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #3498db; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .field-hint { font-size: 0.78rem; color: #718096; margin-top: 0.35rem; line-height: 1.4; }
+    .login-btn { width: 100%; padding: 0.85rem; background: #3498db; color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; margin-top: 0.5rem; }
+    .login-btn:hover { background: #2980b9; }
+    .register-btn { background: #10b981; }
+    .register-btn:hover { background: #047857; }
+    .back-link { display: block; text-align: center; margin-top: 1.5rem; color: #3498db; text-decoration: none; cursor: pointer; font-size: 0.9rem; }
+    .notification-toast { position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 5px; display: none; z-index: 1000; color: white; font-weight: 500; }
+    .notification-toast.success { background: #48bb78; }
+    .notification-toast.error { background: #f56565; }
+    .notification-toast.info { background: #4299e1; }
+    .offline-warning { background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 5px; margin-bottom: 1rem; font-size: 0.85rem; color: #856404; text-align: center; }
+    .server-status { text-align: center; margin-bottom: 1rem; font-size: 0.8rem; }
+    .server-status.online { color: #10b981; }
+    .server-status.offline { color: #f56565; }
+    .account-row { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+    .account-row-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+    .account-row-head strong { color: #2c3e50; font-size: 0.85rem; }
+    .remove-account { background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 0.78rem; font-weight: 600; }
+    .remove-account:hover { text-decoration: underline; }
+    .add-account-btn { width: 100%; padding: 0.65rem; background: #fff; border: 1.5px dashed #cbd5e0; color: #475569; border-radius: 6px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+    .add-account-btn:hover { border-color: #10b981; color: #059669; }
+    .add-account-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .account-count { display: inline-block; background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; }
+</style>
+</head>
+<body>
+    <div class="login-container">
+        <img class="brand-logo" src="brand-logo.png" alt="Shanks Shop Management logo">
+        <h2>SHANKS SHOP MANAGEMENT</h2>
+        <p class="subtitle">Multi-Business Point of Sale System</p>
+
+        <div class="offline-warning" id="offlineWarning" style="display:none;">
+            <i class="fas fa-exclamation-triangle"></i> Backend server not running. Contact your administrator to start the POS server.
+        </div>
+        <div class="server-status" id="serverStatus"></div>
+
+<div class="tab-switch">
+<button class="active" onclick="switchTab('login')"><i class="fas fa-sign-in-alt"></i> Login</button>
+<button onclick="switchTab('register')"><i class="fas fa-store"></i> Create Store Account</button>
+<button onclick="window.location.href='create-account.html'"><i class="fas fa-id-card"></i> Staff Request</button>
+</div>
+
+        <div id="login-tab" class="tab-content active">
+            <form onsubmit="login(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Username</label>
+                    <input type="text" id="username" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="login-btn"><i class="fas fa-sign-in-alt"></i> Login</button>
+            </form>
+        </div>
+
+        <div id="register-tab" class="tab-content">
+            <div class="note" id="platformStatus"></div>
+            <form onsubmit="registerBusiness(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-briefcase"></i> Business Name *</label>
+                    <input type="text" id="bizName" required placeholder="e.g. Shanks Shop Ikeja">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-tags"></i> Business Type *</label>
+                    <select id="bizType" required onchange="updateBusinessTypeHint()">
+                        <option value="">Loading business types...</option>
+                    </select>
+                    <p class="field-hint" id="bizTypeHint">The business type decides which modules your POS shows (sales, stock, customers, finance, pharmacy tools).</p>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Address</label>
+                    <input type="text" id="bizAddress" placeholder="e.g. 45 Broad Street, Lagos">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> Phone</label>
+                    <input type="tel" id="bizPhone" placeholder="+234 801 234 5678">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="bizEmail" placeholder="admin@yourbusiness.com">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-users"></i> Staff Logins <span class="account-count" id="accountCount">1 account</span></label>
+                    <p class="field-hint" style="margin-bottom:0.6rem;">Optional extra logins for this store, each with its own username, password and role &mdash; they all sign in on the Login tab. The store administrator sets their own login on the next page.</p>
+                    <div id="extraAccounts"></div>
+                    <button type="button" class="add-account-btn" id="addAccountBtn" onclick="addExtraAccount()"><i class="fas fa-plus"></i> Add another account</button>
+                </div>
+                <p class="field-hint" style="margin-bottom:1rem;">Next you will be taken to a setup page where the store administrator creates their own login. The store only becomes active once that is done.</p>
+                <button type="submit" class="login-btn register-btn"><i class="fas fa-store"></i> Create Store Account</button>
+            </form>
+        </div>
+
+        <a class="back-link" onclick="window.location.href='index.html'"><i class="fas fa-home"></i> Back to Home</a>
+    </div>
+    <div class="notification-toast" id="toast"></div>
+
+    <script src="api.js"></script>
+    <script>
+    var API_URL = window.location.origin || '';
+
+    function showToast(msg, type) {
+        var t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'notification-toast ' + (type || 'success');
+        t.style.display = 'block';
+        setTimeout(function() { t.style.display = 'none'; }, 4000);
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-switch button').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+        document.getElementById(tab + '-tab').classList.add('active');
+        var buttons = document.querySelectorAll('.tab-switch button');
+        if (tab === 'login') buttons[0].classList.add('active');
+        else if (tab === 'register') buttons[1].classList.add('active');
+        if (tab === 'register') renderPlatformStatus();
+    }
+
+    // Store accounts are created by the platform administrator, a different account
+    // from the store's own administrator. Show who is signed in as platform admin.
+    function renderPlatformStatus() {
+        var box = document.getElementById('platformStatus');
+        if (!box) return;
+        var user = API.platformUser ? API.platformUser() : '';
+        var token = API.platformToken ? API.platformToken() : '';
+        if (user && token) {
+            box.innerHTML = '<i class="fas fa-user-shield"></i> Signed in as platform administrator <strong>' + user + '</strong>. ' +
+                '<a href="platform.html" style="color:#1e40af;font-weight:600;">Switch account</a>';
+        } else {
+            box.innerHTML = '<i class="fas fa-lock"></i> <strong>Platform administrator required.</strong> ' +
+                'Only the platform administrator can create a store account. ' +
+                '<a href="platform.html" style="color:#1e40af;font-weight:600;">Sign in as platform administrator</a>';
+        }
+    }
+
+    function checkServer() {
+        fetch(API_URL + '/api/health', { method: 'GET' })
+            .then(function(res) {
+                if (!res.ok) throw new Error('Server unavailable');
+                document.getElementById('offlineWarning').style.display = 'none';
+                var status = document.getElementById('serverStatus');
+                status.className = 'server-status online';
+                status.innerHTML = '<i class="fas fa-circle"></i> Server online';
+            })
+            .catch(function() {
+                document.getElementById('offlineWarning').style.display = 'block';
+                var status = document.getElementById('serverStatus');
+                status.className = 'server-status offline';
+                status.innerHTML = '<i class="fas fa-circle"></i> Server offline';
+            });
+    }
+
+    function login(e) {
+        e.preventDefault();
+        var username = document.getElementById('username').value.trim();
+        var password = document.getElementById('password').value;
+
+        if (!username) { showToast('Please enter your username', 'error'); return; }
+        showToast('Logging in...', 'info');
+
+        API.login('', username, password).then(function(res) {
+            if (res.error) { showToast(res.error, 'error'); return; }
+            if (res.pharmacy) {
+                API.setBusiness(res.pharmacy);
+                var storeId = res.pharmacy.address ? res.pharmacy.address.trim() : '';
+                if (!storeId) storeId = res.pharmacy.id;
+                API.init(res.pharmacy.api_key || '', res.user.username, res.pharmacy.name, res.user, storeId);
+            } else {
+                API.init('', res.user.username, '', res.user, '');
+            }
+            var roleName = res.user.role ? res.user.role.toUpperCase() : 'USER';
+            showToast('Welcome, ' + res.user.name + ' (' + roleName + ')!', 'success');
+            setTimeout(function() {
+                window.location.href = nextPage();
+            }, 1000);
+        }).catch(function(err) {
+            showToast('Connection error. Is the server running?', 'error');
+            console.error(err);
+        });
+    }
+
+    function nextPage() {
+        try {
+            var p = new URLSearchParams(window.location.search).get('next');
+            if (p && /^[a-z0-9_\-\/]+\.html$/i.test(p) && p.indexOf('//') < 0) return p;
+        } catch (e) { /* fall through to the dashboard */ }
+        return 'dashboard.html';
+    }
+
+    function loadBusinessTypes() {
+        var select = document.getElementById('bizType');
+        fetch(API_URL + '/api/business-types', { method: 'GET' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var types = (data && data.types) || [];
+                select.innerHTML = '';
+                types.forEach(function(t) {
+                    var opt = document.createElement('option');
+                    opt.value = t.key;
+                    opt.textContent = t.label;
+                    select.appendChild(opt);
+                });
+                if (data && data.max_accounts) {
+                    MAX_ACCOUNTS = data.max_accounts;
+                    ACCOUNT_ROLES = data.account_roles || ACCOUNT_ROLES;
+                }
+                updateAccountCount();
+                if (types.length) {
+                    select.value = 'pharmacy';
+                    updateBusinessTypeHint();
+                }
+            })
+            .catch(function() {
+                select.innerHTML = '<option value="other">Other Business</option>';
+            });
+    }
+
+    function updateBusinessTypeHint() {
+        var hint = document.getElementById('bizTypeHint');
+        var key = document.getElementById('bizType').value;
+        var labels = {
+            pharmacy: 'Prescriptions, expiry and batch tools are included.',
+            restaurant: 'Sales, tables, customers and finance. No product stock module.',
+            services: 'Appointments, customers, payments and finance.',
+            retail: 'Products, stock, customers and finance.',
+            supermarket: 'Products, stock, suppliers, customers and finance.'
+        };
+        hint.textContent = labels[key] || 'The business type decides which modules your POS shows.';
+    }
+
+    // --- Extra store accounts (owner + manager + cashier, etc.) ---
+    var MAX_ACCOUNTS = 3;
+    var ACCOUNT_ROLES = ['admin', 'manager', 'cashier', 'staff', 'pharmacist', 'supervisor', 'accountant'];
+    var ROLE_LABELS = {
+        admin: 'Administrator', manager: 'Manager', cashier: 'Cashier',
+        staff: 'Staff', pharmacist: 'Pharmacist', supervisor: 'Supervisor', accountant: 'Accountant'
+    };
+
+    function accountRows() {
+        var box = document.getElementById('extraAccounts');
+        return box ? box.querySelectorAll('.account-row') : [];
+    }
+
+    function updateAccountCount() {
+        var total = accountRows().length + 1;
+        var badge = document.getElementById('accountCount');
+        if (badge) badge.textContent = total + (total === 1 ? ' account' : ' accounts');
+        var btn = document.getElementById('addAccountBtn');
+        if (btn) {
+            if (total >= MAX_ACCOUNTS) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-check"></i> Maximum ' + MAX_ACCOUNTS + ' accounts reached';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plus"></i> Add another account';
+            }
+        }
+    }
+
+    function makeField(labelText, control) {
+        var group = document.createElement('div');
+        group.className = 'form-group';
+        var label = document.createElement('label');
+        label.textContent = labelText;
+        group.appendChild(label);
+        group.appendChild(control);
+        return group;
+    }
+
+    function makeInput(cls, type, placeholder) {
+        var input = document.createElement('input');
+        input.type = type;
+        input.className = cls;
+        input.placeholder = placeholder;
+        return input;
+    }
+
+    function addExtraAccount(focus) {
+        if (accountRows().length + 1 >= MAX_ACCOUNTS) {
+            showToast('A store can be created with up to ' + MAX_ACCOUNTS + ' accounts', 'error');
+            return;
+        }
+        var box = document.getElementById('extraAccounts');
+        var index = accountRows().length + 1;
+
+        var row = document.createElement('div');
+        row.className = 'account-row';
+
+        var head = document.createElement('div');
+        head.className = 'account-row-head';
+        var title = document.createElement('strong');
+        title.textContent = 'Account ' + (index + 1);
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-account';
+        var trash = document.createElement('i');
+        trash.className = 'fas fa-trash';
+        removeBtn.appendChild(trash);
+        removeBtn.appendChild(document.createTextNode(' Remove'));
+        removeBtn.addEventListener('click', function() { removeExtraAccount(row); });
+        head.appendChild(title);
+        head.appendChild(removeBtn);
+        row.appendChild(head);
+
+        var topRow = document.createElement('div');
+        topRow.className = 'form-row';
+        topRow.appendChild(makeField('Username', makeInput('acc-username', 'text', 'e.g. manager')));
+        topRow.appendChild(makeField('Password', makeInput('acc-password', 'password', 'Min. 4 characters')));
+        row.appendChild(topRow);
+
+        var bottomRow = document.createElement('div');
+        bottomRow.className = 'form-row';
+        bottomRow.appendChild(makeField('Full name', makeInput('acc-name', 'text', 'e.g. Store Manager')));
+        var roleSelect = document.createElement('select');
+        roleSelect.className = 'acc-role';
+        ACCOUNT_ROLES.forEach(function(role) {
+            var opt = document.createElement('option');
+            opt.value = role;
+            opt.textContent = ROLE_LABELS[role] || role;
+            if (role === 'staff') opt.selected = true;
+            roleSelect.appendChild(opt);
+        });
+        bottomRow.appendChild(makeField('Role', roleSelect));
+        row.appendChild(bottomRow);
+
+        box.appendChild(row);
+        updateAccountCount();
+        var first = row.querySelector('.acc-username');
+        if (first && focus !== false) first.focus();
+    }
+
+    function removeExtraAccount(row) {
+        if (row && row.parentNode) row.parentNode.removeChild(row);
+        updateAccountCount();
+    }
+
+    function readAccountRows() {
+        var rows = accountRows();
+        var list = [];
+        for (var i = 0; i < rows.length; i++) {
+            list.push({
+                username: rows[i].querySelector('.acc-username').value.trim(),
+                password: rows[i].querySelector('.acc-password').value,
+                name: rows[i].querySelector('.acc-name').value.trim(),
+                role: rows[i].querySelector('.acc-role').value
+            });
+        }
+        return list;
+    }
+
+    function validateAccountList(list, adminUser) {
+        adminUser = String(adminUser || '').trim().toLowerCase();
+        var accounts = [];
+        for (var i = 0; i < list.length; i++) {
+            var entry = list[i];
+            var username = String(entry.username || '').trim();
+            var password = String(entry.password || '');
+            if (!username && !password) continue;
+            if (!username || !password) {
+                return { ok: false, error: 'Every account needs a username and a password' };
+            }
+            if (password.length < 4) {
+                return { ok: false, error: 'Password for "' + username + '" must be at least 4 characters' };
+            }
+            if (username.toLowerCase() === adminUser) {
+                return { ok: false, error: '"' + username + '" is already used by the admin login' };
+            }
+            for (var j = 0; j < accounts.length; j++) {
+                if (accounts[j].username.toLowerCase() === username.toLowerCase()) {
+                    return { ok: false, error: 'Duplicate username "' + username + '"' };
+                }
+            }
+            accounts.push({
+                username: username,
+                password: password,
+                name: String(entry.name || '').trim() || username,
+                role: entry.role || 'staff'
+            });
+        }
+        return { ok: true, accounts: accounts };
+    }
+
+    function collectAccounts() {
+        var result = validateAccountList(readAccountRows(), '');
+        if (!result.ok) {
+            showToast(result.error, 'error');
+            return null;
+        }
+        return result.accounts;
+    }
+
+    function registerBusiness(e) {
+        e.preventDefault();
+        var name = document.getElementById('bizName').value.trim();
+        var businessType = document.getElementById('bizType').value;
+        var address = document.getElementById('bizAddress').value.trim();
+        var phone = document.getElementById('bizPhone').value.trim();
+        var email = document.getElementById('bizEmail').value.trim();
+
+        if (!name) {
+            showToast('Business name is required', 'error');
+            return;
+        }
+        if (!businessType) {
+            showToast('Choose a business type', 'error');
+            return;
+        }
+        var extraAccounts = collectAccounts();
+        if (extraAccounts === null) return;
+        if (!API.platformToken || !API.platformToken()) {
+            showToast('Sign in as the platform administrator first', 'error');
+            renderPlatformStatus();
+            return;
+        }
+
+        showToast('Creating the store...', 'info');
+
+        API.registerPharmacy({
+            name: name,
+            business_type: businessType,
+            address: address,
+            phone: phone,
+            email: email,
+            accounts: extraAccounts
+        }).then(function(res) {
+            if (res.error) {
+                showToast(res.error, 'error');
+                if (/platform administrator/i.test(res.error)) renderPlatformStatus();
+                return;
+            }
+
+            showToast('Store created. Taking you to the administrator setup...', 'success');
+            setTimeout(function() {
+                window.location.href = 'admin-setup.html?token=' + encodeURIComponent(res.setup_token || '') +
+                    '&business_name=' + encodeURIComponent(res.name || '') +
+                    '&business_type=' + encodeURIComponent(res.business_label || res.business_type || '');
+            }, 1200);
+        }).catch(function(err) {
+            showToast('Connection error. Is the server running?', 'error');
+            console.error(err);
+        });
+    }
+
+    checkServer();
+    loadBusinessTypes();
+    setInterval(checkServer, 15000);
+    // Offer the extra account slots straight away: owner + 2 more logins.
+    if (MAX_ACCOUNTS > 1) {
+        addExtraAccount(false);
+        addExtraAccount(false);
+    }
+    updateAccountCount();
+    try {
+        if (new URLSearchParams(window.location.search).get('tab') === 'register') switchTab('register');
+    } catch (e) { /* older browser: the default tab is fine */ }
+    renderPlatformStatus();
+    </script>
+</body>
+</html>
+
+
+
+

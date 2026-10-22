@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenant Management - SHANKS SHOP MANAGEMENT Admin</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { background: #fff; color: var(--text); border: 1px solid var(--border); }
+        .btn-outline:hover { background: #f9fafb; border-color: #d1d5db; }
+        .btn-danger { background: #fff; color: var(--danger); border: 1px solid #fecaca; }
+        .btn-danger:hover { background: #fef2f2; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .badge-success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        .badge-warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+        .badge-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .badge-info { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 10px; background: #f8fafc; color: var(--muted); font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+        td { padding: 10px; border-bottom: 1px solid #f1f5f9; color: var(--text); }
+        tr:hover td { background: #f8fafc; }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 18px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+        }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #3b82f6; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+        .form-control {
+            width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px;
+            font-size: 14px; background: #fff;
+        }
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none;
+            align-items: center; justify-content: center; z-index: 500;
+        }
+        .modal {
+            background: #fff; border-radius: var(--radius); padding: 24px; width: 100%;
+            max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-title { font-size: 18px; font-weight: 800; }
+        .stat-card {
+            background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 16px; text-align: center;
+        }
+        .stat-value { font-size: 24px; font-weight: 800; color: var(--text); }
+        .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .form-col { flex: 1; min-width: 150px; }
+        .select-row { display: flex; align-items: center; gap: 8px; }
+        .checkbox-cell { width: 40px; text-align: center; }
+        .alert-item {
+            background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+            padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .alert-item.expired { background: #fef2f2; border-color: #fecaca; }
+        .alert-item.trial { background: #eff6ff; border-color: #bfdbfe; }
+        .alert-text { flex: 1; font-size: 13px; }
+        .alert-actions { display: flex; gap: 6px; }
+        .tenant-detail { display: none; margin-top: 12px; padding: 16px; background: #f8fafc; border-radius: var(--radius); border: 1px solid var(--border); }
+        .tenant-detail.active { display: block; }
+        .detail-row { display: flex; gap: 4px; margin-bottom: 6px; font-size: 13px; }
+        .detail-label { color: var(--muted); font-weight: 600; width: 140px; }
+        .hidden { display: none !important; }
+        .bulk-bar {
+            display: none; align-items: center; gap: 10px;
+            background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;
+            padding: 10px 16px; margin-bottom: 16px;
+        }
+        .bulk-bar.active { display: flex; }
+        .small-text { font-size: 11px; color: var(--muted); }
+    </style>
+</head>
+<body>
+    <div class="toast" id="toast"></div>
+    <div class="container" style="max-width:1400px;margin:0 auto;padding:20px;">
+
+        <!-- Header -->
+        <div class="panel-header">
+            <h1 style="font-size:24px;font-weight:900;display:flex;align-items:center;gap:10px;">
+                <i class="fas fa-building" style="color:var(--primary);"></i> Super Admin - Tenant Management
+            </h1>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <span id="platformBadge" style="font-size:13px;color:var(--muted);display:none;"></span>
+                <input type="text" id="platformUser" placeholder="Platform username" class="form-control" style="width:170px;">
+                <input type="password" id="platformPass" placeholder="Password" class="form-control" style="width:150px;">
+                <button class="btn btn-outline" onclick="platformSignIn()"><i class="fas fa-right-to-bracket"></i> Sign in</button>
+                <button class="btn btn-primary" onclick="loadAll()"><i class="fas fa-sync"></i> Load</button>
+            </div>
+        </div>
+
+        <!-- Expiry Alerts -->
+        <div class="panel" id="alertsPanel" style="display:none;">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fas fa-bell"></i> Subscription Expiry Alerts</div>
+                <button class="btn btn-outline btn-sm" onclick="loadAlerts()"><i class="fas fa-sync"></i> Refresh</button>
+            </div>
+            <div id="alertsList"></div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fas fa-chart-bar"></i> Platform Overview</div>
+            </div>
+            <div class="stat-grid" id="statsGrid"></div>
+        </div>
+
+        <!-- Bulk action bar -->
+        <div class="bulk-bar" id="bulkBar">
+            <span><strong><span id="bulkCount">0</span> selected</strong></span>
+            <button class="btn btn-danger btn-sm" onclick="bulkAction('suspend')"><i class="fas fa-pause"></i> Suspend Selected</button>
+            <button class="btn btn-outline btn-sm" onclick="bulkAction('reactivate')"><i class="fas fa-play"></i> Reactivate Selected</button>
+            <button class="btn btn-outline btn-sm" onclick="bulkAction('delete')"><i class="fas fa-trash"></i> Delete Selected</button>
+            <button class="btn btn-outline btn-sm" onclick="clearSelection()"><i class="fas fa-times"></i> Clear</button>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="panel" style="padding:16px;">
+            <div class="form-row">
+                <div class="form-col">
+                    <label>Search tenants</label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by name, email, phone..." oninput="filterTenants()">
+                </div>
+                <div class="form-col">
+                    <label>Status</label>
+                    <select id="statusFilter" class="form-control" onchange="filterTenants()">
+                        <option value="">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="pending">Pending setup</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label>Subscription</label>
+                    <select id="subFilter" class="form-control" onchange="filterTenants()">
+                        <option value="">All plans</option>
+                        <option value="active">Active subscription</option>
+                        <option value="trial">Trial</option>
+                        <option value="none">No subscription</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                </div>
+                <div class="form-col" style="align-self:flex-end;">
+                    <button class="btn btn-outline btn-sm" onclick="exportTenants()"><i class="fas fa-download"></i> Export CSV</button>
+                    <button class="btn btn-primary btn-sm" onclick="runAutoSuspend()"><i class="fas fa-clock"></i> Auto-suspend expired</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tenants Table -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fas fa-clinic-medical"></i> Pharmacies / Tenants</div>
+                <button class="btn btn-primary btn-sm" onclick="showAddTenant()"><i class="fas fa-plus"></i> Add Tenant</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Business type</th>
+                            <th>Plan</th>
+                            <th>Sub. status</th>
+                            <th>Expiry</th>
+                            <th>Users / Products</th>
+                            <th>Sales / Revenue</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tenantsTable">Loading...</tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tenant Detail View -->
+        <div class="tenant-detail" id="tenantDetail">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fas fa-user"></i> Tenant Details: <span id="detailName"></span></div>
+                <button class="btn btn-outline btn-sm" onclick="hideDetail()"><i class="fas fa-times"></i> Close</button>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label>Assign Plan</label>
+                    <select id="detailPlanSelect" class="form-control"></select>
+                </div>
+                <div class="form-col" style="align-self:flex-end;">
+                    <button class="btn btn-primary" onclick="assignDetailPlan()"><i class="fas fa-save"></i> Assign Plan</button>
+                </div>
+            </div>
+            <div id="detailContent"></div>
+        </div>
+
+        <!-- Payments Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fas fa-credit-card"></i> Subscription Payments</div>
+                <button class="btn btn-outline btn-sm" onclick="loadPayments()"><i class="fas fa-sync"></i> Refresh</button>
+            </div>
+            <div class="form-row" style="margin-bottom:12px;">
+                <div class="form-col">
+                    <input type="number" id="payAmount" class="form-control" placeholder="Amount">
+                </div>
+                <div class="form-col">
+                    <input type="text" id="payMethod" class="form-control" placeholder="Method (e.g. Bank transfer)">
+                </div>
+                <div class="form-col">
+                    <input type="text" id="payRef" class="form-control" placeholder="Reference">
+                </div>
+                <div class="form-col" style="align-self:flex-end;">
+                    <button class="btn btn-primary btn-sm" onclick="recordPayment()"><i class="fas fa-plus"></i> Record Payment</button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th><th>Tenant</th><th>Amount</th><th>Method</th><th>Reference</th><th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentsTable">Loading...</tbody>
+            </table>
+        </div>
+
+        <!-- Modals -->
+        <div class="modal-overlay" id="tenantModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <div class="modal-title" id="tenantModalTitle">Add Tenant</div>
+                    <button class="btn btn-outline btn-sm" onclick="closeModal('tenantModal')"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="form-group"><label>Pharmacy Name</label><input type="text" id="tenantName" class="form-control"></div>
+                <div class="form-group"><label>Address</label><input type="text" id="tenantAddress" class="form-control"></div>
+                <div class="form-group"><label>Phone</label><input type="text" id="tenantPhone" class="form-control"></div>
+                <div class="form-group"><label>Email</label><input type="text" id="tenantEmail" class="form-control"></div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="tenantStatus" class="form-control">
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="tenantSaveBtn" onclick="saveTenant()">Save</button>
+                <button class="btn btn-outline" onclick="closeModal('tenantModal')">Cancel</button>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="planModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <div class="modal-title" id="planModalTitle">Add Plan</div>
+                    <button class="btn btn-outline btn-sm" onclick="closeModal('planModal')"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="form-group"><label>Plan Name</label><input type="text" id="planName" class="form-control"></div>
+                <div class="form-group"><label>Slug</label><input type="text" id="planSlug" class="form-control" placeholder="e.g. pro"></div>
+                <div class="form-group"><label>Description</label><input type="text" id="planDesc" class="form-control"></div>
+                <div class="form-group"><label>Price Monthly</label><input type="number" id="planPriceMonthly" class="form-control" value="0"></div>
+                <div class="form-group"><label>Price Yearly</label><input type="number" id="planPriceYearly" class="form-control" value="0"></div>
+                <div class="form-group"><label>Max Users</label><input type="number" id="planMaxUsers" class="form-control" value="5"></div>
+                <div class="form-group"><label>Max Products</label><input type="number" id="planMaxProducts" class="form-control" value="100"></div>
+                <div class="form-group"><label>Max Branches</label><input type="number" id="planMaxBranches" class="form-control" value="1"></div>
+                <div class="form-group">
+                    <label>Active</label>
+                    <select id="planActive" class="form-control">
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="planSaveBtn" onclick="savePlan()">Save</button>
+                <button class="btn btn-outline" onclick="closeModal('planModal')">Cancel</button>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="notifyModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <div class="modal-title" id="notifyModalTitle">Send Subscription Notice</div>
+                    <button class="btn btn-outline btn-sm" onclick="closeModal('notifyModal')"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="form-group"><label>To</label><span id="notifyTenantName"></span></div>
+                <div class="form-group"><label>Subject</label><input type="text" id="notifySubject" class="form-control" value="Subscription reminder"></div>
+                <div class="form-group"><label>Message</label><textarea id="notifyBody" class="form-control" rows="4">Your subscription needs attention. Please renew to avoid service interruption.</textarea></div>
+                <button class="btn btn-primary" onclick="sendNotification()">Send</button>
+                <button class="btn btn-outline" onclick="closeModal('notifyModal')">Cancel</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ---------- State ----------
+        var tenants = [];
+        var plans = [];
+        var selectedIds = new Set();
+        var detailTenantId = null;
+        var notifyTenantId = null;
+
+        // ---------- Helpers ----------
+        function showToast(msg, type) {
+            var t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast ' + (type || 'info');
+            t.style.display = 'block';
+            setTimeout(function() { t.style.display = 'none'; }, 3000);
+        }
+
+        function getToken() {
+            var token = API.platformToken();
+            if (!token) { showToast('Sign in as the platform administrator first', 'error'); return null; }
+            return token;
+        }
+
+        function renderPlatformBadge() {
+            var user = API.platformUser();
+            var badge = document.getElementById('platformBadge');
+            if (!badge) return;
+            if (user) {
+                badge.style.display = 'inline';
+                badge.innerHTML = 'Signed in as <strong>' + user + '</strong>';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function formatDate(val) {
+            if (!val) return '-';
+            try { return new Date(val).toLocaleDateString(); } catch (e) { return val; }
+        }
+
+        function subBadgeClass(status) {
+            if (status === 'active') return 'badge-success';
+            if (status === 'trial') return 'badge-warning';
+            if (status === 'suspended' || status === 'cancelled') return 'badge-danger';
+            return 'badge-info';
+        }
+
+        function statusBadgeClass(status) {
+            if (status === 'active') return 'badge-success';
+            if (status === 'suspended') return 'badge-danger';
+            if (status === 'pending') return 'badge-warning';
+            return 'badge-info';
+        }
+
+        // ---------- Platform sign in ----------
+        async function platformSignIn() {
+            var username = document.getElementById('platformUser').value.trim();
+            var password = document.getElementById('platformPass').value;
+            if (!username || !password) { showToast('Enter the platform username and password', 'error'); return; }
+            var res = await API.platformLogin(username, password);
+            if (res && res.error) { showToast(res.error, 'error'); return; }
+            document.getElementById('platformPass').value = '';
+            showToast('Signed in as ' + username, 'success');
+            renderPlatformBadge();
+            loadAll();
+        }
+
+        // ---------- Load everything ----------
+        async function loadAll() {
+            await loadTenants();
+            await loadPlans();
+            await loadAlerts();
+            await loadStats();
+            await loadPayments();
+        }
+
+        // ---------- Tenants ----------
+        async function loadTenants() {
+            var token = getToken(); if (!token) return;
+            try {
+                tenants = await API.getAdminTenants(token);
+                renderTenants();
+            } catch (e) {
+                showToast(e.message || 'Failed to load tenants', 'error');
+            }
+        }
+
+        function renderTenants() {
+            var tbody = document.getElementById('tenantsTable');
+            var filtered = filterTenantsList();
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);">No tenants found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = filtered.map(function(t) {
+                var isSelected = selectedIds.has(t.id);
+                var statusBadge = t.status === 'active' ? 'badge-success' : t.status === 'pending' ? 'badge-warning' : 'badge-danger';
+                var subBadge = subBadgeClass(t.sub_status);
+                var expiry = formatDate(t.current_period_end || t.trial_ends_at);
+                var usage = (t.user_count || 0) + ' / ' + (t.product_count || 0);
+                var sales = (t.sale_count || 0) + ' / ' + (t.total_sales || 0);
+                var subActions = '';
+                if (t.status === 'suspended') {
+                    subActions += ' <button class="btn btn-outline btn-sm" onclick="reactivateTenant(' + t.id + ')" title="Reactivate"><i class="fas fa-play"></i> Reactivate</button>';
+                } else {
+                    subActions += ' <button class="btn btn-danger btn-sm" onclick="suspendTenant(' + t.id + ')" title="Suspend"><i class="fas fa-pause"></i> Suspend</button>';
+                }
+                subActions += ' <button class="btn btn-outline btn-sm" onclick="notifyTenant(' + t.id + ', \'' + escapeHtml(t.name || '') + '\')" title="Notify subscription"><i class="fas fa-bell"></i> Notify</button>';
+                subActions += ' <button class="btn btn-outline btn-sm" onclick="showDetail(' + t.id + ')" title="Details"><i class="fas fa-user"></i> Details</button>';
+                return '<tr>' +
+                    '<td class="checkbox-cell"><input type="checkbox" class="tenantCheckbox" value="' + t.id + '" ' + (isSelected ? 'checked' : '') + ' onchange="toggleSelect(' + t.id + ', this)"></td>' +
+                    '<td>' + t.id + '</td>' +
+                    '<td><strong>' + escapeHtml(t.name || '') + '</strong></td>' +
+                    '<td><span class="badge badge-info">' + escapeHtml(t.business_label || t.business_type || '-') + '</span></td>' +
+                    '<td>' + escapeHtml(t.plan_name || '-') + '</td>' +
+                    '<td><span class="badge ' + subBadge + '">' + escapeHtml(t.sub_status || 'none') + '</span></td>' +
+                    '<td>' + expiry + '</td>' +
+                    '<td>' + usage + '</td>' +
+                    '<td>' + sales + '</td>' +
+                    '<td><span class="badge ' + statusBadgeClass(t.status) + '">' + escapeHtml(t.status || 'active') + '</span></td>' +
+                    '<td>' +
+                        subActions +
+                        ' <button class="btn btn-outline btn-sm" onclick="editTenant(' + t.id + ', \'' + escapeJs(t.name || '') + '\', \'' + escapeJs(t.address || '') + '\', \'' + escapeJs(t.phone || '') + '\', \'' + escapeJs(t.email || '') + '\', \'' + escapeJs(t.status || 'active') + '\')" title="Edit details"><i class="fas fa-edit"></i></button> ' +
+                        '<button class="btn btn-danger btn-sm" onclick="deleteTenant(' + t.id + ')" title="Delete"><i class="fas fa-trash"></i></button>' +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
+            updateBulkBar();
+        }
+
+        function escapeHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function escapeJs(s) { return String(s || '').replace(/'/g, "\\'").replace(/\\/g, '\\\\'); }
+
+        function filterTenantsList() {
+            var search = document.getElementById('searchInput').value.toLowerCase();
+            var statusFilter = document.getElementById('statusFilter').value;
+            var subFilter = document.getElementById('subFilter').value;
+            return tenants.filter(function(t) {
+                var matchSearch = !search ||
+                    (t.name || '').toLowerCase().includes(search) ||
+                    (t.email || '').toLowerCase().includes(search) ||
+                    (t.phone || '').toLowerCase().includes(search);
+                var matchStatus = !statusFilter || t.status === statusFilter;
+                var matchSub = true;
+                if (subFilter === 'none') matchSub = !t.sub_status || t.sub_status === 'none';
+                else if (subFilter === 'expired') matchSub = t.sub_status === 'active' && t.current_period_end && new Date(t.current_period_end) < new Date();
+                else matchSub = t.sub_status === subFilter;
+                return matchSearch && matchStatus && matchSub;
+            });
+        }
+
+        function filterTenants() { renderTenants(); }
+
+        function updateBulkBar() {
+            var bar = document.getElementById('bulkBar');
+            var count = document.getElementById('bulkCount');
+            if (selectedIds.size > 0) {
+                bar.classList.add('active');
+                count.textContent = selectedIds.size;
+            } else {
+                bar.classList.remove('active');
+                count.textContent = '0';
+            }
+        }
+
+        function toggleSelect(id, checkbox) {
+            if (checkbox.checked) selectedIds.add(id);
+            else selectedIds.delete(id);
+            updateBulkBar();
+            renderTenants();
+        }
+
+        function toggleSelectAll() {
+            var cb = document.getElementById('selectAll');
+            var visible = filterTenantsList();
+            if (cb.checked) {
+                visible.forEach(function(t) { selectedIds.add(t.id); });
+            } else {
+                visible.forEach(function(t) { selectedIds.delete(t.id); });
+            }
+            updateBulkBar();
+            renderTenants();
+        }
+
+        function clearSelection() {
+            selectedIds = new Set();
+            document.getElementById('selectAll').checked = false;
+            updateBulkBar();
+            renderTenants();
+        }
+
+        async function bulkAction(action) {
+            if (selectedIds.size === 0) { showToast('Select tenants first', 'error'); return; }
+            if (action === 'delete' && !confirm('Delete ' + selectedIds.size + ' tenants? This cannot be undone.')) return;
+            var token = getToken(); if (!token) return;
+            try {
+                var res = await API.bulkTenantAction({ ids: Array.from(selectedIds), action: action }, token);
+                showToast(action + ' complete: ' + res.processed + ' tenants', 'success');
+                selectedIds = new Set();
+                document.getElementById('selectAll').checked = false;
+                updateBulkBar();
+                await loadTenants();
+            } catch (e) {
+                showToast(e.message || 'Bulk action failed', 'error');
+            }
+        }
+
+        async function suspendTenant(id) {
+            var token = getToken(); if (!token) return;
+            try {
+                await API.suspendAdminTenant(id, token);
+                showToast('Tenant suspended', 'success');
+                await loadTenants();
+            } catch (e) {
+                showToast(e.message || 'Suspend failed', 'error');
+            }
+        }
+
+        async function reactivateTenant(id) {
+            var token = getToken(); if (!token) return;
+            try {
+                await API.reactivateAdminTenant(id, token);
+                showToast('Tenant reactivated', 'success');
+                await loadTenants();
+            } catch (e) {
+                showToast(e.message || 'Reactivate failed', 'error');
+            }
+        }
+
+        async function notifyTenant(id, name) {
+            notifyTenantId = id;
+            document.getElementById('notifyTenantName').textContent = name;
+            document.getElementById('notifySubject').value = 'Subscription reminder';
+            document.getElementById('notifyBody').value = 'Your subscription needs attention. Please renew to avoid service interruption.';
+            openModal('notifyModal');
+        }
+
+        async function sendNotification() {
+            var token = getToken(); if (!token) return;
+            var subject = document.getElementById('notifySubject').value.trim();
+            var body = document.getElementById('notifyBody').value.trim();
+            if (!subject || !body) { showToast('Subject and message are required', 'error'); return; }
+            try {
+                var res = await API.notifySubscription(notifyTenantId, { subject: subject, body: body }, token);
+                showToast(res.error ? res.error : 'Notice sent', res.error ? 'error' : 'success');
+                closeModal('notifyModal');
+            } catch (e) {
+                showToast(e.message || 'Notify failed', 'error');
+            }
+        }
+
+        // ---------- Tenant Detail ----------
+        function showDetail(id) {
+            var t = tenants.find(function(x) { return x.id === id; });
+            if (!t) return;
+            detailTenantId = id;
+            document.getElementById('detailName').textContent = t.name || '';
+            var content = '';
+            content += '<div class="detail-row"><span class="detail-label">ID:</span><span>' + t.id + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Name:</span><span>' + escapeHtml(t.name || '') + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Address:</span><span>' + escapeHtml(t.address || '-') + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Phone:</span><span>' + escapeHtml(t.phone || '-') + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Email:</span><span>' + escapeHtml(t.email || '-') + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Business type:</span><span>' + escapeHtml(t.business_label || t.business_type || '-') + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Status:</span><span class="badge ' + statusBadgeClass(t.status) + '">' + escapeHtml(t.status || 'active') + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Subscription:</span><span>' + escapeHtml(t.sub_status || 'none') + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Plan:</span><span>' + escapeHtml(t.plan_name || '-') + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Expiry:</span><span>' + formatDate(t.current_period_end || t.trial_ends_at) + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Users:</span><span>' + (t.user_count || 0) + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Products:</span><span>' + (t.product_count || 0) + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Branches:</span><span>' + (t.branch_count || 0) + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Sales:</span><span>' + (t.sale_count || 0) + '</span></div>';
+            content += '<div class="detail-row"><span class="detail-label">Revenue:</span><span>' + (t.total_sales || 0) + '</span></div>';
+            document.getElementById('detailContent').innerHTML = content;
+            loadPlansForSelect();
+            document.getElementById('tenantDetail').classList.add('active');
+        }
+
+        function hideDetail() {
+            document.getElementById('tenantDetail').classList.remove('active');
+            detailTenantId = null;
+        }
+
+        async function loadPlansForSelect() {
+            var select = document.getElementById('detailPlanSelect');
+            select.innerHTML = '<option value="">Select a plan</option>';
+            plans.forEach(function(p) {
+                select.innerHTML += '<option value="' + p.id + '">' + escapeHtml(p.name || '') + ' (' + escapeHtml(p.slug || '') + ')</option>';
+            });
+        }
+
+        async function assignDetailPlan() {
+            if (!detailTenantId) return;
+            var select = document.getElementById('detailPlanSelect');
+            var planId = select.value;
+            if (!planId) { showToast('Select a plan', 'error'); return; }
+            var token = getToken(); if (!token) return;
+            try {
+                await API.assignPlanToTenant(detailTenantId, { plan_id: parseInt(planId) }, token);
+                showToast('Plan assigned', 'success');
+                hideDetail();
+                await loadTenants();
+            } catch (e) {
+                showToast(e.message || 'Assign plan failed', 'error');
+            }
+        }
+
+        // ---------- Add / Edit Tenant ----------
+        var editingTenantId = null;
+        function showAddTenant() {
+            editingTenantId = null;
+            document.getElementById('tenantModalTitle').textContent = 'Add Tenant';
+            document.getElementById('tenantName').value = '';
+            document.getElementById('tenantAddress').value = '';
+            document.getElementById('tenantPhone').value = '';
+            document.getElementById('tenantEmail').value = '';
+            document.getElementById('tenantStatus').value = 'active';
+            openModal('tenantModal');
+        }
+
+        function editTenant(id, name, address, phone, email, status) {
+            editingTenantId = id;
+            document.getElementById('tenantModalTitle').textContent = 'Edit Tenant';
+            document.getElementById('tenantName').value = name;
+            document.getElementById('tenantAddress').value = address;
+            document.getElementById('tenantPhone').value = phone;
+            document.getElementById('tenantEmail').value = email;
+            document.getElementById('tenantStatus').value = status;
+            openModal('tenantModal');
+        }
+
+        async function saveTenant() {
+            var token = getToken(); if (!token) return;
+            var data = {
+                name: document.getElementById('tenantName').value.trim(),
+                address: document.getElementById('tenantAddress').value.trim(),
+                phone: document.getElementById('tenantPhone').value.trim(),
+                email: document.getElementById('tenantEmail').value.trim(),
+                status: document.getElementById('tenantStatus').value
+            };
+            if (!data.name) return showToast('Name is required', 'error');
+            try {
+                await API.updateAdminTenant(editingTenantId, data, token);
+                showToast('Tenant saved', 'success');
+                closeModal('tenantModal');
+                await loadTenants();
+            } catch (e) {
+                showToast(e.message || 'Save failed', 'error');
+            }
+        }
+
+        async function deleteTenant(id) {
+            if (!confirm('Delete this tenant? This cannot be undone.')) return;
+            var token = getToken(); if (!token) return;
+            try {
+                await API.deleteAdminTenant(id, token);
+                showToast('Tenant deleted', 'success');
+                await loadTenants();
+            } catch (e) {
+                showToast(e.message || 'Delete failed', 'error');
+            }
+        }
+
+        // ---------- Expiry Alerts ----------
+        async function loadAlerts() {
+            var token = getToken(); if (!token) return;
+            try {
+                var tenantsWithSubs = await API.getAdminTenants(token);
+                var now = new Date();
+                var alerts = tenantsWithSubs.filter(function(t) {
+                    if (!t.current_period_end) return false;
+                    var end = new Date(t.current_period_end);
+                    var days = (end - now) / (1000 * 60 * 60 * 24);
+                    return t.sub_status === 'active' && days <= 30;
+                });
+                var container = document.getElementById('alertsList');
+                var panel = document.getElementById('alertsPanel');
+                if (alerts.length === 0) {
+                    panel.style.display = 'none';
+                    return;
+                }
+                panel.style.display = 'block';
+                container.innerHTML = alerts.map(function(t) {
+                    var end = new Date(t.current_period_end);
+                    var days = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                    var cls = days <= 0 ? 'expired' : days <= 7 ? 'expired' : 'trial';
+                    var label = days <= 0 ? 'EXPIRED' : days <= 7 ? 'Expires in ' + days + ' days' : 'Expires in ' + days + ' days';
+                    return '<div class="alert-item ' + cls + '">' +
+                        '<div class="alert-text"><strong>' + escapeHtml(t.name || '') + '</strong> - ' + label + '<br><small>Plan: ' + escapeHtml(t.plan_name || '-') + ' | Expiry: ' + formatDate(t.current_period_end) + '</small></div>' +
+                        '<div class="alert-actions">' +
+                        '<button class="btn btn-outline btn-sm" onclick="notifyTenant(' + t.id + ', \'' + escapeJs(t.name || '') + '\')"><i class="fas fa-bell"></i> Notify</button>' +
+                        '<button class="btn btn-outline btn-sm" onclick="showDetail(' + t.id + ')"><i class="fas fa-user"></i> Details</button>' +
+                        '</div>' +
+                        '</div>';
+                }).join('');
+            } catch (e) {
+                showToast(e.message || 'Failed to load alerts', 'error');
+            }
+        }
+
+        // ---------- Stats ----------
+        async function loadStats() {
+            var token = getToken(); if (!token) return;
+            try {
+                var stats = await API.tenantUsageStats(token);
+                var container = document.getElementById('statsGrid');
+                var totalTenants = stats.length;
+                var activeTenants = stats.filter(function(s) { return s.status === 'active'; }).length;
+                var suspendedTenants = stats.filter(function(s) { return s.status === 'suspended'; }).length;
+                var totalUsers = stats.reduce(function(sum, s) { return sum + (s.user_count || 0); }, 0);
+                var totalProducts = stats.reduce(function(sum, s) { return sum + (s.product_count || 0); }, 0);
+                var totalSales = stats.reduce(function(sum, s) { return sum + (s.total_sales || 0); }, 0);
+                var totalRevenue = stats.reduce(function(sum, s) { return sum + parseFloat(s.total_sales || 0); }, 0);
+                container.innerHTML = '' +
+                    statCard('Total Stores', totalTenants) +
+                    statCard('Active', activeTenants, 'badge-success') +
+                    statCard('Suspended', suspendedTenants, 'badge-danger') +
+                    statCard('Total Users', totalUsers) +
+                    statCard('Total Products', totalProducts) +
+                    statCard('Total Sales', totalSales) +
+                    statCard('Revenue', 'NGN ' + totalRevenue.toLocaleString());
+            } catch (e) {
+                showToast(e.message || 'Failed to load stats', 'error');
+            }
+        }
+
+        function statCard(label, value, badgeClass) {
+            var badge = badgeClass ? '<span class="badge ' + badgeClass + '"></span>' : '';
+            return '<div class="stat-card"><div class="stat-value">' + value + '</div><div class="stat-label">' + label + '</div></div>';
+        }
+
+        // ---------- Plans ----------
+        async function loadPlans() {
+            var token = getToken(); if (!token) return;
+            try {
+                plans = await API.platformListPlans(token);
+                var tbody = document.getElementById('plansTable');
+                if (!plans.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);">No plans found</td></tr>'; return; }
+                tbody.innerHTML = plans.map(function(p) {
+                    return '<tr>' +
+                        '<td>' + p.id + '</td>' +
+                        '<td><strong>' + escapeHtml(p.name || '') + '</strong></td>' +
+                        '<td>' + escapeHtml(p.slug || '') + '</td>' +
+                        '<td>' + (p.price_monthly || 0) + '</td>' +
+                        '<td>' + (p.price_yearly || 0) + '</td>' +
+                        '<td>' + (p.max_users || 0) + '</td>' +
+                        '<td>' + (p.max_products || 0) + '</td>' +
+                        '<td>' + (p.max_branches || 0) + '</td>' +
+                        '<td><span class="badge ' + (p.is_active ? 'badge-success' : 'badge-danger') + '">' + (p.is_active ? 'Yes' : 'No') + '</span></td>' +
+                        '<td>' +
+                            '<button class="btn btn-outline btn-sm" onclick="editPlan(' + p.id + ', \'' + escapeJs(p.name || '') + '\', \'' + escapeJs(p.slug || '') + '\', \'' + escapeJs(p.description || '') + '\', ' + (p.price_monthly || 0) + ', ' + (p.price_yearly || 0) + ', ' + (p.max_users || 0) + ', ' + (p.max_products || 0) + ', ' + (p.max_branches || 0) + ', ' + (p.is_active || 0) + ')" title="Edit"><i class="fas fa-edit"></i></button> ' +
+                            '<button class="btn btn-danger btn-sm" onclick="deletePlan(' + p.id + ')" title="Delete"><i class="fas fa-trash"></i></button>' +
+                        '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (e) {
+                showToast(e.message || 'Failed to load plans', 'error');
+            }
+        }
+
+        var editingPlanId = null;
+        function showAddPlan() {
+            editingPlanId = null;
+            document.getElementById('planModalTitle').textContent = 'Add Plan';
+            document.getElementById('planName').value = '';
+            document.getElementById('planSlug').value = '';
+            document.getElementById('planDesc').value = '';
+            document.getElementById('planPriceMonthly').value = 0;
+            document.getElementById('planPriceYearly').value = 0;
+            document.getElementById('planMaxUsers').value = 5;
+            document.getElementById('planMaxProducts').value = 100;
+            document.getElementById('planMaxBranches').value = 1;
+            document.getElementById('planActive').value = 1;
+            openModal('planModal');
+        }
+
+        function editPlan(id, name, slug, desc, priceMonthly, priceYearly, maxUsers, maxProducts, maxBranches, isActive) {
+            editingPlanId = id;
+            document.getElementById('planModalTitle').textContent = 'Edit Plan';
+            document.getElementById('planName').value = name;
+            document.getElementById('planSlug').value = slug;
+            document.getElementById('planDesc').value = desc;
+            document.getElementById('planPriceMonthly').value = priceMonthly;
+            document.getElementById('planPriceYearly').value = priceYearly;
+            document.getElementById('planMaxUsers').value = maxUsers;
+            document.getElementById('planMaxProducts').value = maxProducts;
+            document.getElementById('planMaxBranches').value = maxBranches;
+            document.getElementById('planActive').value = isActive;
+            openModal('planModal');
+        }
+
+        async function savePlan() {
+            var token = getToken(); if (!token) return;
+            var data = {
+                name: document.getElementById('planName').value.trim(),
+                slug: document.getElementById('planSlug').value.trim(),
+                description: document.getElementById('planDesc').value.trim(),
+                price_monthly: parseFloat(document.getElementById('planPriceMonthly').value) || 0,
+                price_yearly: parseFloat(document.getElementById('planPriceYearly').value) || 0,
+                max_users: parseInt(document.getElementById('planMaxUsers').value) || 5,
+                max_products: parseInt(document.getElementById('planMaxProducts').value) || 100,
+                max_branches: parseInt(document.getElementById('planMaxBranches').value) || 1,
+                is_active: parseInt(document.getElementById('planActive').value) || 1
+            };
+            if (!data.name || !data.slug) return showToast('Name and slug are required', 'error');
+            try {
+                if (editingPlanId) {
+                    await API.platformUpdatePlan(editingPlanId, data, token);
+                    showToast('Plan updated', 'success');
+                } else {
+                    await API.platformCreatePlan(data, token);
+                    showToast('Plan created', 'success');
+                }
+                closeModal('planModal');
+                await loadPlans();
+                await loadPlansForSelect();
+            } catch (e) {
+                showToast(e.message || 'Save failed', 'error');
+            }
+        }
+
+        async function deletePlan(id) {
+            if (!confirm('Delete this plan?')) return;
+            var token = getToken(); if (!token) return;
+            try {
+                await API.platformDeletePlan(id, token);
+                showToast('Plan deleted', 'success');
+                await loadPlans();
+                await loadPlansForSelect();
+            } catch (e) {
+                showToast(e.message || 'Delete failed', 'error');
+            }
+        }
+
+        // ---------- Export ----------
+        async function exportTenants() {
+            var token = getToken(); if (!token) return;
+            try {
+                var res = await fetch('/api/admin/tenants/export?platform_token=' + encodeURIComponent(token));
+                if (!res.ok) throw new Error('Export failed');
+                var blob = await res.blob();
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'tenants_export.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                showToast(e.message || 'Export failed', 'error');
+            }
+        }
+
+        // ---------- Auto-suspend ----------
+        async function runAutoSuspend() {
+            var token = getToken(); if (!token) return;
+            if (!confirm('Suspend all tenants with expired subscriptions?')) return;
+            try {
+                var res = await API.autoSuspendExpired(token);
+                showToast(res.suspended + ' tenant(s) suspended', 'success');
+                await loadTenants();
+                await loadAlerts();
+                await loadStats();
+            } catch (e) {
+                showToast(e.message || 'Auto-suspend failed', 'error');
+            }
+        }
+
+        // ---------- Payments ----------
+        async function loadPayments() {
+            var token = getToken(); if (!token) return;
+            try {
+                var payments = await API.listAdminPayments(token);
+                var tbody = document.getElementById('paymentsTable');
+                if (!payments.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">No payments found</td></tr>'; return; }
+                tbody.innerHTML = payments.map(function(p) {
+                    return '<tr>' +
+                        '<td>' + formatDate(p.date) + '</td>' +
+                        '<td>' + escapeHtml(p.pharmacy_id) + '</td>' +
+                        '<td>' + (p.amount || 0) + '</td>' +
+                        '<td>' + escapeHtml(p.method || '-') + '</td>' +
+                        '<td>' + escapeHtml(p.reference || '-') + '</td>' +
+                        '<td>' + escapeHtml(p.description || '-') + '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (e) {
+                showToast(e.message || 'Failed to load payments', 'error');
+            }
+        }
+
+        async function recordPayment() {
+            var token = getToken(); if (!token) return;
+            var pharmacyId = document.getElementById('detailTenantId') ? document.getElementById('detailTenantId').value : null;
+            // Use detail tenant if available, else prompt
+            if (!pharmacyId) {
+                pharmacyId = prompt('Enter tenant (pharmacy) ID:');
+                if (!pharmacyId) return;
+            }
+            var amount = document.getElementById('payAmount').value;
+            var method = document.getElementById('payMethod').value.trim();
+            var ref = document.getElementById('payRef').value.trim();
+            if (!amount) { showToast('Amount is required', 'error'); return; }
+            try {
+                await API.recordAdminPayment({
+                    pharmacy_id: parseInt(pharmacyId),
+                    amount: parseFloat(amount),
+                    method: method,
+                    reference: ref,
+                    description: 'Subscription payment'
+                }, token);
+                showToast('Payment recorded', 'success');
+                document.getElementById('payAmount').value = '';
+                document.getElementById('payMethod').value = '';
+                document.getElementById('payRef').value = '';
+                await loadPayments();
+            } catch (e) {
+                showToast(e.message || 'Record payment failed', 'error');
+            }
+        }
+
+        // ---------- Init ----------
+        (function init() {
+            renderPlatformBadge();
+            if (API.platformToken()) {
+                loadAll();
+            }
+        })();
+    </script>
+</body>
+</html>

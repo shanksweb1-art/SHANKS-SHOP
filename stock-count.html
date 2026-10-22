@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Count - SHANKS SHOP MANAGEMENT</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="common.css">
+<script src="api.js"></script>
+<script src="common.js"></script>
+<style>
+    .count-input { width: 90px; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; text-align: right; background: #fff; }
+    .count-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); }
+    .count-input.dirty { border-color: #f59e0b; background: #fffbeb; }
+    .variance-pos { color: #15803d; font-weight: 800; }
+    .variance-neg { color: #b91c1c; font-weight: 800; }
+    .variance-zero { color: var(--muted); }
+    .sheet-meta { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+    .sheet-meta strong { color: var(--text); }
+    .count-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .summary-box { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: #fcfcfd; }
+    .summary-box .label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+    .summary-box .value { font-size: 20px; font-weight: 900; color: var(--text); margin-top: 4px; }
+    .count-sheet { max-height: 460px; overflow-y: auto; }
+    .count-sheet thead th { position: sticky; top: 0; background: #f8fafc; z-index: 1; }
+    .history-row { cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+  <div class="header">
+    <h2><i class="fas fa-clipboard-check"></i> Stock Count</h2>
+    <div id="userMenu"></div>
+    <div class="header-clock" id="topClock"></div>
+  </div>
+  <div class="content">
+
+    <div class="page-head">
+      <div>
+        <h3>Stock Take</h3>
+        <p>Count what is physically on the shelf, review the variance, then post it to stock.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-outline" onclick="loadProducts()"><i class="fas fa-sync-alt"></i> Reload Stock</button>
+        <button class="btn btn-primary" id="btnSaveDraft" onclick="saveDraft()"><i class="fas fa-save"></i> Save Draft</button>
+        <button class="btn btn-success" id="btnApply" onclick="applyCount()"><i class="fas fa-check-double"></i> Apply to Stock</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Count Reference</label>
+          <input type="text" id="countRef" class="form-control" placeholder="Auto generated">
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <select id="countLocation" class="form-select"><option value="">Main store</option></select>
+        </div>
+        <div class="form-group">
+          <label>Counted By</label>
+          <input type="text" id="countBy" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <input type="text" id="countNotes" class="form-control" placeholder="Optional note for this count">
+        </div>
+      </div>
+    </div>
+
+    <div class="count-summary">
+      <div class="summary-box"><div class="label">Products on sheet</div><div class="value" id="sumItems">0</div></div>
+      <div class="summary-box"><div class="label">Counted lines</div><div class="value" id="sumCounted">0</div></div>
+      <div class="summary-box"><div class="label">Unit variance</div><div class="value" id="sumVariance">0</div></div>
+      <div class="summary-box"><div class="label">Value variance</div><div class="value" id="sumValue">0.00</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <input id="countSearch" class="search-input" placeholder="Search product, SKU, category or batch..." oninput="renderSheet()">
+        <select id="countFilter" class="form-select" onchange="renderSheet()">
+          <option value="all">All products</option>
+          <option value="counted">Counted only</option>
+          <option value="variance">With variance</option>
+          <option value="uncounted">Not counted</option>
+        </select>
+        <button class="btn btn-secondary" onclick="printSheet()"><i class="fas fa-print"></i> Print sheet</button>
+      </div>
+      <div class="table-wrap count-sheet">
+        <table>
+          <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Batch</th><th>System Qty</th><th>Counted Qty</th><th>Variance</th><th>Unit Cost</th><th>Value Var</th></tr></thead>
+          <tbody id="sheetBody"><tr><td colspan="9" class="empty-state">Loading products...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="table-panel">
+      <div class="table-top"><strong><i class="fas fa-clock-rotate-left"></i> Previous Stock Counts</strong><span id="historyCount">0 counts</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Reference</th><th>Date</th><th>Location</th><th>Counted By</th><th>Items</th><th>Variance</th><th>Value Var</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="historyBody"><tr><td colspan="9" class="empty-state">Loading counts...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function () {
+    var products = [];
+    var locations = [];
+    var counts = [];
+    var currentCountId = null;
+    var applied = false;
+
+    function $(id) { return document.getElementById(id); }
+    function num(v, f) { var n = parseFloat(v); return isNaN(n) ? (f || 0) : n; }
+    function esc(s) { return POS.esc(s); }
+    function fmtMoney(v) { return POS.formatCurrency(num(v)); }
+
+    function toast(msg, err) { POS.showToast(msg, err); }
+
+    function countedRows() {
+        return products.filter(function (p) { return p._counted !== undefined && p._counted !== null && p._counted !== ''; });
+    }
+
+    function renderSheet() {
+        var body = $('sheetBody');
+        if (!products.length) { body.innerHTML = '<tr><td colspan="9" class="empty-state">No products to count. Add products first.</td></tr>'; updateSummary(); return; }
+        var q = ($('countSearch').value || '').toLowerCase();
+        var mode = $('countFilter').value;
+        var rows = products.filter(function (p) {
+            var text = [p.name, p.sku, p.category_name, p.batch_number].join(' ').toLowerCase();
+            if (q && text.indexOf(q) === -1) return false;
+            var counted = p._counted !== undefined && p._counted !== null && p._counted !== '';
+            if (mode === 'counted') return counted;
+            if (mode === 'uncounted') return !counted;
+            if (mode === 'variance') return counted && (num(p._counted) - num(p.stock)) !== 0;
+            return true;
+        });
+        if (!rows.length) { body.innerHTML = '<tr><td colspan="9" class="empty-state">No products match the current filter.</td></tr>'; updateSummary(); return; }
+        body.innerHTML = rows.map(function (p) {
+            var counted = p._counted === undefined || p._counted === null || p._counted === '' ? null : num(p._counted);
+            var variance = counted === null ? null : round3(counted - num(p.stock));
+            var valueVar = variance === null ? 0 : variance * num(p.cost_price);
+            var cls = variance === null ? 'variance-zero' : (variance > 0 ? 'variance-pos' : (variance < 0 ? 'variance-neg' : 'variance-zero'));
+            var vText = variance === null ? '-' : (variance > 0 ? '+' : '') + POS.formatNumber(variance);
+            return '<tr>' +
+                '<td>' + esc(p.sku || '-') + '</td>' +
+                '<td><strong>' + esc(p.name || '-') + '</strong></td>' +
+                '<td>' + esc(p.category_name || 'Uncategorized') + '</td>' +
+                '<td>' + esc(p.batch_number || '-') + '</td>' +
+                '<td>' + POS.formatNumber(num(p.stock)) + '</td>' +
+                '<td><input type="number" min="0" step="1" class="count-input" data-id="' + p.id + '" value="' + (counted === null ? '' : counted) + '"></td>' +
+                '<td class="' + cls + '">' + vText + '</td>' +
+                '<td>' + fmtMoney(p.cost_price) + '</td>' +
+                '<td class="' + cls + '">' + (variance === null ? '-' : fmtMoney(valueVar)) + '</td>' +
+                '</tr>';
+        }).join('');
+        Array.prototype.forEach.call(body.querySelectorAll('.count-input'), function (input) {
+            input.addEventListener('input', function () {
+                var id = input.getAttribute('data-id');
+                var p = products.find(function (x) { return String(x.id) === String(id); });
+                if (!p) return;
+                p._counted = input.value === '' ? null : num(input.value);
+                input.classList.toggle('dirty', p._counted !== null && (num(p._counted) - num(p.stock)) !== 0);
+                updateSummary();
+            });
+        });
+        updateSummary();
+    }
+
+    function round3(v) { return Math.round(v * 1000) / 1000; }
+
+    function updateSummary() {
+        var counted = countedRows();
+        var variance = 0, value = 0;
+        counted.forEach(function (p) {
+            var v = num(p._counted) - num(p.stock);
+            variance += v;
+            value += v * num(p.cost_price);
+        });
+        $('sumItems').textContent = products.length;
+        $('sumCounted').textContent = counted.length;
+        $('sumVariance').textContent = (variance > 0 ? '+' : '') + POS.formatNumber(round3(variance));
+        $('sumValue').textContent = fmtMoney(value);
+    }
+
+    function buildItems() {
+        return products.map(function (p) {
+            return {
+                product_id: p.id,
+                product_name: p.name,
+                sku: p.sku,
+                batch_number: p.batch_number,
+                expiry_date: p.expiry || p.expiry_date || '',
+                system_qty: num(p.stock),
+                counted_qty: (p._counted === undefined || p._counted === null) ? null : num(p._counted),
+                unit_cost: num(p.cost_price)
+            };
+        });
+    }
+
+    function payload() {
+        return {
+            reference: ($('countRef').value || '').trim(),
+            location: $('countLocation').value,
+            notes: ($('countNotes').value || '').trim(),
+            items: buildItems()
+        };
+    }
+
+    async function saveDraft() {
+        var data = payload();
+        if (!products.length) { toast('There is nothing to count yet', true); return; }
+        try {
+            if (currentCountId) {
+                await API.updateStockCount(currentCountId, data);
+                toast('Stock count saved');
+            } else {
+                var res = await API.saveStockCount(data);
+                currentCountId = res.id;
+                if (!data.reference) $('countRef').value = res.reference || '';
+                toast('Stock count saved as draft');
+            }
+            await loadHistory();
+        } catch (e) { toast(e.message || 'Could not save the stock count', true); }
+    }
+
+    async function applyCount() {
+        var counted = countedRows();
+        if (!counted.length) { toast('Enter at least one counted quantity', true); return; }
+        var variance = counted.reduce(function (sum, p) { return sum + (num(p._counted) - num(p.stock)); }, 0);
+        if (!confirm('Apply ' + counted.length + ' counted product(s) to stock? Variance: ' + POS.formatNumber(round3(variance)))) return;
+        try {
+            if (!currentCountId) {
+                var res = await API.saveStockCount(payload());
+                currentCountId = res.id;
+            } else {
+                await API.updateStockCount(currentCountId, payload());
+            }
+            var out = await API.applyStockCount(currentCountId);
+            toast('Stock updated for ' + out.products_updated + ' product(s)');
+            applied = true;
+            currentCountId = null;
+            $('countRef').value = '';
+            $('countNotes').value = '';
+            products.forEach(function (p) { delete p._counted; });
+            await loadProducts();
+            await loadHistory();
+        } catch (e) { toast(e.message || 'Could not apply the stock count', true); }
+    }
+
+    async function loadProducts() {
+        try {
+            var list = await API.getProducts() || [];
+            products = list.map(function (p) {
+                p.stock = num(p.stock);
+                p.cost_price = num(p.cost_price);
+                return p;
+            });
+        } catch (e) { products = []; toast('Could not load products: ' + (e.message || 'API error'), true); }
+        renderSheet();
+    }
+
+    async function loadLocations() {
+        try {
+            locations = await API.getLocations() || [];
+        } catch (e) { locations = []; }
+        var sel = $('countLocation');
+        var current = sel.value;
+        sel.innerHTML = '<option value="">Main store</option>' + locations.map(function (l) {
+            return '<option value="' + esc(l.name || l.id) + '">' + esc(l.name || l.id) + '</option>';
+        }).join('');
+        if (current) sel.value = current;
+    }
+
+    async function loadHistory() {
+        try {
+            counts = await API.getStockCounts() || [];
+        } catch (e) { counts = []; }
+        var body = $('historyBody');
+        $('historyCount').textContent = counts.length + ' count(s)';
+        if (!counts.length) { body.innerHTML = '<tr><td colspan="9" class="empty-state">No stock counts recorded yet</td></tr>'; return; }
+        body.innerHTML = counts.map(function (c) {
+            var status = c.applied ? 'Applied' : (c.status === 'draft' ? 'Draft' : (c.status || 'draft'));
+            var cls = c.applied ? 'badge-success' : 'badge-warning';
+            return '<tr>' +
+                '<td><strong>' + esc(c.reference || '#' + c.id) + '</strong></td>' +
+                '<td>' + esc(String(c.created_at || '').replace('T', ' ').slice(0, 16)) + '</td>' +
+                '<td>' + esc(c.location || 'Main store') + '</td>' +
+                '<td>' + esc(c.counted_by || '-') + '</td>' +
+                '<td>' + num(c.counted_items) + ' / ' + num(c.total_items) + '</td>' +
+                '<td class="' + (num(c.total_variance) > 0 ? 'variance-pos' : (num(c.total_variance) < 0 ? 'variance-neg' : '')) + '">' +
+                    (num(c.total_variance) > 0 ? '+' : '') + POS.formatNumber(num(c.total_variance)) + '</td>' +
+                '<td>' + fmtMoney(c.value_variance) + '</td>' +
+                '<td><span class="badge ' + cls + '">' + esc(status) + '</span></td>' +
+                '<td class="action-btns">' +
+                    '<button class="icon-btn view" title="Open" onclick="openCount(' + c.id + ')"><i class="fas fa-eye"></i></button> ' +
+                    '<button class="icon-btn delete" title="Delete" onclick="removeCount(' + c.id + ')"><i class="fas fa-trash"></i></button>' +
+                '</td></tr>';
+        }).join('');
+    }
+
+    async function openCount(id) {
+        try {
+            var c = await API.getStockCount(id);
+            currentCountId = c.id;
+            applied = !!c.applied;
+            $('countRef').value = c.reference || '';
+            $('countNotes').value = c.notes || '';
+            $('countLocation').value = c.location || '';
+            var byId = {};
+            (c.items || []).forEach(function (i) { byId[String(i.product_id)] = i; });
+            products.forEach(function (p) {
+                var item = byId[String(p.id)];
+                p._counted = item && item.counted_qty !== null && item.counted_qty !== undefined ? num(item.counted_qty) : null;
+            });
+            renderSheet();
+            toast('Opened ' + (c.reference || 'stock count'));
+        } catch (e) { toast(e.message || 'Could not open the stock count', true); }
+    }
+
+    async function removeCount(id) {
+        if (!confirm('Delete this stock count? The stock levels are not changed.')) return;
+        try {
+            await API.deleteStockCount(id);
+            if (currentCountId === id) { currentCountId = null; applied = false; }
+            toast('Stock count deleted');
+            await loadHistory();
+        } catch (e) { toast(e.message || 'Delete failed', true); }
+    }
+
+    function printSheet() {
+        var rows = products.filter(function (p) { return p._counted !== undefined && p._counted !== null; });
+        if (!rows.length) { toast('Count some products before printing', true); return; }
+        POS.printTable('Stock Count Sheet', ['SKU', 'Product', 'System Qty', 'Counted Qty', 'Variance'],
+            rows.map(function (p) {
+                var v = num(p._counted) - num(p.stock);
+                return {
+                    SKU: p.sku || '',
+                    Product: p.name || '',
+                    'System Qty': num(p.stock),
+                    'Counted Qty': num(p._counted),
+                    Variance: round3(v)
+                };
+            }));
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!POS.requireAuth()) return;
+        $('countBy').value = API.getUserName ? API.getUserName() : '';
+        loadLocations();
+        loadProducts();
+        loadHistory();
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1508 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHANKS SHOP MANAGEMENT - Professional Point of Sale System</title>
+<meta name="description" content="SHANKS SHOP MANAGEMENT is a complete point of sale and pharmacy management system for Nigerian pharmacies and retail stores: sales, inventory, prescriptions, store accounts, reports and a full audit trail.">
+<meta name="keywords" content="pharmacy software, POS Nigeria, pharmacy management system, inventory management, retail POS, drug store software, stock control">
+<meta name="author" content="SHANKS SHOP MANAGEMENT">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#10b981">
+<link rel="canonical" href="https://sheds-pos-pharmacy.fly.dev/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SHANKS SHOP MANAGEMENT">
+<meta property="og:title" content="SHANKS SHOP MANAGEMENT - The all-in-one Point of Sale for pharmacies and retail stores">
+<meta property="og:description" content="Streamline sales, inventory, prescriptions, finance and analytics in one powerful platform built for Nigerian pharmacies and retail stores.">
+<meta property="og:url" content="https://sheds-pos-pharmacy.fly.dev/index.html">
+<meta property="og:image" content="brand-logo.png">
+<meta property="og:locale" content="en_NG">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SHANKS SHOP MANAGEMENT - Professional Point of Sale System">
+<meta name="twitter:description" content="The all-in-one point of sale, inventory, prescription and reporting platform for Nigerian pharmacies and retail stores.">
+<meta name="twitter:image" content="brand-logo.png">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="landing.css">
+<style>
+:root{--primary:#10b981;--primary-dark:#059669;--primary-light:#ecfdf5;--accent:#4f46e5;--dark:#0f172a;--dark-2:#1e293b;--text:#111827;--muted:#64748b;--light:#f8fafc;--border:#e5e7eb;--shadow:0 20px 40px rgba(15,23,42,.08);--shadow-lg:0 25px 50px rgba(15,23,42,.12);}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',Arial,sans-serif;background:#fff;color:var(--text);line-height:1.6;overflow-x:hidden;}
+.container{max-width:1200px;margin:0 auto;padding:0 24px;}
+a{text-decoration:none;color:inherit;}
+ul{list-style:none;}
+
+/* Header */
+.site-header{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);background:rgba(255,255,255,.95);}
+.header-inner{display:flex;justify-content:space-between;align-items:center;height:72px;max-width:1200px;margin:0 auto;padding:0 24px;}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;color:var(--dark);}
+    .logo-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#2563eb);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;}
+    .logo-icon img{width:100%;height:100%;object-fit:contain;padding:5px;border-radius:12px;background:#fff;}
+.nav-links{display:flex;gap:32px;}
+.nav-links a{font-size:14px;font-weight:600;color:var(--muted);transition:.2s;cursor:pointer;}
+.nav-links a:hover{color:var(--primary);}
+.header-cta{background:var(--primary);color:#fff;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;transition:.2s;cursor:pointer;border:none;}
+.header-cta:hover{background:var(--primary-dark);transform:translateY(-1px);}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:100px 0 120px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-50%;right:-10%;width:600px;height:600px;background:radial-gradient(circle,rgba(16,185,129,.15) 0%,transparent 70%);border-radius:50%;}
+.hero::after{content:'';position:absolute;bottom:-30%;left:-5%;width:500px;height:500px;background:radial-gradient(circle,rgba(79,70,229,.12) 0%,transparent 70%);border-radius:50%;}
+.hero-inner{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 24px;text-align:center;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:24px;color:#a5b4fc;}
+.hero h1{font-size:clamp(32px,5vw,56px);font-weight:900;line-height:1.1;margin-bottom:20px;letter-spacing:-.02em;}
+.hero h1 span{background:linear-gradient(135deg,#10b981,#4f46e5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero p{font-size:18px;color:#94a3b8;max-width:640px;margin:0 auto 32px;line-height:1.7;}
+.hero-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;transition:.2s;cursor:pointer;border:none;}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 10px 30px rgba(16,185,129,.3);}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-2px);box-shadow:0 15px 35px rgba(16,185,129,.35);}
+.btn-outline{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.2);}
+.btn-outline:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.35);}
+
+/* Stats Bar */
+.stats-bar{background:#fff;border-bottom:1px solid var(--border);position:relative;z-index:2;margin-top:-60px;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-radius:20px;box-shadow:var(--shadow-lg);padding:32px;border:1px solid var(--border);}
+.stat-item{text-align:center;padding:0 16px;border-right:1px solid var(--border);}
+.stat-item:last-child{border-right:none;}
+.stat-number{font-size:32px;font-weight:900;color:var(--dark);line-height:1;margin-bottom:6px;}
+.stat-number span{color:var(--primary);}
+.stat-label{font-size:13px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+
+/* Section Titles */
+.section-title{text-align:center;margin-bottom:48px;}
+.section-title h2{font-size:32px;font-weight:900;color:var(--dark);margin-bottom:12px;letter-spacing:-.02em;}
+.section-title p{font-size:16px;color:var(--muted);max-width:560px;margin:0 auto;}
+
+/* Features */
+.features-section{padding:100px 0;background:#fff;}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;}
+.feature-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:32px;transition:.3s;cursor:pointer;position:relative;overflow:hidden;}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(135deg,var(--primary),#2563eb);transform:scaleX(0);transform-origin:left;transition:.3s;}
+.feature-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);border-color:transparent;}
+.feature-card:hover::before{transform:scaleX(1);}
+.feature-icon{width:56px;height:56px;border-radius:16px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--primary);margin-bottom:20px;}
+.feature-card h3{font-size:18px;font-weight:800;color:var(--dark);margin-bottom:10px;}
+.feature-card p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:16px;}
+.feature-card ul{display:flex;flex-direction:column;gap:8px;}
+.feature-card li{font-size:13px;color:#475569;display:flex;align-items:center;gap:8px;}
+.feature-card li i{color:var(--primary);font-size:12px;}
+
+/* Testimonials */
+.testimonials-section{padding:100px 0;background:#f8fafc;}
+.testimonial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;}
+.testimonial-card{background:#fff;border-radius:20px;padding:32px;border:1px solid var(--border);position:relative;}
+.testimonial-card .quote-icon{font-size:40px;color:var(--primary);opacity:.15;position:absolute;top:20px;right:24px;}
+.testimonial-card p{font-size:15px;color:#475569;line-height:1.8;font-style:italic;margin-bottom:20px;position:relative;z-index:1;}
+.testimonial-author{display:flex;align-items:center;gap:12px;}
+.testimonial-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#2563eb);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;}
+.testimonial-info strong{display:block;font-size:14px;font-weight:800;color:var(--dark);}
+.testimonial-info span{font-size:12px;color:var(--muted);}
+
+/* Why Us */
+.why-section{padding:100px 0;background:#fff;}
+.why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;}
+.why-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:32px;text-align:center;transition:.3s;}
+.why-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
+.why-icon{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,var(--primary-light),#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--primary);margin:0 auto 20px;}
+.why-card h4{font-size:18px;font-weight:800;color:var(--dark);margin-bottom:8px;}
+.why-card p{font-size:14px;color:var(--muted);line-height:1.7;}
+
+/* CTA */
+.cta-section{padding:100px 0;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;text-align:center;position:relative;overflow:hidden;}
+.cta-section::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 30% 50%,rgba(16,185,129,.12) 0%,transparent 50%);}
+.cta-inner{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:0 24px;}
+.cta-section h2{font-size:clamp(28px,4vw,40px);font-weight:900;margin-bottom:16px;line-height:1.2;}
+.cta-section p{font-size:16px;color:#94a3b8;margin-bottom:32px;}
+.cta-section .btn-primary{font-size:16px;padding:16px 36px;}
+
+/* Steps */
+.steps-section{padding:100px 0;background:#f8fafc;}
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;text-align:center;}
+.step-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:32px 24px;transition:.3s;position:relative;}
+.step-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
+.step-number{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#2563eb);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;margin:0 auto 16px;}
+.step-card h4{font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;}
+.step-card p{font-size:14px;color:var(--muted);line-height:1.6;}
+
+/* FAQ */
+.faq-section{padding:100px 0;background:#fff;}
+.faq-list{max-width:800px;margin:0 auto;}
+.faq-item{border:1px solid var(--border);border-radius:16px;margin-bottom:12px;overflow:hidden;transition:.2s;}
+.faq-item:hover{border-color:var(--primary);}
+.faq-question{width:100%;background:#fff;border:none;padding:20px 24px;font-size:16px;font-weight:700;color:var(--dark);text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:.2s;}
+.faq-question:hover{color:var(--primary);}
+.faq-question i{transition:.3s;font-size:14px;color:var(--muted);}
+.faq-item.open .faq-question i{transform:rotate(180deg);color:var(--primary);}
+.faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease;background:#f8fafc;}
+.faq-answer-inner{padding:0 24px 20px;font-size:15px;color:#475569;line-height:1.7;}
+
+/* Contact */
+.contact-section{padding:100px 0;background:#f8fafc;}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;}
+.contact-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:32px;text-align:center;transition:.3s;}
+.contact-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);}
+.contact-icon{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--primary-light),#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--primary);margin:0 auto 16px;}
+.contact-card h4{font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px;}
+.contact-card p{font-size:14px;color:var(--muted);line-height:1.6;}
+.contact-card a{color:var(--primary);font-weight:600;}
+
+/* Partners */
+.partners-section{padding:60px 0;background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.partners-grid{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:40px 60px;opacity:.6;}
+.partner-item{font-size:20px;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:10px;transition:.2s;}
+.partner-item:hover{color:var(--dark);opacity:1;}
+.partner-item i{font-size:24px;color:var(--primary);}
+
+/* Footer */
+.site-footer{background:#0f172a;color:#94a3b8;padding:48px 0 24px;border-top:1px solid rgba(255,255,255,.08);}
+.footer-inner{max-width:1200px;margin:0 auto;padding:0 24px;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;}
+.footer-brand h3{color:#fff;font-size:20px;font-weight:800;margin-bottom:12px;}
+.footer-brand p{font-size:14px;line-height:1.7;color:#94a3b8;}
+.footer-col h4{color:#e2e8f0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;}
+.footer-col a{display:block;font-size:14px;color:#94a3b8;margin-bottom:10px;transition:.2s;}
+.footer-col a:hover{color:#fff;}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;text-align:center;font-size:13px;color:#64748b;}
+
+/* Feature sub-heading */
+.sub-head{text-align:center;margin:56px 0 28px;}
+.sub-head h3{font-size:22px;font-weight:800;color:var(--dark);margin-bottom:8px;}
+.sub-head p{font-size:15px;color:var(--muted);max-width:520px;margin:0 auto;}
+
+/* Business types */
+.biz-section{padding:100px 0;background:#f8fafc;}
+.biz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;}
+.biz-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:26px;transition:.25s;cursor:pointer;display:flex;flex-direction:column;gap:14px;}
+.biz-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:#cbd5e1;}
+.biz-top{display:flex;align-items:center;gap:12px;}
+.biz-icon{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--primary-light),#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--primary);flex-shrink:0;}
+.biz-name{font-size:15px;font-weight:800;color:var(--dark);line-height:1.3;}
+.biz-count{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.biz-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.biz-tag{font-size:11px;font-weight:600;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 9px;border-radius:999px;}
+
+/* Module directory */
+.modules-section{padding:100px 0;background:#fff;}
+.module-bar{display:flex;flex-direction:column;gap:16px;align-items:center;margin-bottom:36px;}
+.module-search{width:100%;max-width:480px;padding:14px 20px;border:1px solid var(--border);border-radius:14px;font-size:15px;font-family:inherit;background:#fff;box-shadow:var(--shadow);outline:none;transition:.2s;}
+.module-search:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(16,185,129,.12);}
+.module-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+.chip{font-size:13px;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--border);padding:7px 15px;border-radius:999px;cursor:pointer;transition:.2s;font-family:inherit;}
+.chip:hover{border-color:var(--primary);color:var(--primary);}
+.chip.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px;}
+.module-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.2s;}
+.module-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--primary);}
+.module-card i{width:36px;height:36px;border-radius:10px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.module-card strong{display:block;font-size:13.5px;font-weight:700;color:var(--dark);line-height:1.3;}
+.module-card span{font-size:11px;color:var(--muted);}
+.module-count{text-align:center;margin-top:28px;font-size:14px;color:var(--muted);font-weight:600;}
+.module-empty{grid-column:1/-1;text-align:center;color:var(--muted);font-size:15px;padding:40px 0;}
+
+/* Responsive */
+@media(max-width:968px){.nav-links{display:none;}.stats-grid{grid-template-columns:repeat(2,1fr);}.footer-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:640px){.stats-grid{grid-template-columns:1fr;}.stat-item{border-right:none;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:16px;}.stat-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}.footer-grid{grid-template-columns:1fr;}}
+
+/* WhatsApp Float */
+.whatsapp-float{position:fixed;width:60px;height:60px;bottom:24px;right:24px;background:#25D366;color:#fff;border-radius:50%;text-align:center;font-size:30px;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:9999;display:flex;align-items:center;justify-content:center;transition:.2s;text-decoration:none;}
+.whatsapp-float:hover{transform:scale(1.1);background:#128C7E;}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "SHANKS SHOP MANAGEMENT",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web browser, Windows, Android",
+  "description": "Point of sale and pharmacy management system for Nigerian pharmacies and retail stores: sales, inventory, prescriptions, store accounts, finance, reports and a full audit trail.",
+  "url": "/index.html",
+  "image": "brand-logo.png",
+  "inLanguage": "en-NG",
+  "featureList": [
+    "Point of sale with barcode scanning",
+    "Packaging and unit-aware stock control",
+    "Prescriptions and expiry tracking",
+    "Store accounts and split payments",
+    "Expenses, shifts and cashier closeout",
+    "Reports, audit trail and multi-branch stock"
+  ],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "NGN",
+    "description": "14 day free trial"
+  }
+}
+</script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="logo" onclick="navigateTo('index.html')">
+                <div class="logo-icon"><img src="brand-logo.png" alt="Shanks Shop Management logo"></div>
+                <span>SHANKS SHOP MANAGEMENT</span>
+            </a>
+            <nav class="nav-links">
+                <a onclick="scrollToSection('.features-section')">Features</a>
+                <a onclick="scrollToSection('.pricing-section')">Pricing</a>
+                <a onclick="scrollToSection('.tour-section')">Tour</a>
+                <a onclick="scrollToSection('.modules-section')">Modules</a>
+                <a onclick="scrollToSection('.about-section')">About</a>
+                <a onclick="goToApp('sales.html')">Sales</a>
+                <a onclick="goToApp('inventory.html')">Inventory</a>
+                <a onclick="goToApp('reports.html')">Reports</a>
+            </nav>
+            <div class="header-actions">
+                <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Switch between light and dark mode" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+                <button class="header-cta chat-btn" onclick="toggleChat()" style="background:#fff;color:var(--primary);border:1px solid var(--border);"><i class="fas fa-comments"></i> Chat</button>
+                <button class="header-cta" onclick="navigateTo('login.html')">Get Started</button>
+                <button class="icon-btn nav-toggle" id="navToggle" onclick="toggleNav()" title="Menu" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="nav-backdrop" id="navBackdrop" onclick="toggleNav(false)"></div>
+    <nav class="nav-drawer" id="navDrawer" aria-label="Mobile menu">
+        <div class="nav-drawer-head">
+            <strong>Menu</strong>
+            <button class="icon-btn" onclick="toggleNav(false)" aria-label="Close menu"><i class="fas fa-times"></i></button>
+        </div>
+        <a onclick="scrollToSection('.features-section')"><i class="fas fa-cubes"></i> Features</a>
+        <a onclick="scrollToSection('.pricing-section')"><i class="fas fa-tags"></i> Pricing</a>
+        <a onclick="scrollToSection('.tour-section')"><i class="fas fa-play"></i> Product tour</a>
+        <a onclick="scrollToSection('.about-section')"><i class="fas fa-circle-info"></i> About us</a>
+        <a onclick="scrollToSection('.modules-section')"><i class="fas fa-layer-group"></i> Modules</a>
+        <a onclick="scrollToSection('.download-section')"><i class="fas fa-download"></i> Download</a>
+        <a onclick="scrollToSection('.faq-section')"><i class="fas fa-circle-question"></i> FAQ</a>
+        <a onclick="goToApp('sales.html')"><i class="fas fa-shopping-cart"></i> Open the POS</a>
+        <a onclick="navigateTo('login.html')"><i class="fas fa-right-to-bracket"></i> Login</a>
+        <a class="drawer-cta" onclick="requestDemo('General enquiry')"><i class="fas fa-rocket"></i> Request a demo</a>
+    </nav>
+
+    <div class="sticky-cta">
+        <a class="secondary" onclick="toggleChat()"><i class="fas fa-comments"></i> Chat with us</a>
+        <a class="primary" onclick="requestDemo('General enquiry')"><i class="fas fa-rocket"></i> Request a demo</a>
+    </div>
+
+    <section class="hero">
+        <div class="hero-inner">
+            <div class="hero-badge"><i class="fas fa-star"></i> Trusted by <span id="heroStoreCount">pharmacies &amp; retail stores</span> across Nigeria</div>
+            <h1>The all-in-one <span>Point of Sale</span> system for modern businesses</h1>
+            <p>Streamline sales, inventory, prescriptions, finance, and analytics in one powerful platform built for Nigerian pharmacies and retail stores.</p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary" onclick="requestDemo('General enquiry')"><i class="fas fa-rocket"></i> Request a Demo</button>
+                <button class="btn btn-outline" onclick="scrollToSection('.tour-section')"><i class="fas fa-play"></i> See It In Action</button>
+            </div>
+            <div class="signup-box" style="margin-top:34px;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);text-align:left;">
+                <h3 style="color:#fff;">Get product news and setup tips</h3>
+                <p style="color:#94a3b8;">One short email a month: what shipped, how other pharmacies use it, and how to get more out of your till.</p>
+                <form class="signup-form" onsubmit="return submitSignup(event,'hero')">
+                    <input class="signup-input" type="email" id="heroEmail" placeholder="you@pharmacy.com" required style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);color:#fff;">
+                    <input class="signup-input" type="text" id="heroPharmacy" placeholder="Pharmacy name (optional)" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);color:#fff;flex:0 1 200px;min-width:170px;">
+                    <input class="signup-hp" type="text" id="heroWebsite" tabindex="-1" autocomplete="off">
+                    <button class="signup-btn" type="submit" id="heroSubmit">Subscribe</button>
+                </form>
+                <p class="signup-note" id="heroNote">No spam. Unsubscribe any time.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats-bar">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="statStores">&mdash;</div>
+                    <div class="stat-label">Active Stores</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statProducts">&mdash;</div>
+                    <div class="stat-label">Products Tracked</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statTransactions">&mdash;</div>
+                    <div class="stat-label">Transactions Recorded</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statModules">&mdash;</div>
+                    <div class="stat-label">Modules Shipped</div>
+                </div>
+            </div>
+            <p style="text-align:center;margin-top:14px;" id="statsLiveNote"><span class="live-badge"><span class="live-dot"></span> Live numbers from the running platform</span></p>
+        </div>
+    </section>
+
+    <section class="about-section" id="about">
+        <div class="container">
+            <div class="about-grid">
+                <div>
+                    <span class="eyebrow"><i class="fas fa-building"></i> About us</span>
+                    <h2 style="font-size:32px;font-weight:900;color:var(--heading);margin-bottom:16px;letter-spacing:-.02em;">We build the till that Nigerian pharmacies actually wanted</h2>
+                    <p class="about-lead">SHANKS SHOP MANAGEMENT started in a real pharmacy, on a real counter, where the paper book was faster than the software. We rebuilt it around the way a busy store works: multi-package drugs, credit customers, cash that must balance at close of day, and expiry dates that quietly cost money.</p>
+                    <ul class="about-list">
+                        <li><i class="fas fa-check-circle"></i><span>Built with pharmacy owners in Nigeria, not copied from a generic retail POS.</span></li>
+                        <li><i class="fas fa-check-circle"></i><span>Every stock movement is understood in base units, so a carton of 12 never quietly breaks your stock count.</span></li>
+                        <li><i class="fas fa-check-circle"></i><span>Every price change, void, refund and login is recorded, so a dispute ends with facts.</span></li>
+                    </ul>
+                    <a class="btn btn-primary" onclick="requestDemo('General enquiry')" style="display:inline-flex;"><i class="fas fa-rocket"></i> Talk to us</a>
+                </div>
+                <div>
+                    <div class="card" style="background:var(--surface-2,#f8fafc);border:1px solid var(--line,#e5e7eb);border-radius:20px;padding:30px;">
+                        <h3 style="font-size:17px;font-weight:800;color:var(--heading);margin-bottom:18px;"><i class="fas fa-timeline" style="color:var(--primary);margin-right:8px;"></i>How we got here</h3>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-year">Year 1</div>
+                                <h4>A single till, built properly</h4>
+                                <p>We shipped the counter first: fast checkout, reliable receipts, and a stock book that matched the shelf at close of day.</p>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-year">Year 2</div>
+                                <h4>Pharmacy depth</h4>
+                                <p>Prescriptions, expiry and batch tracking, drug categories and reorder alerts joined the platform.</p>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-year">Year 3</div>
+                                <h4>Money discipline</h4>
+                                <p>Store accounts, split payments, expenses, shifts and cashier closeout so the books close cleanly every night.</p>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-year">Today</div>
+                                <h4>Multi-branch, fully auditable</h4>
+                                <p>Branch-wise stock, per-user page access, a full audit trail and package-aware pricing across every till.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="value-grid">
+                <div class="about-value">
+                    <div class="value-icon"><i class="fas fa-bullseye"></i></div>
+                    <h4>Accuracy over features</h4>
+                    <p>A module that reports the wrong number is worse than no module. We ship what the stock book can prove.</p>
+                </div>
+                <div class="about-value">
+                    <div class="value-icon"><i class="fas fa-user-shield"></i></div>
+                    <h4>Control for the owner</h4>
+                    <p>Per-account page access, an audit trail on every action and no silent edits to prices or stock.</p>
+                </div>
+                <div class="about-value">
+                    <div class="value-icon"><i class="fas fa-hand-holding-heart"></i></div>
+                    <h4>Support from people who sell</h4>
+                    <p>Our support team works with real tills. If a screen is confusing, that is our problem to fix, not yours.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Everything you need to run your store</h2>
+                <p>From sales and inventory to pharmacy prescriptions and analytics, SHANKS SHOP MANAGEMENT has you covered.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card" onclick="navigateTo('sales.html')">
+                    <div class="feature-icon"><i class="fas fa-shopping-cart"></i></div>
+                    <h3>Sales Management</h3>
+                    <p>Fast checkout with barcode scanning, receipt printing, and suspended sales support.</p>
+                    <ul><li><i class="fas fa-check"></i> Real-time sales tracking</li><li><i class="fas fa-check"></i> Barcode scanning</li><li><i class="fas fa-check"></i> Receipt printing</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('inventory.html')">
+                    <div class="feature-icon"><i class="fas fa-boxes"></i></div>
+                    <h3>Inventory Control</h3>
+                    <p>Monitor stock levels, set low-stock alerts, and manage bulk imports/exports.</p>
+                    <ul><li><i class="fas fa-check"></i> Stock monitoring</li><li><i class="fas fa-check"></i> Low-stock alerts</li><li><i class="fas fa-check"></i> Bulk import/export</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('customers.html')">
+                    <div class="feature-icon"><i class="fas fa-users"></i></div>
+                    <h3>Customer Management</h3>
+                    <p>Build stronger relationships with CRM tools, loyalty programs, and purchase history.</p>
+                    <ul><li><i class="fas fa-check"></i> CRM features</li><li><i class="fas fa-check"></i> Loyalty programs</li><li><i class="fas fa-check"></i> Purchase history</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('prescriptions.html')">
+                    <div class="feature-icon"><i class="fas fa-prescription"></i></div>
+                    <h3>Pharmacy & Prescriptions</h3>
+                    <p>Manage prescriptions, drug categories, and expiry/batch alerts for compliance.</p>
+                    <ul><li><i class="fas fa-check"></i> Rx management</li><li><i class="fas fa-check"></i> Drug categories</li><li><i class="fas fa-check"></i> Expiry & batch alerts</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('payments.html')">
+                    <div class="feature-icon"><i class="fas fa-credit-card"></i></div>
+                    <h3>Finance & Payments</h3>
+                    <p>Accept multiple payment methods, manage store accounts, and reconcile banks.</p>
+                    <ul><li><i class="fas fa-check"></i> Multiple payment methods</li><li><i class="fas fa-check"></i> Store account</li><li><i class="fas fa-check"></i> Bank reconciliation</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('reports.html')">
+                    <div class="feature-icon"><i class="fas fa-chart-bar"></i></div>
+                    <h3>Reports & Analytics</h3>
+                    <p>Get daily summaries, audit logs, tax reports, and actionable insights.</p>
+                    <ul><li><i class="fas fa-check"></i> Daily summaries</li><li><i class="fas fa-check"></i> Audit logs</li><li><i class="fas fa-check"></i> Tax reports</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('employees.html')">
+                    <div class="feature-icon"><i class="fas fa-user-tie"></i></div>
+                    <h3>Employee Management</h3>
+                    <p>Roles, permissions, attendance tracking, and performance reports.</p>
+                    <ul><li><i class="fas fa-check"></i> Roles & permissions</li><li><i class="fas fa-check"></i> Attendance tracking</li><li><i class="fas fa-check"></i> Performance reports</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('purchase-orders.html')">
+                    <div class="feature-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <h3>Purchases & Suppliers</h3>
+                    <p>Manage purchase orders, suppliers, receiving, and stock transfers.</p>
+                    <ul><li><i class="fas fa-check"></i> Purchase orders</li><li><i class="fas fa-check"></i> Supplier management</li><li><i class="fas fa-check"></i> Receiving & stock transfer</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('giftcards.html')">
+                    <div class="feature-icon"><i class="fas fa-gift"></i></div>
+                    <h3>Gift Cards & Promotions</h3>
+                    <p>Gift card sales, discount campaigns, and a powerful promo engine.</p>
+                    <ul><li><i class="fas fa-check"></i> Gift card sales</li><li><i class="fas fa-check"></i> Discount campaigns</li><li><i class="fas fa-check"></i> Promo engine</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('deliveries.html')">
+                    <div class="feature-icon"><i class="fas fa-truck-loading"></i></div>
+                    <h3>Deliveries & Appointments</h3>
+                    <p>Track deliveries, schedule customer appointments, and send messages.</p>
+                    <ul><li><i class="fas fa-check"></i> Delivery tracking</li><li><i class="fas fa-check"></i> Customer appointments</li><li><i class="fas fa-check"></i> Messaging</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('backups.html')">
+                    <div class="feature-icon"><i class="fas fa-download"></i></div>
+                    <h3>System & Backups</h3>
+                    <p>Data backups, audit logs, and full store configuration management.</p>
+                    <ul><li><i class="fas fa-check"></i> Data backups</li><li><i class="fas fa-check"></i> Audit logs</li><li><i class="fas fa-check"></i> Store configuration</li></ul>
+                </div>
+
+                <div class="sub-head">
+                    <h3>And the day-to-day modules that keep it all running</h3>
+                    <p>Money, stock accuracy and staff discipline - the parts most POS systems leave out.</p>
+                </div>
+
+                <div class="feature-card" onclick="navigateTo('expenses.html')">
+                    <div class="feature-icon"><i class="fas fa-receipt"></i></div>
+                    <h3>Expenses & Cost Control</h3>
+                    <p>Record rent, utilities, transport and supplier spending against categories.</p>
+                    <ul><li><i class="fas fa-check"></i> Categorised expenses</li><li><i class="fas fa-check"></i> True profit after expenses</li><li><i class="fas fa-check"></i> Variance by period</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('stock-count.html')">
+                    <div class="feature-icon"><i class="fas fa-clipboard-check"></i></div>
+                    <h3>Stock Count & Adjustments</h3>
+                    <p>Count shelf stock, post the difference, and keep the books matching reality.</p>
+                    <ul><li><i class="fas fa-check"></i> Physical count sheets</li><li><i class="fas fa-check"></i> Automatic stock correction</li><li><i class="fas fa-check"></i> Count history</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('shifts.html')">
+                    <div class="feature-icon"><i class="fas fa-clock"></i></div>
+                    <h3>Shift Manager & Cashier Closeout</h3>
+                    <p>Open and close shifts, track cash on hand, and reconcile every till at end of day.</p>
+                    <ul><li><i class="fas fa-check"></i> Shift open/close</li><li><i class="fas fa-check"></i> Cash variance report</li><li><i class="fas fa-check"></i> Z-report per shift</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('suspended-sales.html')">
+                    <div class="feature-icon"><i class="fas fa-pause"></i></div>
+                    <h3>Suspended Sales & Returns</h3>
+                    <p>Park a running bill and resume it later, or refund a sale with a reason code.</p>
+                    <ul><li><i class="fas fa-check"></i> Suspend &amp; resume bills</li><li><i class="fas fa-check"></i> Sale returns &amp; refunds</li><li><i class="fas fa-check"></i> Reason trail on every refund</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('expiry-alerts.html')">
+                    <div class="feature-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                    <h3>Expiry, Batch &amp; Reorder Alerts</h3>
+                    <p>See what is about to expire, which batch is moving, and what needs reordering.</p>
+                    <ul><li><i class="fas fa-check"></i> Expiry countdown</li><li><i class="fas fa-check"></i> Batch &amp; FEFO tracking</li><li><i class="fas fa-check"></i> Reorder suggestions</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('bank-reconciliation.html')">
+                    <div class="feature-icon"><i class="fas fa-building-columns"></i></div>
+                    <h3>Bank Reconciliation</h3>
+                    <p>Match deposits and card settlements to the bank statement and spot what is missing.</p>
+                    <ul><li><i class="fas fa-check"></i> Deposit matching</li><li><i class="fas fa-check"></i> Unmatched transactions</li><li><i class="fas fa-check"></i> Statement import</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('tax-settings.html')">
+                    <div class="feature-icon"><i class="fas fa-percent"></i></div>
+                    <h3>Tax, Invoices &amp; Quotes</h3>
+                    <p>Set VAT once, raise professional invoices, and send quotes before the sale.</p>
+                    <ul><li><i class="fas fa-check"></i> VAT configuration</li><li><i class="fas fa-check"></i> Printable invoices</li><li><i class="fas fa-check"></i> Quotes &amp; estimates</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('appointments.html')">
+                    <div class="feature-icon"><i class="fas fa-calendar"></i></div>
+                    <h3>Appointments &amp; Messaging</h3>
+                    <p>Book services, chase collections, and keep customers in the loop by message.</p>
+                    <ul><li><i class="fas fa-check"></i> Appointment diary</li><li><i class="fas fa-check"></i> In-app messages</li><li><i class="fas fa-check"></i> Customer reminders</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('locations.html')">
+                    <div class="feature-icon"><i class="fas fa-store"></i></div>
+                    <h3>Multi-Branch Locations</h3>
+                    <p>Run several branches from one account and see each branch's numbers separately.</p>
+                    <ul><li><i class="fas fa-check"></i> Per-branch stock</li><li><i class="fas fa-check"></i> Branch-wise reporting</li><li><i class="fas fa-check"></i> Stock transfer between branches</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('user-roles.html')">
+                    <div class="feature-icon"><i class="fas fa-user-shield"></i></div>
+                    <h3>Users, Roles &amp; Access Control</h3>
+                    <p>Give each staff member exactly the access their job needs - nothing more.</p>
+                    <ul><li><i class="fas fa-check"></i> Custom roles</li><li><i class="fas fa-check"></i> Per-screen permissions</li><li><i class="fas fa-check"></i> Staff accounts &amp; PIN login</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('audit-log.html')">
+                    <div class="feature-icon"><i class="fas fa-clipboard-list"></i></div>
+                    <h3>Audit Trail &amp; Compliance</h3>
+                    <p>Every price change, void, refund and login is recorded with who and when.</p>
+                    <ul><li><i class="fas fa-check"></i> Who did what, when</li><li><i class="fas fa-check"></i> Price &amp; stock change history</li><li><i class="fas fa-check"></i> Exportable records</li></ul>
+                </div>
+                <div class="feature-card" onclick="navigateTo('daily-summary.html')">
+                    <div class="feature-icon"><i class="fas fa-calendar-day"></i></div>
+                    <h3>Daily Summary &amp; Profit</h3>
+                    <p>Close the day with sales, profit on package cost, expenses and net takings.</p>
+                    <ul><li><i class="fas fa-check"></i> End-of-day takings</li><li><i class="fas fa-check"></i> Profit on package cost</li><li><i class="fas fa-check"></i> Best sellers &amp; best day</li></ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="pricing-section" id="pricing">
+        <div class="container">
+            <div class="section-title">
+                <span class="eyebrow"><i class="fas fa-tags"></i> Pricing</span>
+                <h2>Simple pricing that grows with your store</h2>
+                <p>Start free, then pay one flat fee per month. No per-transaction charges and no surprises at month end.</p>
+            </div>
+            <div class="billing-toggle" id="billingToggle">
+                <button class="active" data-cycle="monthly" onclick="setBillingCycle('monthly')">Monthly</button>
+                <button data-cycle="yearly" onclick="setBillingCycle('yearly')">Yearly <span class="save">2 months free</span></button>
+            </div>
+            <div class="plan-grid" id="planGrid"><div class="module-empty">Loading plans...</div></div>
+            <p class="module-count">Every plan includes daily backups, receipt printing, barcode scanning and working on the browser you already use.</p>
+        </div>
+    </section>
+
+    <section class="tour-section" id="tour">
+        <div class="container">
+            <div class="section-title">
+                <span class="eyebrow"><i class="fas fa-play-circle"></i> Product tour</span>
+                <h2>See the working screen before you sign up</h2>
+                <p>Four screens you will use every day, exactly as they look in the app.</p>
+            </div>
+            <div class="tour-tabs" id="tourTabs">
+                <button class="tour-tab active" data-tour="pos" onclick="showTour('pos')">Point of Sale</button>
+                <button class="tour-tab" data-tour="stock" onclick="showTour('stock')">Inventory &amp; Stock</button>
+                <button class="tour-tab" data-tour="reports" onclick="showTour('reports')">Reports &amp; Profit</button>
+                <button class="tour-tab" data-tour="shift" onclick="showTour('shift')">Shifts &amp; Closeout</button>
+            </div>
+
+            <div class="tour-panel active" data-panel="pos">
+                <div class="tour-grid">
+                    <div class="tour-copy">
+                        <h3>Check out in seconds, on any package</h3>
+                        <p>Scan or search for a product, pick the package you are selling, and the price, stock and receipt line update together. Multi-package drugs are handled in base units so the shelf count stays honest.</p>
+                        <ul class="tour-points">
+                            <li><i class="fas fa-check"></i> Price comes from the package you selected, never from a stale list price</li>
+                            <li><i class="fas fa-check"></i> Cash, card, transfer or store account, including a split between cash and credit</li>
+                            <li><i class="fas fa-check"></i> Suspend a bill and resume it later, or refund with a reason code</li>
+                        </ul>
+                        <a class="tour-cta" onclick="navigateTo('sales.html')">Open the point of sale <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="screen-mock">
+                        <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-title">Point of Sale - Cart</span></div>
+                        <div class="mock-body">
+                            <div class="mock-row"><span><strong>Paracetamol 500mg</strong> &nbsp;&middot;&nbsp; Carton (12 pcs)</span><span>N15,000.00</span></div>
+                            <div class="mock-row"><span><strong>Paracetamol 500mg</strong> &nbsp;&middot;&nbsp; Packet</span><span>N1,500.00</span></div>
+                            <div class="mock-row"><span><strong>Amoxycillin 500mg</strong> &nbsp;&middot;&nbsp; Pack</span><span>N4,200.00</span></div>
+                            <div class="mock-row"><span><strong>Vitamin C</strong> &nbsp;&middot;&nbsp; Bottle</span><span>N2,500.00</span></div>
+                            <div class="mock-kpis" style="margin-top:12px;margin-bottom:0;">
+                                <div class="mock-kpi"><small>Subtotal</small><strong>N23,200</strong></div>
+                                <div class="mock-kpi"><small>To account</small><strong>N3,200</strong></div>
+                                <div class="mock-kpi"><small>Cash tendered</small><strong>N20,000</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tour-panel" data-panel="stock">
+                <div class="tour-grid">
+                    <div class="tour-copy">
+                        <h3>Stock that counts in the units you actually hold</h3>
+                        <p>Receive a carton of 24 and the system adds 24 base units, not one carton. Every sale, void, transfer and stock count moves the same number, so the shelf and the book agree.</p>
+                        <ul class="tour-points">
+                            <li><i class="fas fa-check"></i> Receiving, transfers and stock counts all work in base units</li>
+                            <li><i class="fas fa-check"></i> Cost price is stored per base unit, so profit is real profit</li>
+                            <li><i class="fas fa-check"></i> Low-stock and reorder alerts before you run out</li>
+                        </ul>
+                        <a class="tour-cta" onclick="navigateTo('inventory.html')">Open inventory <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="screen-mock">
+                        <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-title">Inventory - Stock</span></div>
+                        <div class="mock-body">
+                            <div class="mock-row"><span>Paracetamol 500mg</span><span class="mock-pill">In stock</span></div>
+                            <div class="mock-row"><span>Amoxycillin 500mg</span><span class="mock-pill warn">Low stock</span></div>
+                            <div class="mock-row"><span>Cough Syrup 100ml</span><span class="mock-pill bad">Out of stock</span></div>
+                            <div class="mock-row"><span>ORS Sachet</span><span class="mock-pill">In stock</span></div>
+                            <div class="mock-row"><span>Insulin Glargine</span><span class="mock-pill warn">Low stock</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tour-panel" data-panel="reports">
+                <div class="tour-copy">
+                    <h3>Know the day, not just the till</h3>
+                        <p>Sales, profit after the true cost of goods, expenses and net takings, broken down by category, staff and branch. The daily summary is the page the owner opens first.</p>
+                        <ul class="tour-points">
+                            <li><i class="fas fa-check"></i> Profit calculated on package cost, not on the shelf price</li>
+                            <li><i class="fas fa-check"></i> Best sellers, best day and sales trend</li>
+                            <li><i class="fas fa-check"></i> Expenses and variance by period, exportable for your accountant</li>
+                        </ul>
+                        <a class="tour-cta" onclick="navigateTo('reports.html')">Open reports <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="screen-mock">
+                        <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-title">Daily Sales Summary</span></div>
+                        <div class="mock-body">
+                            <div class="mock-kpis">
+                                <div class="mock-kpi"><small>Revenue</small><strong>N1.42m</strong></div>
+                                <div class="mock-kpi"><small>Cost of goods</small><strong>N980k</strong></div>
+                                <div class="mock-kpi"><small>Gross profit</small><strong>N440k</strong></div>
+                            </div>
+                            <div class="mock-row"><span>Tablet</span><span>N612,400</span></div>
+                            <div class="mock-row"><span>Liquids</span><span>N318,900</span></div>
+                            <div class="mock-row"><span>Consumables</span><span>N288,700</span></div>
+                            <div class="mock-row"><span>Net takings</span><span>N1.06m</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tour-panel" data-panel="shift">
+                <div class="tour-copy">
+                    <h3>Close the till with the numbers already in the system</h3>
+                    <p>Open a shift, sell all day, and close with a count. The system shows expected cash, counted cash and the variance, and every difference is explained on the record.</p>
+                    <ul class="tour-points">
+                            <li><i class="fas fa-check"></i> Shift open and close with cash on hand tracked live</li>
+                            <li><i class="fas fa-check"></i> Z-report per shift for the day book</li>
+                            <li><i class="fas fa-check"></i> Variance and suspense printed for review</li>
+                        </ul>
+                        <a class="tour-cta" onclick="navigateTo('cashier-closeout.html')">Open closeout <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="screen-mock">
+                        <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-title">Cashier Closeout</span></div>
+                        <div class="mock-body">
+                            <div class="mock-kpis">
+                                <div class="mock-kpi"><small>Expected</small><strong>N184,500</strong></div>
+                                <div class="mock-kpi"><small>Counted</small><strong>N184,500</strong></div>
+                                <div class="mock-kpi"><small>Variance</small><strong>N0</strong></div>
+                            </div>
+                            <div class="mock-row"><span>Cash sales</span><span>N168,000</span></div>
+                            <div class="mock-row"><span>Card sales</span><span>N26,500</span></div>
+                            <div class="mock-row"><span>Store account</span><span>N12,000</span></div>
+                            <div class="mock-row"><span>Shift closed by</span><span class="mock-pill">Balanced</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="biz-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Built for every kind of store</h2>
+                <p>Choose your business type when you sign up and the right modules switch on automatically. You can fine-tune every one of them later from the admin panel.</p>
+            </div>
+            <div class="biz-grid" id="bizGrid"></div>
+        </div>
+    </section>
+
+    <section class="modules-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Every module, one screen away</h2>
+                <p>Search the full module list below - from the till to stock counts, expenses and staff access.</p>
+            </div>
+            <div class="module-bar">
+                <input type="text" id="moduleSearch" class="module-search" placeholder="Search modules e.g. stock, invoice, shift..." oninput="filterModules()">
+                <div class="module-chips" id="moduleChips"></div>
+            </div>
+            <div class="module-grid" id="moduleGrid"></div>
+            <p class="module-count" id="moduleCount"></p>
+        </div>
+    </section>
+
+    <section class="trust-section" id="trust">
+        <div class="container">
+            <div class="section-title">
+                <span class="eyebrow"><i class="fas fa-shield-halved"></i> Security &amp; compliance</span>
+                <h2>Your books stay yours, and stay correct</h2>
+                <p>The controls a pharmacy needs to defend its stock, its money and its licence.</p>
+            </div>
+            <div class="trust-grid">
+                <div class="trust-card">
+                    <div class="trust-icon"><i class="fas fa-user-shield"></i></div>
+                    <h4>Role-based access</h4>
+                    <p>Every account sees only the screens their job needs, with per-user page control from the admin panel.</p>
+                </div>
+                <div class="trust-card">
+                    <div class="trust-icon"><i class="fas fa-clipboard-list"></i></div>
+                    <h4>Full audit trail</h4>
+                    <p>Price changes, voids, refunds, stock adjustments and logins are recorded with who did them and when.</p>
+                </div>
+                <div class="trust-card">
+                    <div class="trust-icon"><i class="fas fa-database"></i></div>
+                    <h4>Backups you control</h4>
+                    <p>Scheduled database backups with one-click restore, so a bad morning never becomes a bad quarter.</p>
+                </div>
+                <div class="trust-card">
+                    <div class="trust-icon"><i class="fas fa-lock"></i></div>
+                    <h4>Tenant isolation</h4>
+                    <p>Every store's products, customers, sales and stock live in its own isolated space on the platform.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Trusted by businesses across Nigeria</h2>
+                <p>See what pharmacy and retail owners are saying about SHANKS SHOP MANAGEMENT.</p>
+            </div>
+            <div class="testimonial-grid" id="testimonialGrid">
+                <div class="testimonial-card">
+                    <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
+                    <p>"SHANKS SHOP MANAGEMENT transformed our pharmacy operations. Inventory and prescriptions are now seamless, and the team loves how easy it is to use."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">CO</div>
+                        <div class="testimonial-info"><strong>Chinedu Okafor</strong><span>Pharmacy Manager, Lagos</span></div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
+                    <p>"The reporting and analytics help us make smarter decisions every single day. Support is fast and professional."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">AN</div>
+                        <div class="testimonial-info"><strong>Amaka Nwosu</strong><span>Retail Owner, Abuja</span></div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="quote-icon"><i class="fas fa-quote-right"></i></div>
+                    <p>"Easy to use, reliable, and the support team is outstanding. We switched from three different tools and never looked back."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">ED</div>
+                        <div class="testimonial-info"><strong>Emeka Daniels</strong><span>Store Director, Port Harcourt</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="updates-section" id="updates">
+        <div class="container">
+            <div class="section-title">
+                <span class="eyebrow"><i class="fas fa-code-branch"></i> Latest updates</span>
+                <h2>What we shipped recently</h2>
+                <p>Every release note is written for the person standing at the counter, not the release manager.</p>
+            </div>
+            <div class="update-list" id="updateList">
+                <div class="update-item">
+                    <div>
+                        <div class="update-version">2.4.0</div>
+                        <div class="update-date">21 Oct 2026</div>
+                    </div>
+                    <div>
+                        <h4>Package-aware pricing and stock</h4>
+                        <p>Every cart line now takes its price from the package you sell, and stock moves in base units.</p>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Cart lines price from the selling price configured for the selected package type</li>
+                            <li><i class="fas fa-check"></i> Stock is tracked and deducted in base units across sales, receiving and voids</li>
+                            <li><i class="fas fa-check"></i> Split checkout between cash and a store account</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="why-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Why businesses choose SHANKS SHOP MANAGEMENT</h2>
+                <p>Built for speed, security, and simplicity so you can focus on growing your business.</p>
+            </div>
+            <div class="why-grid">
+                <div class="why-card">
+                    <div class="why-icon"><i class="fas fa-bolt"></i></div>
+                    <h4>Fast & Reliable</h4>
+                    <p>Optimized for speed with offline-ready workflows so sales never stop.</p>
+                </div>
+                <div class="why-card">
+                    <div class="why-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h4>Secure by Design</h4>
+                    <p>Enterprise-grade security to protect your transactions and business data.</p>
+                </div>
+                <div class="why-card">
+                    <div class="why-icon"><i class="fas fa-mobile-alt"></i></div>
+                    <h4>Mobile Friendly</h4>
+                    <p>Works smoothly on tablets and phones for flexible in-store use.</p>
+                </div>
+                <div class="why-card">
+                    <div class="why-icon"><i class="fas fa-headset"></i></div>
+                    <h4>24/7 Support</h4>
+                    <p>Real help from real people whenever you need it.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="steps-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Get started in minutes</h2>
+                <p>Setting up SHANKS SHOP MANAGEMENT is simple. Here's how it works.</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h4>Create Account</h4>
+                    <p>Sign up and configure your store details, currency, and preferences.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h4>Import Products</h4>
+                    <p>Add your inventory with bulk import or barcode scanning.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h4>Start Selling</h4>
+                    <p>Process sales, print receipts, and accept multiple payments.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h4>Grow Insights</h4>
+                    <p>Use reports and analytics to make smarter business decisions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="download-section" id="download">
+        <div class="container">
+            <div class="section-title">
+                <span class="eyebrow"><i class="fas fa-download"></i> Get the app</span>
+                <h2>Use it on the counter you already have</h2>
+                <p>No install required to start. Open the browser on your till, or add it to the home screen and treat it like a normal app.</p>
+            </div>
+            <div class="download-grid">
+                <div class="download-card">
+                    <div class="download-icon"><i class="fas fa-globe"></i></div>
+                    <h4>Web app</h4>
+                    <p>Works in Chrome, Edge, Safari and Firefox on Windows, macOS and Linux. Nothing to install on the counter PC and updates land automatically.</p>
+                    <a class="download-link" onclick="navigateTo('login.html')">Open in your browser <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="download-card">
+                    <div class="download-icon"><i class="fas fa-laptop"></i></div>
+                    <h4>Counter PC</h4>
+                    <p>Run it on a dedicated Windows till with a barcode scanner and a receipt printer. Local network installs are supported for stores with more than one branch.</p>
+                    <a class="download-link" onclick="scrollToSection('.contact-section')">Talk to us about deployment <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="download-card">
+                    <div class="download-icon"><i class="fas fa-mobile-screen"></i></div>
+                    <h4>Phone and tablet</h4>
+                    <p>Add the app to the home screen of an Android tablet or phone. Scan, sell and check stock away from the counter when you are on the floor.</p>
+                    <a class="download-link" onclick="scrollToSection('.contact-section')">Request the mobile build <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:28px;">
+                <span class="health-badge" id="healthBadge"><span class="live-dot"></span> Checking platform status...</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="partners-section">
+        <div class="container">
+            <div class="partners-grid">
+                <div class="partner-item"><i class="fas fa-hospital"></i> City Pharmacy</div>
+                <div class="partner-item"><i class="fas fa-store"></i> MedPlus</div>
+                <div class="partner-item"><i class="fas fa-clinic-medical"></i> HealthPlus</div>
+                <div class="partner-item"><i class="fas fa-heartbeat"></i> LifeCare</div>
+                <div class="partner-item"><i class="fas fa-first-aid"></i> QuickMed</div>
+                <div class="partner-item"><i class="fas fa-user-md"></i> DocPlus</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Frequently asked questions</h2>
+                <p>Everything you need to know about SHANKS SHOP MANAGEMENT.</p>
+            </div>
+            <div class="faq-tools">
+                <input type="text" id="faqSearch" class="faq-search" placeholder="Search a question, for example: pricing, expiry, backup..." oninput="filterFaq()">
+                <div class="faq-cats" id="faqCats">
+                    <button class="faq-cat active" data-cat="all" onclick="setFaqCat('all', this)">All questions</button>
+                    <button class="faq-cat" data-cat="general" onclick="setFaqCat('general', this)">General</button>
+                    <button class="faq-cat" data-cat="start" onclick="setFaqCat('start', this)">Getting started</button>
+                    <button class="faq-cat" data-cat="pricing" onclick="setFaqCat('pricing', this)">Pricing &amp; billing</button>
+                    <button class="faq-cat" data-cat="data" onclick="setFaqCat('data', this)">Data &amp; security</button>
+                    <button class="faq-cat" data-cat="hardware" onclick="setFaqCat('hardware', this)">Hardware</button>
+                </div>
+            </div>
+            <div class="faq-list" id="faqList">
+                <div class="faq-item" data-cat="general">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Is SHANKS SHOP MANAGEMENT suitable for pharmacies?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Yes. SHANKS SHOP MANAGEMENT includes prescription management, drug categories, expiry alerts, batch tracking, and pharmacy-specific reports.</div></div>
+                </div>
+                <div class="faq-item" data-cat="general">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Can I use it on multiple devices?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Yes. SHANKS SHOP MANAGEMENT works on desktops, tablets, and phones. You can manage your store from anywhere.</div></div>
+                </div>
+                <div class="faq-item" data-cat="hardware">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Do you support barcode scanning?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Yes. You can use USB barcode scanners or the built-in camera scanner for fast checkout. Scanned items are added with the package price and stock already configured for that product.</div></div>
+                </div>
+                <div class="faq-item" data-cat="data">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Is my data secure?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Yes. We use enterprise-grade security, encrypted storage, and regular backups to keep your data safe. Every store's records are isolated from every other store.</div></div>
+                </div>
+                <div class="faq-item" data-cat="general">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Do you offer support?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Yes. We provide 24/7 support via chat, email, and phone for all active stores.</div></div>
+                </div>
+                <div class="faq-item" data-cat="pricing">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">What does it cost, and is there really a free trial?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">The first 14 days are free with no card details needed. After that it is a flat monthly fee per store, and paying yearly gives two months free. There is no per-transaction or per-user charge on any plan.</div></div>
+                </div>
+                <div class="faq-item" data-cat="pricing">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Can I change or cancel my plan?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Yes. Plans move up at any time and take effect immediately. When you cancel, your store keeps working until the end of the paid period, and your data stays exportable from the backups screen.</div></div>
+                </div>
+                <div class="faq-item" data-cat="pricing">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Do you offer refunds?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">If the platform does not fit your store, tell us within 14 days of your first payment and we will refund the last month in full. Read the full refund policy for the details.</div></div>
+                </div>
+                <div class="faq-item" data-cat="start">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">How long does it take to set up?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Most stores are selling within a day: create the account, add your staff, import or key in your products with their packaging, then open the till. Bulk import keeps a long product list to under an hour.</div></div>
+                </div>
+                <div class="faq-item" data-cat="start">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">How do I handle products sold in cartons and packs?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Each product carries its own packaging types, such as a pack of 10 or a carton of 24, with the selling price and cost for each one. Stock is tracked in base units, so a carton of 24 always moves 24 units no matter which package you sell.</div></div>
+                </div>
+                <div class="faq-item" data-cat="start">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Can my customers pay on credit?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Yes. Store accounts let a customer buy now and settle later, and a single sale can be split between cash and the customer's account. Every credit movement is shown on the customer's history.</div></div>
+                </div>
+                <div class="faq-item" data-cat="data">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Who owns my data, and can I take it with me?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">You do. Your products, customers, sales and stock belong to your store. You can take a full backup at any time from the backups screen, and the audit log records who changed what.</div></div>
+                </div>
+                <div class="faq-item" data-cat="data">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">What happens if the internet goes off?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Your last loaded product and price list stays on the till, so the counter keeps moving. Sales made while the connection is down are synced once the link is back, and the audit trail shows exactly when they were captured.</div></div>
+                </div>
+                <div class="faq-item" data-cat="hardware">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">What printers and scanners do you work with?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Any standard thermal receipt printer that prints from the browser, and any USB or Bluetooth barcode scanner that behaves like a keyboard. You can print small 80mm receipts or full A4 invoices from the same store.</div></div>
+                </div>
+                <div class="faq-item" data-cat="hardware">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.nextElementSibling.style.maxHeight=this.parentElement.classList.contains('open')?this.nextElementSibling.scrollHeight+'px':'0';">Can I run more than one branch?<i class="fas fa-chevron-down"></i></button>
+                    <div class="faq-answer"><div class="faq-answer-inner">Yes. The Pro plan supports multiple branches with their own stock and their own reports, plus stock transfers between branches. Each branch keeps its own price list and staff access.</div></div>
+                </div>
+            </div>
+            <p class="faq-count" id="faqCount"></p>
+        </div>
+    </section>
+
+    <section class="contact-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Get in touch</h2>
+                <p>Have questions? We'd love to hear from you.</p>
+            </div>
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <div class="contact-icon"><i class="fas fa-phone-alt"></i></div>
+                    <h4>Call Us</h4>
+                    <p><a href="tel:+2348012345678">+234 801 234 5678</a></p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                    <h4>Email</h4>
+                    <p><a href="mailto:info@shadepos.com">info@shadepos.com</a></p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <h4>Office</h4>
+                    <p>Lagos, Nigeria</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon"><i class="fas fa-clock"></i></div>
+                    <h4>Support Hours</h4>
+                    <p>24/7 Support Available</p>
+                </div>
+                <div class="contact-card" onclick="toggleChat()" style="cursor:pointer;">
+                    <div class="contact-icon" style="background:#dcfce7;color:#166534;"><i class="fas fa-comments"></i></div>
+                    <h4>Live Chat</h4>
+                    <p>Chat with our team instantly</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="cta-inner">
+            <h2>Ready to streamline your business?</h2>
+            <p>Join hundreds of pharmacies and retail stores already using SHANKS SHOP MANAGEMENT to grow faster.</p>
+            <button class="btn btn-primary" onclick="navigateTo('login.html')"><i class="fas fa-rocket"></i> Get Started Today</button>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="signup-box" style="margin-bottom:36px;max-width:none;background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);text-align:left;display:flex;gap:28px;align-items:center;flex-wrap:wrap;">
+                <div style="flex:1;min-width:240px;">
+                    <h3 style="color:#fff;">Stay on top of what shipped</h3>
+                    <p style="color:#94a3b8;margin-bottom:0;">Product news, setup tips and the occasional pharmacy tip. One email a month, no spam.</p>
+                </div>
+                <form class="signup-form" onsubmit="return submitSignup(event,'footer')" style="flex:0 1 460px;">
+                    <input class="signup-input" type="email" id="footerEmail" placeholder="you@pharmacy.com" required style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);color:#fff;">
+                    <input class="signup-hp" type="text" id="footerWebsite" tabindex="-1" autocomplete="off">
+                    <button class="signup-btn" type="submit" id="footerSubmit">Subscribe</button>
+                </form>
+                <p class="signup-note" id="footerNote" style="width:100%;color:#94a3b8;"></p>
+            </div>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>SHANKS SHOP MANAGEMENT</h3>
+                    <p>Professional Point of Sale system for pharmacies and retail stores. Manage sales, inventory, prescriptions, and analytics in one place.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a onclick="goToApp('sales.html')">Sales</a>
+                    <a onclick="goToApp('inventory.html')">Inventory</a>
+                    <a onclick="goToApp('reports.html')">Reports</a>
+                    <a onclick="goToApp('prescriptions.html')">Pharmacy</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <a onclick="scrollToSection('.about-section')">About us</a>
+                    <a onclick="scrollToSection('.pricing-section')">Pricing</a>
+                    <a onclick="scrollToSection('.updates-section')">Latest updates</a>
+                    <a onclick="scrollToSection('.trust-section')">Security</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Support</h4>
+                    <a onclick="scrollToSection('.faq-section')">FAQ</a>
+                    <a onclick="scrollToSection('.download-section')">Download</a>
+                    <a onclick="scrollToSection('.contact-section')">Contact us</a>
+                    <a onclick="navigateTo('login.html')">Login</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a onclick="navigateTo('privacy.html')">Privacy policy</a>
+                    <a onclick="navigateTo('terms.html')">Terms of service</a>
+                    <a onclick="navigateTo('refund-policy.html')">Refund policy</a>
+                    <a onclick="navigateTo('cookie-policy.html')">Cookie policy</a>
+                </div>
+            </div>
+            <div class="footer-bottom">&copy; 2026 SHANKS SHOP MANAGEMENT. All rights reserved. &nbsp;&middot;&nbsp; <a onclick="navigateTo('privacy.html')" style="color:#94a3b8;">Privacy</a> &middot; <a onclick="navigateTo('terms.html')" style="color:#94a3b8;">Terms</a> &middot; <a onclick="navigateTo('refund-policy.html')" style="color:#94a3b8;">Refunds</a></div>
+        </div>
+    </footer>
+
+    <div class="cookie-banner" id="cookieBanner" role="dialog" aria-label="Cookie notice">
+        <div class="cookie-text">
+            <strong>We use cookies</strong>
+            We use cookies to keep you signed in, remember your store preferences and understand which pages are useful. Read our <a onclick="navigateTo('cookie-policy.html')" style="color:var(--brand);font-weight:700;">cookie policy</a>.
+        </div>
+        <div class="cookie-actions">
+            <button onclick="dismissCookies('essential')">Essential only</button>
+            <button class="primary" onclick="dismissCookies('all')">Accept all</button>
+        </div>
+    </div>
+
+    <script>
+        function navigateTo(p){window.location.href=p;}
+        function toggleChat(){if(typeof Tawk_API!=='undefined' && Tawk_API.toggle){Tawk_API.toggle();}}
+
+        // The full module list, mirroring the app's page catalogue.
+        var MODULE_CATALOG=[
+            ['dashboard.html','Dashboard','Main','fa-chart-pie'],
+            ['sales.html','Point of Sale','Main','fa-shopping-cart'],
+            ['suspended-sales.html','Suspended Sales','Main','fa-pause'],
+            ['variations.html','Add Product','Main','fa-plus-circle'],
+            ['inventory.html','Inventory','Main','fa-boxes'],
+            ['receiving.html','Receiving','Main','fa-file-import'],
+            ['reports.html','Reports','Main','fa-chart-bar'],
+            ['customers.html','Customers','Customers','fa-users'],
+            ['customer-history.html','Customer History','Customers','fa-user-clock'],
+            ['appointments.html','Appointments','Customers','fa-calendar'],
+            ['giftcards.html','Gift Cards','Customers','fa-gift'],
+            ['messages.html','Messages','Customers','fa-envelope'],
+            ['suppliers.html','Suppliers','Stock','fa-truck'],
+            ['locations.html','Locations','Stock','fa-store'],
+            ['product-variations.html','Product Variations','Stock','fa-layer-group'],
+            ['stock-count.html','Stock Count','Stock','fa-clipboard-check'],
+            ['stock-transfer.html','Stock Transfer','Stock','fa-truck-ramp-box'],
+            ['deliveries.html','Deliveries','Stock','fa-truck-loading'],
+            ['sales-returns.html','Sales Returns','Stock','fa-rotate-left'],
+            ['prescriptions.html','Prescriptions / Rx','Pharmacy','fa-prescription'],
+            ['expiry-alerts.html','Expiry & Batch Alerts','Pharmacy','fa-triangle-exclamation'],
+            ['drug-categories.html','Drug Categories','Pharmacy','fa-tags'],
+            ['payments.html','Payments','Finance','fa-credit-card'],
+            ['store_account_payment.html','Store Account','Finance','fa-wallet'],
+            ['bank-reconciliation.html','Bank Reconciliation','Finance','fa-building-columns'],
+            ['tax-settings.html','Tax & Vat','Finance','fa-percent'],
+            ['promo-engine.html','Promos & Discounts','Finance','fa-tags'],
+            ['expenses.html','Expenses','Finance','fa-receipt'],
+            ['invoices.html','Invoices','Finance','fa-file-invoice'],
+            ['purchase-orders.html','Purchase Orders','Finance','fa-file-invoice-dollar'],
+            ['employees.html','Employees','Operations','fa-user-tie'],
+            ['user-roles.html','User Roles & Accounts','Operations','fa-user-shield'],
+            ['shifts.html','Shift Manager','Operations','fa-clock'],
+            ['cashier-closeout.html','Cashier Closeout','Operations','fa-calculator'],
+            ['receipt.html','Receipt','Operations','fa-receipt'],
+            ['todays-receipts.html',"Today's Receipts",'Operations','fa-receipt'],
+            ['daily-summary.html','Daily Sales Summary','Operations','fa-calendar-day'],
+            ['audit.html','Audit Log','Operations','fa-clipboard-list'],
+            ['audit-log.html','Audit Trail','Reports','fa-clipboard-list'],
+            ['backups.html','System Backups','Reports','fa-download'],
+            ['config.html','Store Config','Reports','fa-cog'],
+            ['admin.html','Admin Panel','Administration','fa-shield-halved']
+        ];
+        var moduleGroup='All',moduleQuery='';
+
+        function renderModuleChips(){
+            var groups=['All'];
+            MODULE_CATALOG.forEach(function(m){if(groups.indexOf(m[2])<0)groups.push(m[2]);});
+            document.getElementById('moduleChips').innerHTML=groups.map(function(g){
+                return '<button class="chip'+(g===moduleGroup?' active':'')+'" onclick="setModuleGroup(\''+g+'\')">'+g+'</button>';
+            }).join('');
+        }
+        function setModuleGroup(g){moduleGroup=g;renderModuleChips();filterModules();}
+        function filterModules(){
+            var q=moduleQuery.toLowerCase();
+            var list=MODULE_CATALOG.filter(function(m){
+                if(moduleGroup!=='All'&&m[2]!==moduleGroup)return false;
+                if(!q)return true;
+                return (m[1]+' '+m[2]+' '+m[0]).toLowerCase().indexOf(q)>-1;
+            });
+            var grid=document.getElementById('moduleGrid');
+            if(!list.length){grid.innerHTML='<div class="module-empty">No module matches "'+moduleQuery+'".</div>';}
+            else{
+                grid.innerHTML=list.map(function(m){
+                    return '<div class="module-card" onclick="navigateTo(\''+m[0]+'\')"><i class="fas '+m[3]+'"></i><span><strong>'+m[1]+'</strong><span>'+m[2]+'</span></span></div>';
+                }).join('');
+            }
+            document.getElementById('moduleCount').textContent=list.length+' of '+MODULE_CATALOG.length+' modules';
+        }
+        document.addEventListener('DOMContentLoaded',function(){
+            renderModuleChips();
+            filterModules();
+            var search=document.getElementById('moduleSearch');
+            if(search)search.addEventListener('input',function(){moduleQuery=search.value.trim();filterModules();});
+            loadBusinessTypes();
+            restoreTheme();
+            loadPlans();
+            loadStats();
+            loadTestimonials();
+            loadChangelog();
+            loadHealth();
+            filterFaq();
+            showCookieBanner();
+        });
+
+        // Business types come from the server so the page always matches the app.
+        function loadBusinessTypes(){
+            fetch('/api/business-types').then(function(r){return r.json();}).then(function(d){
+                var types=(d&&d.types)||[];
+                if(!types.length)return;
+                var labels={};
+                ((d&&d.modules)||[]).forEach(function(m){labels[m.key]=m.label;});
+                document.getElementById('bizGrid').innerHTML=types.map(function(t){
+                    var tags=(t.modules||[]).map(function(k){return '<span class="biz-tag">'+(labels[k]||k)+'</span>';}).join('');
+                    return '<div class="biz-card" onclick="requestDemo(\'Business type: '+escHtml(t.label)+'\')">'+
+                        '<div class="biz-top"><div class="biz-icon"><i class="fas '+(t.icon||'fa-briefcase')+'"></i></div>'+
+                        '<div><div class="biz-name">'+t.label+'</div><div class="biz-count">'+(t.modules||[]).length+' modules</div></div></div>'+
+                        '<div class="biz-tags">'+tags+'</div></div>';
+                }).join('');
+            }).catch(function(){/* the section simply stays empty when the server is unreachable */});
+        }
+
+        // ---------- Landing page behaviour ----------
+
+        var THEME_KEY='shanks_theme';
+        var COOKIE_KEY='shanks_cookie_choice';
+        var navOpen=false;
+        var billingCycle='monthly';
+        var plansCache=[];
+        var faqCategory='all';
+
+        function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+        function compact(n){
+            n=parseFloat(n)||0;
+            if(n>=1000000)return (n/1000000).toFixed(n>=10000000?0:1).replace(/\.0$/,'')+'M';
+            if(n>=1000)return (n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'')+'k';
+            return String(Math.round(n));
+        }
+        function money(v){return '₦'+(parseFloat(v)||0).toLocaleString('en-NG',{minimumFractionDigits:0,maximumFractionDigits:0});}
+        function getJson(url){return fetch(url).then(function(r){return r.json();});}
+
+        // ----- navigation -----
+        function scrollToSection(sel){
+            var el=document.querySelector(sel);
+            if(!el)return;
+            if(navOpen){toggleNav(false);setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'});},280);return;}
+            el.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+        function toggleNav(force){
+            var drawer=document.getElementById('navDrawer');
+            var backdrop=document.getElementById('navBackdrop');
+            if(!drawer)return;
+            navOpen=(force===undefined)?!navOpen:!!force;
+            drawer.classList.toggle('open',navOpen);
+            if(backdrop)backdrop.classList.toggle('open',navOpen);
+            document.body.style.overflow=navOpen?'hidden':'';
+        }
+        function goToApp(page){
+            var loggedIn=false;
+            try{loggedIn=!!(localStorage.getItem('danzona_api_key')&&localStorage.getItem('danzona_username'));}catch(e){}
+            if(loggedIn){window.location.href=page;return;}
+            window.location.href='login.html?next='+encodeURIComponent(page);
+        }
+
+        // ----- dark mode -----
+        function applyTheme(theme){
+            document.documentElement.setAttribute('data-theme',theme);
+            var btn=document.getElementById('themeToggle');
+            if(btn)btn.innerHTML=theme==='dark'?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+        }
+        function toggleTheme(){
+            var next=(document.documentElement.getAttribute('data-theme')==='dark')?'light':'dark';
+            applyTheme(next);
+            try{localStorage.setItem(THEME_KEY,next);}catch(e){}
+        }
+        function restoreTheme(){
+            var saved=null;
+            try{saved=localStorage.getItem(THEME_KEY);}catch(e){}
+            if(!saved){
+                try{if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)saved='dark';}catch(e){}
+            }
+            applyTheme(saved||'light');
+        }
+
+        // ----- product tour -----
+        function showTour(key){
+            var panels=document.querySelectorAll('.tour-panel');
+            for(var i=0;i<panels.length;i++)panels[i].classList.toggle('active',panels[i].getAttribute('data-panel')===key);
+            var tabs=document.querySelectorAll('.tour-tab');
+            for(var j=0;j<tabs.length;j++)tabs[j].classList.toggle('active',tabs[j].getAttribute('data-tour')===key);
+        }
+
+        // ----- pricing -----
+        function setBillingCycle(cycle){
+            billingCycle=cycle;
+            var btns=document.querySelectorAll('#billingToggle button');
+            for(var i=0;i<btns.length;i++)btns[i].classList.toggle('active',btns[i].getAttribute('data-cycle')===cycle);
+            renderPlans();
+        }
+        function renderPlans(){
+            var grid=document.getElementById('planGrid');
+            if(!grid||!plansCache.length)return;
+            grid.innerHTML=plansCache.map(function(p){
+                var amount=billingCycle==='yearly'?p.price_yearly:p.price_monthly;
+                var cycle=billingCycle==='yearly'?'/year':'/month';
+                var note='';
+                if(billingCycle==='yearly'&&p.price_monthly>0){
+                    note='Billed once a year - saves '+money(p.price_monthly*2);
+                }else if(billingCycle==='monthly'&&p.price_yearly>0){
+                    note='Pay yearly and save '+money(p.price_monthly*12-p.price_yearly);
+                }
+                var features=(p.features||[]).map(function(f){return '<li><i class="fas fa-check"></i> '+escHtml(f)+'</li>';}).join('');
+                var cta=p.price_monthly>0||p.price_yearly>0?'Request this plan':'Request a demo';
+                return '<div class="plan-card'+(p.highlight?' highlight':'')+'">'+
+                    (p.highlight?'<span class="plan-flag">Most popular</span>':'')+
+                    '<div class="plan-name">'+escHtml(p.name)+'</div>'+
+                    '<div class="plan-tagline">'+escHtml(p.tagline||'')+'</div>'+
+                    '<div class="plan-price"><span class="plan-amount">'+money(amount)+'</span><span class="plan-cycle">'+cycle+'</span></div>'+
+                    '<div class="plan-note">'+escHtml(note||(amount>0?'Billed monthly, cancel any time':'No card details needed'))+'</div>'+
+                    '<ul class="plan-features">'+features+'</ul>'+
+                    '<a class="plan-cta" data-plan="'+escHtml(p.name)+'" onclick="requestDemo(this.getAttribute(\'data-plan\'))">'+cta+'</a>'+
+                '</div>';
+            }).join('');
+        }
+        function loadPlans(){
+            getJson('/api/plans').then(function(d){
+                plansCache=(d&&d.plans)||[];
+                renderPlans();
+            }).catch(function(){
+                var grid=document.getElementById('planGrid');
+                if(grid)grid.innerHTML='<div class="module-empty">Plans are unavailable right now. Please contact us and we will send them.</div>';
+            });
+        }
+
+        // ----- live stats -----
+        function loadStats(){
+            getJson('/api/public/stats').then(function(d){
+                if(!d)return;
+                var stores=document.getElementById('statStores');
+                var products=document.getElementById('statProducts');
+                var tx=document.getElementById('statTransactions');
+                var mods=document.getElementById('statModules');
+                if(stores)stores.innerHTML=compact(d.stores);
+                if(products)products.innerHTML=compact(d.products);
+                if(tx)tx.innerHTML=compact(d.transactions);
+                if(mods)mods.innerHTML=compact(d.modules);
+                var hero=document.getElementById('heroStoreCount');
+                if(hero)hero.textContent=compact(d.stores)+(d.stores===1?' store':' stores');
+            }).catch(function(){});
+        }
+
+        // ----- testimonials -----
+        function loadTestimonials(){
+            getJson('/api/testimonials').then(function(d){
+                var list=(d&&d.testimonials)||[];
+                var grid=document.getElementById('testimonialGrid');
+                if(!grid||!list.length)return;
+                grid.innerHTML=list.map(function(t){
+                    var initials=String(t.author_name||'?').split(/\s+/).map(function(w){return w.charAt(0);}).slice(0,2).join('').toUpperCase();
+                    var where=[t.author_role,t.business].filter(Boolean).join(', ');
+                    return '<div class="testimonial-card">'+
+                        '<div class="quote-icon"><i class="fas fa-quote-right"></i></div>'+
+                        '<p>"'+escHtml(t.quote||'')+'"</p>'+
+                        '<div class="testimonial-author">'+
+                            '<div class="testimonial-avatar">'+escHtml(initials)+'</div>'+
+                            '<div class="testimonial-info"><strong>'+escHtml(t.author_name||'')+'</strong><span>'+escHtml(where)+'</span></div>'+
+                        '</div>'+
+                    '</div>';
+                }).join('');
+            }).catch(function(){});
+        }
+
+        // ----- release notes -----
+        function loadChangelog(){
+            getJson('/api/changelog').then(function(d){
+                var list=(d&&d.changelog)||[];
+                var box=document.getElementById('updateList');
+                if(!box||!list.length)return;
+                box.innerHTML=list.map(function(c){
+                    var items=(c.items||[]).map(function(i){return '<li><i class="fas fa-check"></i> '+escHtml(i)+'</li>';}).join('');
+                    var when=c.released_on?new Date(c.released_on).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'}):'';
+                    return '<div class="update-item">'+
+                        '<div><div class="update-version">'+escHtml(c.version||'')+'</div><div class="update-date">'+escHtml(when)+'</div></div>'+
+                        '<div><h4>'+escHtml(c.title||'')+'</h4><p>'+escHtml(c.summary||'')+'</p>'+(items?'<ul>'+items+'</ul>':'')+'</div>'+
+                    '</div>';
+                }).join('');
+            }).catch(function(){});
+        }
+
+        // ----- platform status -----
+        function loadHealth(){
+            getJson('/api/health').then(function(d){
+                var badge=document.getElementById('healthBadge');
+                if(!badge||!d)return;
+                var ok=d.status==='ok'&&String(d.database||'').indexOf('error')!==0;
+                badge.innerHTML='<span class="live-dot" style="background:'+(ok?'#22c55e':'#ef4444')+'"></span> '+
+                    (ok?'All systems operational':'We are working on it - the platform is reachable');
+            }).catch(function(){
+                var badge=document.getElementById('healthBadge');
+                if(badge)badge.innerHTML='<span class="live-dot" style="background:#f59e0b"></span> Status check unavailable right now';
+            });
+        }
+
+        // ----- newsletter / demo signups -----
+        var signupInterest='';
+        function requestDemo(interest){
+            signupInterest=interest||'General enquiry';
+            var box=document.getElementById('heroEmail');
+            scrollToSection('.hero');
+            setTimeout(function(){if(box)box.focus();},420);
+        }
+        function submitSignup(event,where){
+            event.preventDefault();
+            var prefix=where==='footer'?'footer':'hero';
+            var email=document.getElementById(prefix+'Email');
+            var note=document.getElementById(prefix+'Note');
+            var btn=document.getElementById(prefix+'Submit');
+            var website=document.getElementById(prefix+'Website');
+            var pharmacy=document.getElementById(prefix+'Pharmacy');
+            if(!email||!email.value)return false;
+            if(btn)btn.disabled=true;
+            if(note){note.className='signup-note';note.textContent='Sending...';}
+            fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                    email:email.value,
+                    pharmacy:pharmacy?pharmacy.value:'',
+                    website:website?website.value:'',
+                    source:prefix==='footer'?'footer':'hero',
+                    message:signupInterest||'Landing page signup'
+                })})
+                .then(function(r){return r.json().then(function(b){return {ok:r.ok,body:b};});})
+                .then(function(res){
+                    if(btn)btn.disabled=false;
+                    if(res.ok){
+                        if(note){note.className='signup-note ok';note.textContent='Thank you - we have your details and will call you back.';}
+                        if(email)email.value='';
+                        if(pharmacy)pharmacy.value='';
+                        signupInterest='';
+                    }else{
+                        if(note){note.className='signup-note err';note.textContent=(res.body&&res.body.error)||'We could not save that. Please try again.';}
+                    }
+                })
+                .catch(function(){
+                    if(btn)btn.disabled=false;
+                    if(note){note.className='signup-note err';note.textContent='Connection problem. Please email us instead.';}
+                });
+            return false;
+        }
+
+        // ----- FAQ search and categories -----
+        function setFaqCat(cat,el){
+            faqCategory=cat;
+            var cats=document.querySelectorAll('.faq-cat');
+            for(var i=0;i<cats.length;i++)cats[i].classList.toggle('active',cats[i].getAttribute('data-cat')===cat);
+            filterFaq();
+        }
+        function filterFaq(){
+            var input=document.getElementById('faqSearch');
+            var q=input?input.value.trim().toLowerCase():'';
+            var items=document.querySelectorAll('#faqList .faq-item');
+            var shown=0;
+            for(var i=0;i<items.length;i++){
+                var item=items[i];
+                var catOk=faqCategory==='all'||item.getAttribute('data-cat')===faqCategory;
+                var textOk=!q||item.textContent.toLowerCase().indexOf(q)>-1;
+                var visible=catOk&&textOk;
+                item.classList.toggle('hidden',!visible);
+                if(visible)shown++;
+            }
+            var count=document.getElementById('faqCount');
+            if(count)count.textContent=shown+' of '+items.length+' questions shown';
+        }
+
+        // ----- cookie notice -----
+        function showCookieBanner(){
+            var choice=null;
+            try{choice=localStorage.getItem(COOKIE_KEY);}catch(e){}
+            if(choice)return;
+            var banner=document.getElementById('cookieBanner');
+            if(banner)banner.classList.add('show');
+        }
+        function dismissCookies(choice){
+            try{localStorage.setItem(COOKIE_KEY,choice);}catch(e){}
+            var banner=document.getElementById('cookieBanner');
+            if(banner)banner.classList.remove('show');
+        }
+
+    </script>
+    <!--Start of Tawk.to Script-->
+    <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/6a860711ae3056344ea70116/1k0don81m';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!--End of Tawk.to Script-->
+    <a href="https://wa.me/2348012345678" class="whatsapp-float" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
+</body>
+</html>
+

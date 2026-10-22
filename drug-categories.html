@@ -1,0 +1,179 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Categories - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        .btn-danger{background:#ef4444;color:#fff}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .category-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:.2s}
+        .category-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.06);border-color:#10b981}
+        .category-card .name{font-weight:900;color:#111827;font-size:14px}
+        .category-card .meta{font-size:12px;color:#6b7280;margin-top:4px}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-tags"></i> Drug Categories</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <h3><i class="fas fa-plus"></i> New Category</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Category Name</label>
+                    <input type="text" id="catName" class="form-control" placeholder="e.g. Antibiotics">
+                </div>
+                <div class="form-group">
+                    <label>Therapeutic Class</label>
+                    <input type="text" id="catClass" class="form-control" placeholder="e.g. Anti-infectives">
+                </div>
+                <div class="form-group">
+                    <label>Schedule</label>
+                    <select id="catSchedule" class="form-control">
+                        <option value="OTC">OTC</option>
+                        <option value="Prescription">Prescription Only</option>
+                        <option value="Controlled">Controlled</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="catDesc" class="form-control" placeholder="Short description">
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;">
+                    <button class="btn btn-primary" onclick="saveCategory()"><i class="fas fa-save"></i> Save</button>
+                </div>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-layer-group"></i> Categories</h3>
+            <div id="categoriesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+                <div class="empty-state" style="grid-column:1/-1;">No categories created yet</div>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-list"></i> All Products by Category</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Product</th><th>Category</th><th>Class</th><th>Schedule</th><th>Stock</th></tr>
+                    </thead>
+                    <tbody id="productsByCatBody">
+                        <tr><td colspan="5" class="empty-state">No products linked yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var categories=[];
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){ t.style.display='none'; },3000); }
+async function saveCategory(){
+    var name=$('catName').value.trim();
+    var cls=$('catClass').value.trim();
+    var schedule=$('catSchedule').value;
+    var desc=$('catDesc').value.trim();
+    if(!name){ showToast('Category name is required', true); return; }
+    var data={name:name, cls:cls, schedule:schedule, desc:desc};
+    try{
+        var created = await API.saveCategory(data);
+        data.id = created.id;
+        categories.unshift(data);
+        showToast('Category added');
+    }catch(e){
+        showToast(e.message||'Save failed', true);
+        return;
+    }
+    resetCategory();
+    renderCategories();
+    logAction('edit', data.id, 'New category: ' + name);
+}
+function resetCategory(){ $('catName').value='';$('catClass').value='';$('catDesc').value=''; }
+function renderCategories(){
+    var grid=$('categoriesGrid');
+    if(!categories.length){ grid.innerHTML='<div class="empty-state" style="grid-column:1/-1;">No categories created yet</div>'; renderProductsByCat([]); return; }
+    grid.innerHTML=categories.map(function(c){
+        return '<div class="category-card" onclick="filterByCategory(\''+c.id+'\')"><div class="name">'+esc(c.name)+'</div><div class="meta"><strong>Class:</strong> '+esc(c.cls||'N/A')+'<br><strong>Schedule:</strong> '+esc(c.schedule)+'</div><div style="margin-top:8px;"><button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="event.stopPropagation();deleteCategory(\''+c.id+'\')"><i class="fas fa-trash"></i> Delete</button></div></div>';
+    }).join('');
+    renderProductsByCat(categories);
+}
+function filterByCategory(id){ var cat=categories.find(function(c){return c.id===id;}); if(!cat) return; renderProductsByCat(categories.filter(function(c){return c.id===id;})); }
+async function deleteCategory(id){
+    if(!confirm('Delete this category?')) return;
+    try{
+        await API.delete('/categories/' + id);
+        categories=categories.filter(function(c){return c.id!==id;});
+        showToast('Category deleted');
+    }catch(e){
+        showToast(e.message||'Delete failed', true);
+    }
+    renderCategories();
+}
+function renderProductsByCat(cats){
+    var tbody=$('productsByCatBody');
+    if(!cats.length){ tbody.innerHTML='<tr><td colspan="5" class="empty-state">No categories selected</td></tr>'; return; }
+    try {
+        var products=JSON.parse(localStorage.getItem('danzona_products')||'[]');
+    }catch(e){ products=[]; }
+    var rows=[];
+    products.forEach(function(p){
+        var pCat=(p.category||p.category_name||p.therapeutic_class||'').toLowerCase();
+        var matched=cats.find(function(c){ return pCat.indexOf((c.name||'').toLowerCase())>-1 || pCat.indexOf((c.cls||'').toLowerCase())>-1; });
+        if(matched){
+            rows.push({product:p.name||'Unnamed', category:matched.name, class:matched.cls||'-', schedule:matched.schedule, stock:p.stock||0});
+        }
+    });
+    if(!rows.length){ tbody.innerHTML='<tr><td colspan="5" class="empty-state">No products match selected categories</td></tr>'; return; }
+    tbody.innerHTML=rows.map(function(r){
+        return '<tr><td>'+esc(r.product)+'</td><td>'+esc(r.category)+'</td><td>'+esc(r.class)+'</td><td>'+esc(r.schedule)+'</td><td>'+esc(r.stock)+'</td></tr>';
+    }).join('');
+}
+function loadCategories(){
+    try{ categories=JSON.parse(localStorage.getItem('SHEDS_categories')||'[]'); if(!Array.isArray(categories)) categories=[]; }catch(e){ categories=[]; }
+    renderCategories();
+}
+function logAction(action, ref, note){
+    var user=API.getUserName?API.getUserName():'System';
+    API.post('/audit-log',{action:action,entity:'drug_category',entity_id:String(ref||''),details:note||'',user:user}).catch(function(){});
+}
+document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; loadCategories(); });
+</script>
+</body>
+</html>
+
+
+
+
+

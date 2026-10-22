@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promos & Discounts - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        .btn-warning{background:#f59e0b;color:#fff}
+        .btn-danger{background:#ef4444;color:#fff}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .badge-active{background:#ecfdf5;color:#065f46}
+        .badge-expired{background:#fef2f2;color:#991b1b}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-tags"></i> Promos & Discounts</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <h3><i class="fas fa-plus"></i> New Promo / Discount</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Promo Name</label>
+                    <input type="text" id="promoName" class="form-control" placeholder="e.g. Summer Sale">
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="promoType" class="form-control">
+                        <option value="percent">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount (₦)</option>
+                        <option value="bundle">Bundle / Volume</option>
+                        <option value="loyalty">Loyalty Points</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Value</label>
+                    <input type="number" id="promoValue" class="form-control" min="0" step="0.01" placeholder="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Applies To</label>
+                    <select id="promoApply" class="form-control">
+                        <option value="all">All Products</option>
+                        <option value="category">Category</option>
+                        <option value="product">Product</option>
+                        <option value="customer">Customer Segment</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Code (optional)</label>
+                    <input type="text" id="promoCode" class="form-control" placeholder="e.g. SAVE10">
+                </div>
+                <div class="form-group">
+                    <label>Valid Until</label>
+                    <input type="date" id="promoExpiry" class="form-control">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="savePromo()"><i class="fas fa-save"></i> Save Promo</button>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-list"></i> Active Promos</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>Type</th><th>Value</th><th>Applies To</th><th>Code</th><th>Expires</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="promoBody">
+                        <tr><td colspan="8" class="empty-state">No promos created</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var promos=[];
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){t.style.display='none';},3000); }
+function savePromo(){
+    var name=$('promoName').value.trim();
+    var type=$('promoType').value;
+    var value=parseFloat($('promoValue').value)||0;
+    var apply=$('promoApply').value;
+    var code=$('promoCode').value.trim();
+    var expiry=$('promoExpiry').value;
+    if(!name){ showToast('Promo name is required', true); return; }
+    var expiresOn = expiry ? new Date(expiry) : null;
+    var status = (!expiresOn || expiresOn >= new Date()) ? 'active' : 'expired';
+    var record={ id:'PRM-'+Date.now(), name:name, type:type, value:value, apply:apply, code:code, expiry:expiry, status:status };
+    promos.unshift(record);
+    try{ localStorage.setItem('SHEDS_promos', JSON.stringify(promos)); }catch(e){}
+    showToast('Promo saved');
+    resetPromo();
+    renderPromos();
+}
+function resetPromo(){ $('promoName').value='';$('promoType').value='percent';$('promoValue').value='';$('promoApply').value='all';$('promoCode').value='';$('promoExpiry').value=''; }
+function badgeFor(s){ return s==='active'?'<span class="badge badge-active">Active</span>':'<span class="badge badge-expired">Expired</span>'; }
+function renderPromos(){
+    var tbody=$('promoBody');
+    if(!promos.length){ tbody.innerHTML='<tr><td colspan="8" class="empty-state">No promos created</td></tr>'; return; }
+    tbody.innerHTML=promos.map(function(p){
+        var typeLabel=p.type==='percent'?'% Off':p.type==='fixed'?'Fixed':p.type==='bundle'?'Bundle':'Loyalty';
+        var applyLabel=p.apply==='all'?'All':p.apply==='category'?'Category':p.apply==='product'?'Product':'Customer Segment';
+        return '<tr><td><strong>'+esc(p.name)+'</strong></td><td>'+esc(typeLabel)+'</td><td>'+esc(p.value)+(p.type==='percent'?'%':'')+'</td><td>'+esc(applyLabel)+'</td><td>'+esc(p.code||'-')+'</td><td>'+esc(p.expiry||'Unlimited')+'</td><td>'+badgeFor(p.status)+'</td><td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deletePromo(\''+p.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
+    }).join('');
+}
+function deletePromo(id){ if(!confirm('Delete promo?')) return; promos=promos.filter(function(p){return p.id!==id;}); try{ localStorage.setItem('SHEDS_promos',JSON.stringify(promos)); }catch(e){} renderPromos(); showToast('Deleted'); }
+function loadPromos(){ try{ promos=JSON.parse(localStorage.getItem('SHEDS_promos')||'[]'); if(!Array.isArray(promos)) promos=[]; }catch(e){ promos=[]; } renderPromos(); }
+document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; loadPromos(); });
+</script>
+</body>
+</html>
+
+
+
+
+

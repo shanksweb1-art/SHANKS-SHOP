@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: sheds-pos-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -c gunicorn_config.py server:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DB_PATH
+        value: /var/data/danzona_pos.db
+      - key: PLATFORM_ADMIN_USERNAME
+        value: platformadmin
+      - key: PLATFORM_ADMIN_PASSWORD
+        value: "PlatformAdmin123!"
+      - key: PLATFORM_TOKEN_TTL
+        value: "28800"
+      - key: SUPER_ADMIN_API_KEY
+        value: shedrack
+    disk:
+      name: sheds-data
+      mountPath: /var/data
+      sizeGB: 1

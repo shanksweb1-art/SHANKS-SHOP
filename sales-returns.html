@@ -1,0 +1,190 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Returns - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-primary:hover{background:#059669}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        .btn-outline:hover{background:#f9fafb}
+        .btn-danger{background:#ef4444;color:#fff}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .badge-approved{background:#ecfdf5;color:#065f46}
+        .badge-pending{background:#fffbeb;color:#92400e}
+        .badge-rejected{background:#fef2f2;color:#991b1b}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-rotate-left"></i> Sales Returns</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <h3><i class="fas fa-arrow-rotate-left"></i> New Return</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Original Receipt / Sale #</label>
+                    <input type="text" id="returnSaleId" class="form-control" placeholder="Enter receipt #">
+                </div>
+                <div class="form-group">
+                    <label>Return Reason</label>
+                    <select id="returnReason" class="form-control">
+                        <option value="defective">Defective</option>
+                        <option value="expired">Expired</option>
+                        <option value="wrong_item">Wrong Item</option>
+                        <option value="customer_request">Customer Request</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Refund Method</label>
+                    <select id="refundMethod" class="form-control">
+                        <option value="cash">Cash</option>
+                        <option value="store_account">Store Account</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="pos">POS / Card</option>
+                        <option value="giftcard">Gift Card</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Item</label>
+                    <input type="text" id="returnItem" class="form-control" placeholder="Product name or SKU">
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="returnQty" class="form-control" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Amount (₦)</label>
+                    <input type="number" id="returnAmount" class="form-control" placeholder="0.00" step="0.01">
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="submitReturn()"><i class="fas fa-check"></i> Submit Return</button>
+                <button class="btn btn-outline" onclick="resetReturnForm()"><i class="fas fa-eraser"></i> Clear</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap;">
+                <h3 style="margin:0;"><i class="fas fa-list"></i> Recent Returns</h3>
+                <input type="text" id="returnSearch" class="form-control" placeholder="Search returns..." style="max-width:260px;">
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Receipt #</th><th>Reason</th><th>Item</th><th>Qty</th><th>Refund</th><th>Method</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="returnsBody">
+                        <tr><td colspan="9" class="empty-state">No returns recorded yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var returns = [];
+function fmt(n){ try { return StoreConfig.formatCurrency(n); } catch(e) { return '₦' + (parseFloat(n) || 0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); } }
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); } 
+function showToast(m, err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){ t.style.display='none'; }, 3000); }
+function submitReturn(){
+    var saleId = $('returnSaleId').value.trim();
+    var reason = $('returnReason').value;
+    var method = $('refundMethod').value;
+    var item = $('returnItem').value.trim();
+    var qty = parseInt($('returnQty').value) || 0;
+    var amount = parseFloat($('returnAmount').value) || 0;
+    if(!saleId || !item || qty <= 0 || amount <= 0){ showToast('Fill all required fields with valid values', true); return; }
+    var record = {
+        id: 'RET-' + Date.now(),
+        date: new Date().toISOString(),
+        saleId: saleId,
+        reason: reason,
+        item: item,
+        qty: qty,
+        amount: amount,
+        method: method,
+        status: 'approved'
+    };
+    returns.unshift(record);
+    try { localStorage.setItem('SHEDS_returns', JSON.stringify(returns)); } catch(e){}
+    showToast('Return submitted successfully');
+    resetReturnForm();
+    renderReturns();
+}
+function resetReturnForm(){
+    $('returnSaleId').value = '';
+    $('returnReason').value = 'defective';
+    $('refundMethod').value = 'cash';
+    $('returnItem').value = '';
+    $('returnQty').value = 1;
+    $('returnAmount').value = '';
+}
+function renderReturns(){
+    var tbody = $('returnsBody');
+    if(!returns.length){ tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No returns recorded yet</td></tr>'; return; }
+    tbody.innerHTML = returns.map(function(r){
+        var d = r.date ? new Date(r.date).toLocaleString('en-NG') : '--';
+        var method = r.method.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase(); });
+        return '<tr><td>' + esc(d) + '</td><td>#' + esc(r.saleId) + '</td><td style="text-transform:capitalize;">' + esc(r.reason) + '</td><td>' + esc(r.item) + '</td><td>' + esc(r.qty) + '</td><td style="font-weight:900;">' + fmt(r.amount) + '</td><td>' + esc(method) + '</td><td><span class="badge badge-approved">' + esc(r.status) + '</span></td><td><button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="voidReturn(\'' + r.id + '\')">Void</button></td></tr>';
+    }).join('');
+}
+function voidReturn(id){
+    if(!confirm('Void this return?')) return;
+    returns = returns.filter(function(r){ return r.id !== id; });
+    try { localStorage.setItem('SHEDS_returns', JSON.stringify(returns)); } catch(e){}
+    renderReturns();
+    showToast('Return voided');
+}
+function loadReturns(){
+    try { returns = JSON.parse(localStorage.getItem('SHEDS_returns') || '[]'); if(!Array.isArray(returns)) returns = []; } catch(e){ returns = []; }
+    renderReturns();
+}
+$('returnSearch') && $('returnSearch').addEventListener('input', function(e){
+    var q = (e.target.value || '').toLowerCase();
+    var rows = document.querySelectorAll('#returnsBody tr');
+    rows.forEach(function(row){
+        var text = (row.textContent || '').toLowerCase();
+        row.style.display = text.indexOf(q) > -1 ? '' : 'none';
+    });
+});
+document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; loadReturns(); });
+</script>
+</body>
+</html>
+
+
+
+
+

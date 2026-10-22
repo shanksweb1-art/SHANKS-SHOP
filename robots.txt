@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# The app itself is private: a signed-in store's data must not be crawled.
+Disallow: /dashboard.html
+Disallow: /sales.html
+Disallow: /inventory.html
+Disallow: /receiving.html
+Disallow: /reports.html
+Disallow: /customers.html
+Disallow: /suppliers.html
+Disallow: /employees.html
+Disallow: /admin.html
+Disallow: /api/
+
+Sitemap: https://sheds-pos-pharmacy.fly.dev/sitemap.xml

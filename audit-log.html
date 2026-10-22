@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Log - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .badge-login{background:#ecfdf5;color:#065f46}
+        .badge-logout{background:#fef2f2;color:#991b1b}
+        .badge-sale{background:#eff6ff;color:#1e40af}
+        .badge-edit{background:#fffbeb;color:#92400e}
+        .badge-return{background:#fdf4ff;color:#86198f}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-clipboard-list"></i> Audit Log</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>From Date</label>
+                    <input type="date" id="auditFrom" class="form-control" onchange="filterAudit()">
+                </div>
+                <div class="form-group">
+                    <label>To Date</label>
+                    <input type="date" id="auditTo" class="form-control" onchange="filterAudit()">
+                </div>
+                <div class="form-group">
+                    <label>Action Type</label>
+                    <select id="auditType" class="form-control" onchange="filterAudit()">
+                        <option value="">All</option>
+                        <option value="void_sale">Void Sale</option>
+                        <option value="edit_sale">Edit Sale</option>
+                        <option value="login">Login</option>
+                        <option value="logout">Logout</option>
+                        <option value="sale">Sale</option>
+                        <option value="return">Return</option>
+                        <option value="transfer">Transfer</option>
+                        <option value="order">Purchase Order</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>User</label>
+                    <input type="text" id="auditUser" class="form-control" placeholder="Username" oninput="filterAudit()">
+                </div>
+            </div>
+            <button class="btn btn-outline" onclick="exportAudit()"><i class="fas fa-download"></i> Export CSV</button>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-list"></i> Activity Log</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Timestamp</th><th>User</th><th>Action</th><th>Reference</th><th>Note</th></tr>
+                    </thead>
+                    <tbody id="auditBody">
+                        <tr><td colspan="5" class="empty-state">No audit entries recorded</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var auditEntries = [];
+function fmtDate(iso){ if(!iso) return '--'; var d=new Date(iso); return d.toLocaleString('en-NG'); }
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){ t.style.display='none'; },3000); }
+function badgeFor(action){
+    if(action==='void_sale') return '<span class="badge badge-logout">Void Sale</span>';
+    if(action==='edit_sale') return '<span class="badge badge-edit">Edit Sale</span>';
+    if(action==='login') return '<span class="badge badge-login">Login</span>';
+    if(action==='logout') return '<span class="badge badge-logout">Logout</span>';
+    if(action==='sale') return '<span class="badge badge-sale">Sale</span>';
+    if(action==='return') return '<span class="badge badge-return">Return</span>';
+    if(action==='transfer') return '<span class="badge badge-sale">Transfer</span>';
+    if(action==='order') return '<span class="badge badge-edit">Order</span>';
+    return '<span class="badge badge-edit">' + esc(action) + '</span>';
+}
+function fmtMoney(n){try{return StoreConfig.formatCurrency(n);}catch(e){return '₦'+(parseFloat(n)||0).toLocaleString('en-NG',{minimumFractionDigits:2});}}
+function safeParse(s){try{return JSON.parse(s);}catch(e){return {};}}
+function loadAudit(){
+    var tbody=$('auditBody');
+    tbody.innerHTML='<tr><td colspan="5" class="empty-state">Loading…</td></tr>';
+    API.get('/audit').then(function(list){
+        auditEntries=list||[];
+        filterAudit();
+    }).catch(function(e){tbody.innerHTML='<tr><td colspan="5" class="empty-state">Failed to load audit: '+(e.message||'error')+'</td></tr>';});
+}
+function renderAudit(list){
+    var tbody=$('auditBody');
+    if(!list||!list.length){tbody.innerHTML='<tr><td colspan="5" class="empty-state">No matching entries</td></tr>';return;}
+    tbody.innerHTML=list.slice(0,200).map(function(a){
+        var d=a.details?safeParse(a.details):{};
+        var note='';
+        if(a.action==='void_sale') note='Total: '+fmtMoney(d.total)+', Customer: '+(d.customer||'-')+', Payment: '+(d.payment||'-');
+        else if(a.action==='edit_sale') note='Total: '+fmtMoney(d.old_total)+' → '+fmtMoney(d.new_total)+', Customer: '+(d.old_customer||'-')+' → '+(d.new_customer||'-');
+        else note=esc(a.entity||'')+(a.details?' - '+esc(a.details):'');
+        return '<tr><td>' + esc(fmtDate(a.created_at)) + '</td><td>' + esc(a.user||'system') + '</td><td>' + badgeFor(a.action) + '</td><td>' + esc(a.entity_id||'-') + '</td><td>' + note + '</td></tr>';
+    }).join('');
+}
+function filterAudit(){
+    var from=$('auditFrom').value?new Date($('auditFrom').value):null;
+    var to=$('auditTo').value?new Date($('auditTo').value):null;
+    if(to) to.setHours(23,59,59,999);
+    var type=($('auditType').value||'').toLowerCase();
+    var user=($('auditUser').value||'').toLowerCase();
+    var filtered=auditEntries.filter(function(a){
+        var d=new Date(a.created_at);
+        if(from&&d<from) return false;
+        if(to&&d>to) return false;
+        if(type&&a.action!==type) return false;
+        if(user&&!(a.user||'').toLowerCase().indexOf(user)>-1) return false;
+        return true;
+    });
+    renderAudit(filtered);
+}
+function exportAudit(){
+    if(!auditEntries.length){showToast('No entries to export',true);return;}
+    var headers='Timestamp,User,Action,Entity,Entity ID,Details\n';
+    var rows=auditEntries.map(function(a){return [fmtDate(a.created_at),a.user||'',a.action,a.entity||'',a.entity_id||'',a.details||''].map(function(x){return '"'+String(x||'').replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+    var blob=new Blob([headers+rows],{type:'text/csv;charset=utf-8;'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download='audit-log.csv';a.click();
+    URL.revokeObjectURL(url);
+}
+document.addEventListener('DOMContentLoaded', function(){
+    if(!POS.requireAuth()) return;
+    loadAudit();
+});
+</script>
+</body>
+</html>
+
+
+
+
+

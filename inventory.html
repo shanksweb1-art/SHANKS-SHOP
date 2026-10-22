@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory - SHANKS SHOP MANAGEMENT</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="common.css">
+<script src="api.js"></script>
+<script src="common.js"></script>
+<style>
+.editable{cursor:pointer;padding:4px 8px;border-radius:4px;transition:background .15s}
+.editable:hover{background:#f1f5f9;outline:1px dashed #94a3b8}
+.editable input,.editable select{width:100%;padding:4px 6px;border:1px solid #10b981;border-radius:4px;font-size:13px;background:#fff;outline:none;box-shadow:0 0 0 2px rgba(16,185,129,.15)}
+.icon-btn.delete{background:#fff;color:#ef4444;border:1px solid #fecaca}
+.icon-btn.delete:hover{background:#fef2f2;border-color:#ef4444}
+</style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+  <div class="header"><h2><i class="fas fa-boxes"></i> Inventory</h2><div id="userMenu"></div><div class="header-clock" id="topClock"></div></div>
+  <div class="content">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label"><i class="fas fa-box"></i> Products</div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-sub">Catalog count</div></div>
+      <div class="kpi-card"><div class="kpi-label"><i class="fas fa-triangle-exclamation"></i> Low Stock</div><div class="kpi-value" id="kpiLow">0</div><div class="kpi-sub">Below reorder</div></div>
+      <div class="kpi-card"><div class="kpi-label"><i class="fas fa-ban"></i> Out of Stock</div><div class="kpi-value" id="kpiOut">0</div><div class="kpi-sub">Needs replenishment</div></div>
+      <div class="kpi-card"><div class="kpi-label"><i class="fas fa-calendar-xmark"></i> Expired</div><div class="kpi-value" id="kpiExpired">0</div><div class="kpi-sub">Past expiry</div></div>
+      <div class="kpi-card"><div class="kpi-label"><i class="fas fa-coins"></i> Stock Value</div><div class="kpi-value" id="kpiValue">?0.00</div><div class="kpi-sub">Cost value</div></div>
+    </div>
+    <div class="page-head">
+      <div><h3>Stock Control Center</h3><p>Search by barcode, batch, category, expiry or location and manage stock movements.</p></div>
+      <div class="actions"><button class="btn btn-primary" onclick="POS.navigateTo('variations.html')"><i class="fas fa-plus"></i> Add Product</button><button class="btn btn-outline" onclick="quickStockAdjust()"><i class="fas fa-sliders"></i> Bulk Update</button></div>
+    </div>
+    <div class="panel">
+      <div class="toolbar">
+        <input id="searchInput" class="search-input" placeholder="Search product, SKU, barcode, batch or category..." oninput="applyFilters()">
+        <select id="categoryFilter" class="form-select" onchange="applyFilters()"><option value="all">All Categories</option></select>
+        <select id="statusFilter" class="form-select" onchange="applyFilters()"><option value="all">All Status</option><option value="low">Low Stock</option><option value="out">Out of Stock</option><option value="expired">Expired</option><option value="healthy">Healthy Stock</option></select>
+        <button class="btn btn-info" onclick="exportInventory()"><i class="fas fa-file-export"></i> Export CSV</button>
+        <button class="btn btn-secondary" onclick="printInventory()"><i class="fas fa-print"></i> Print</button>
+      </div>
+    </div>
+    <div class="table-panel">
+      <div class="table-top"><strong><i class="fas fa-list"></i> Inventory Items</strong><span id="tableCount">0 items</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>SKU / Barcode</th><th>Product</th><th>Category</th><th>Stock</th><th>Reorder</th><th>Expiry</th><th>Value</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="inventoryBody"><tr><td colspan="9" class="empty-state">Loading inventory...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="stockModal">
+  <div class="modal">
+    <div class="modal-header"><h3><i class="fas fa-boxes-stacked"></i> Adjust Stock</h3><button class="modal-close" onclick="POS.closeModal('stockModal')">&times;</button></div>
+    <input type="hidden" id="stockProductId">
+    <div class="form-row">
+      <div class="form-group"><label>Product</label><input id="stockProductName" class="form-control" readonly></div>
+      <div class="form-group"><label>Current Stock</label><input id="stockCurrent" class="form-control" readonly></div>
+      <div class="form-group"><label>New Stock Qty</label><input id="stockNewQty" class="form-control" type="number" min="0" placeholder="Enter new quantity"></div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal('stockModal')">Cancel</button><button class="btn btn-success" onclick="saveStockAdjust()">Save Adjustment</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="bulkModal">
+  <div class="modal">
+    <div class="modal-header"><h3><i class="fas fa-bolt"></i> Bulk Stock Update</h3><button class="modal-close" onclick="POS.closeModal('bulkModal')">&times;</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Action</label><select id="bulkAction" class="form-select"><option value="add">Add to stock</option><option value="subtract">Subtract from stock</option><option value="set">Set exact stock</option></select></div>
+      <div class="form-group"><label>Quantity</label><input id="bulkQty" class="form-control" type="number" min="0" value="1"></div>
+      <div class="form-group"><label>Scope</label><select id="bulkScope" class="form-select"><option value="visible">Visible filtered items</option><option value="all">All inventory</option><option value="low">Low stock only</option></select></div>
+    </div>
+    <div class="alert warning"><i class="fas fa-info-circle"></i> Review the affected item count before applying a bulk update.</div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal('bulkModal')">Cancel</button><button class="btn btn-warning" onclick="applyBulkUpdate()">Apply Update</button></div>
+  </div>
+</div>
+<script>
+var products=[],filtered=[];
+function $(id){return document.getElementById(id);}
+function num(v,f){var n=parseFloat(v);return isNaN(n)?(f||0):n;}
+function statusFor(p){var now=new Date();var stock=num(p.stock);var expiry=p.expiry||p.expiry_date;if(stock<=0)return {label:'Out of Stock',cls:'badge-danger'};if(expiry&&new Date(expiry)<now)return {label:'Expired',cls:'badge-danger'};var reorder=num(p.reorder_level,10);if(stock<=reorder)return {label:'Low Stock',cls:'badge-warning'};return {label:'Healthy',cls:'badge-success'};}
+function updateKPIs(){var now=new Date();var total=products.length;var low=products.filter(function(p){var s=num(p.stock);return s>0&&s<=num(p.reorder_level,10)}).length;var out=products.filter(function(p){return num(p.stock)<=0}).length;var expired=products.filter(function(p){var e=p.expiry||p.expiry_date;return e&&new Date(e)<now}).length;var value=products.reduce(function(sum,p){return sum+num(p.stock)*num(p.cost_price||p.costPrice)},0);$('kpiTotal').textContent=total;$('kpiLow').textContent=low;$('kpiOut').textContent=out;$('kpiExpired').textContent=expired;$('kpiValue').textContent=POS.formatCurrency(value);}
+function fillCategories(){var cats=[];products.forEach(function(p){var c=p.category_name||p.category||'Uncategorized';if(cats.indexOf(c)<0)cats.push(c)});cats.sort();var sel=$('categoryFilter');sel.innerHTML='<option value="all">All Categories</option>';cats.forEach(function(c){sel.innerHTML+='<option value="'+POS.esc(c)+'">'+POS.esc(c)+'</option>'});}
+function render(){fillCategories();var q=$('searchInput').value.toLowerCase();var cat=$('categoryFilter').value;var st=$('statusFilter').value;filtered=products.filter(function(p){var s=statusFor(p);var text=[p.name,p.sku,p.barcode,p.batch_number,(p.batches||[]).map(function(b){return b.batch_number}).join(' '),p.category_name||p.category].join(' ').toLowerCase();var ok=!q||text.indexOf(q)>-1;ok=ok&&(cat==='all'||String(p.category_name||p.category||'Uncategorized')===cat);ok=ok&&(st==='all'||(st==='low'&&s.label==='Low Stock')||(st==='out'&&s.label==='Out of Stock')||(st==='expired'&&s.label==='Expired')||(st==='healthy'&&s.label==='Healthy'));return ok});$('tableCount').textContent=filtered.length+' of '+products.length+' items';var body=$('inventoryBody');if(!filtered.length){body.innerHTML='<tr><td colspan="9" class="empty-state">No inventory items match the current filters.</td></tr>';return;}body.innerHTML=filtered.map(function(p){var s=statusFor(p);return '<tr data-id="'+p.id+'"><td class="editable" data-field="sku" data-id="'+p.id+'">'+POS.esc(p.sku||p.barcode||'-')+'</td><td class="editable" data-field="name" data-id="'+p.id+'">'+POS.esc(p.name||'-')+'</td><td class="editable" data-field="category" data-id="'+p.id+'">'+POS.esc(p.category_name||p.category||'Uncategorized')+'</td><td class="editable" data-field="stock" data-id="'+p.id+'">'+POS.formatNumber(num(p.stock))+'</td><td class="editable" data-field="reorder" data-id="'+p.id+'">'+POS.formatNumber(num(p.reorder_level,10))+'</td><td class="editable" data-field="expiry" data-id="'+p.id+'">'+POS.formatDate(p.expiry||p.expiry_date)+'</td><td>'+POS.formatCurrency(num(p.stock)*num(p.cost_price||p.costPrice))+'</td><td><span class="badge '+s.cls+'">'+s.label+'</span></td><td class="action-btns"><button class="icon-btn edit" onclick="openStockModal('+p.id+')"><i class="fas fa-edit"></i></button><button class="icon-btn view" onclick="POS.navigateTo(\'variations.html?edit='+p.id+'\')"><i class="fas fa-eye"></i></button><button class="icon-btn delete" onclick="deleteProduct('+p.id+')"><i class="fas fa-trash"></i></button></td></tr>'}).join('');}
+function applyFilters(){render();initInlineEdit();}
+async function loadProducts(){try{products=await API.getProducts()||[];}catch(e){POS.showToast('Failed to load products: '+(e.message||'API error'),true);products=[];}updateKPIs();render();initInlineEdit();}
+function openStockModal(id){var p=products.find(function(x){return String(x.id)===String(id)});if(!p)return;$('stockProductId').value=p.id;$('stockProductName').value=p.name;$('stockCurrent').value=num(p.stock);$('stockNewQty').value=num(p.stock);POS.openModal('stockModal');}
+async function saveStockAdjust(){var id=$('stockProductId').value;var qty=parseInt($('stockNewQty').value)||0;try{await API.updateProduct(id,{stock:qty});POS.showToast('Stock adjusted');await loadProducts();POS.closeModal('stockModal');}catch(e){POS.showToast('Stock update failed: '+(e.message||'API error'),true);}}
+async function deleteProduct(id){if(!confirm('Delete this product permanently?'))return;try{await API.deleteProduct(id);POS.showToast('Product deleted');await loadProducts();}catch(e){POS.showToast('Delete failed: '+(e.message||'API error'),true);}}
+function quickStockAdjust(){POS.openModal('bulkModal');}
+async function applyBulkUpdate(){var action=$('bulkAction').value;var qty=parseInt($('bulkQty').value)||0;var scope=$('bulkScope').value;var items=scope==='visible'?filtered.slice():scope==='low'?products.filter(function(p){return num(p.stock)>0&&num(p.stock)<=num(p.reorder_level,10)}):products.slice();if(!items.length){POS.showToast('No items to update',true);return;}if(!confirm('Apply stock update to '+items.length+' items?'))return;try{for(var p of items){var next=action==='set'?qty:action==='add'?num(p.stock)+qty:num(p.stock)-qty;if(next<0)next=0;await API.updateProduct(p.id,{stock:next});}POS.showToast('Bulk update completed ('+items.length+' items)');await loadProducts();POS.closeModal('bulkModal');}catch(e){POS.showToast('Bulk update failed: '+(e.message||'API error'),true);}}
+function exportInventory(){var rows=filtered.length?filtered:products;if(!rows.length){POS.showToast('No inventory to export',true);return;}POS.exportCSV('Shanks_Shop_Management_inventory_'+POS.today()+'.csv',['SKU','Product','Category','Stock','Reorder','Expiry','Cost','Value','Status'],rows.map(function(p){var s=statusFor(p);return {SKU:p.sku||'',Product:p.name||'',Category:p.category_name||p.category||'',Stock:num(p.stock),Reorder:num(p.reorder_level,10),Expiry:p.expiry||p.expiry_date||'',Cost:num(p.cost_price||p.costPrice),Value:(num(p.stock)*num(p.cost_price||p.costPrice)).toFixed(2),Status:s.label}}));}
+function printInventory(){var rows=filtered.length?filtered:products;if(!rows.length){POS.showToast('No inventory to export',true);return;}POS.printTable('SHANKS SHOP MANAGEMENT Inventory Report',['SKU','Product','Category','Stock','Reorder','Expiry','Value','Status'],rows.map(function(p){var s=statusFor(p);return {SKU:p.sku||'',Product:p.name||'',Category:p.category_name||p.category||'',Stock:num(p.stock),Reorder:num(p.reorder_level,10),Expiry:p.expiry||p.expiry_date||'',Value:POS.formatCurrency(num(p.stock)*num(p.cost_price||p.costPrice)),Status:s.label}}));}
+function initInlineEdit(){var body=$('inventoryBody');if(!body)return;body.removeEventListener('click',handleInlineEdit);body.addEventListener('click',handleInlineEdit);}
+function handleInlineEdit(e){var cell=e.target.closest('.editable');if(!cell)return;if(cell.querySelector('input')||cell.querySelector('select'))return;var field=cell.dataset.field;var id=cell.dataset.id;var p=products.find(function(x){return String(x.id)===String(id);});if(!p)return;var current=field==='stock'?num(p.stock):field==='reorder'?num(p.reorder_level,10):field==='expiry'?(p.expiry||p.expiry_date||''):p[field]||'';var input=field==='expiry'?'<input type="date" value="'+POS.esc(current)+'">':field==='stock'||field==='reorder'?'<input type="number" value="'+POS.esc(current)+'" step="1">':'<input type="text" value="'+POS.esc(current)+'">';cell.innerHTML=input;var inp=cell.querySelector('input');inp.focus();inp.select();inp.addEventListener('blur',function(){saveInlineEdit(id,field,inp.value);});inp.addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();inp.blur();}if(ev.key==='Escape'){cell.innerHTML=field==='expiry'?POS.formatDate(p.expiry||p.expiry_date):field==='stock'?POS.formatNumber(num(p.stock)):field==='reorder'?POS.formatNumber(num(p.reorder_level,10)):POS.esc(p[field]||'-');}});}
+async function saveInlineEdit(id,field,value){var p=products.find(function(x){return String(x.id)===String(id)});if(!p)return;var updates={};if(field==='stock'){updates.stock=parseFloat(value)||0;}else if(field==='reorder'){updates.reorder_level=parseFloat(value)||0;}else if(field==='expiry'){updates.expiry=value;}else{updates[field]=value;}try{await API.updateProduct(id,updates);POS.showToast('Updated '+field);await loadProducts();}catch(e){POS.showToast('Update failed: '+(e.message||'API error'),true);}}
+document.addEventListener('DOMContentLoaded',function(){if(!POS.requireAuth())return;loadProducts();});
+</script>
+</body>
+</html>
+
+
+
+

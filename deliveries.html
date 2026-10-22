@@ -1,0 +1,263 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deliveries - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-truck-loading"></i> Deliveries</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-truck-loading"></i> Total Deliveries</div>
+                <div class="kpi-value" id="kpiTotal">0</div>
+                <div class="kpi-sub">All scheduled</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-clock"></i> Pending</div>
+                <div class="kpi-value" style="color:#f59e0b;" id="kpiPending">0</div>
+                <div class="kpi-sub">Awaiting</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-check-circle"></i> Delivered</div>
+                <div class="kpi-value" style="color:#10b981;" id="kpiDelivered">0</div>
+                <div class="kpi-sub">Completed</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-times-circle"></i> Delayed</div>
+                <div class="kpi-value" style="color:#ef4444;" id="kpiDelayed">0</div>
+                <div class="kpi-sub">Overdue</div>
+            </div>
+        </div>
+        <div class="page-head">
+            <div>
+                <h3>Delivery Management</h3>
+                <p>Schedule and track deliveries to customers.</p>
+            </div>
+            <button class="btn btn-primary" onclick="showAddDeliveryForm()"><i class="fas fa-plus"></i> Schedule Delivery</button>
+        </div>
+        <div class="panel">
+            <div class="toolbar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search deliveries..." oninput="renderDeliveries()">
+                <select id="statusFilter" class="form-select" onchange="renderDeliveries()">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in_transit">In Transit</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+                <button class="btn btn-info" onclick="exportDeliveriesCSV()"><i class="fas fa-file-export"></i> Export CSV</button>
+            </div>
+        </div>
+        <div id="addDeliveryForm" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="deliveryFormTitle">Schedule New Delivery</h3>
+                    <button class="modal-close" onclick="POS.closeModal('addDeliveryForm')">&times;</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">Customer</label>
+                        <select id="customerSelect" class="form-select"><option value="">Select Customer</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Delivery Date</label>
+                        <input type="date" id="deliveryDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" id="deliveryTime" class="form-control">
+                    </div>
+                    <div class="form-group full">
+                        <label>Address</label>
+                        <textarea id="deliveryAddress" class="form-control" placeholder="Delivery address"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Person</label>
+                        <input type="text" id="contactPerson" class="form-control" placeholder="Contact name">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Phone</label>
+                        <input type="tel" id="contactPhone" class="form-control" placeholder="Phone number">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="POS.closeModal('addDeliveryForm')">Cancel</button>
+                    <button class="btn btn-success" onclick="scheduleDelivery()">Save Delivery</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-panel">
+            <div class="table-top"><strong><i class="fas fa-list"></i> Deliveries</strong><span id="deliveryCount">0 deliveries</span></div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Address</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deliveriesTableBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var deliveries = [];
+var filteredDeliveries = [];
+var customersCache = [];
+var editDeliveryId = null;
+function $id(id) { return document.getElementById(id); }
+function updateKPIs() {
+    $id('kpiTotal').textContent = deliveries.length;
+    $id('kpiPending').textContent = deliveries.filter(function(d) { return d.status === 'pending'; }).length;
+    $id('kpiDelivered').textContent = deliveries.filter(function(d) { return d.status === 'delivered'; }).length;
+    $id('kpiDelayed').textContent = deliveries.filter(function(d) { return d.status === 'delayed'; }).length;
+}
+function showAddDeliveryForm() {
+    editDeliveryId = null;
+    $id('addDeliveryForm').classList.add('open');
+    $id('deliveryFormTitle').textContent = 'Schedule New Delivery';
+    $id('customerSelect').value = '';
+    $id('deliveryDate').value = '';
+    $id('deliveryTime').value = '';
+    $id('deliveryAddress').value = '';
+    $id('contactPerson').value = '';
+    $id('contactPhone').value = '';
+    loadCustomerOptions();
+}
+async function loadCustomerOptions() {
+    try {
+        customersCache = await API.getCustomers() || [];
+        $id('customerSelect').innerHTML = '<option value="">Select Customer</option>' + customersCache.map(function(c) {
+            return '<option value="' + c.id + '">' + POS.esc((c.firstName || '') + ' ' + (c.lastName || '')) + '</option>';
+        }).join('');
+    } catch (err) { POS.showToast('Failed to load customers: '+(err.message||'API error'), true); }
+}
+async function scheduleDelivery() {
+    var customer = $id('customerSelect').value;
+    var date = $id('deliveryDate').value;
+    var time = $id('deliveryTime').value;
+    if (!customer || !date) {
+        POS.showToast('Please select customer and delivery date', true);
+        return;
+    }
+    try {
+        if (editDeliveryId !== null) {
+            await API.updateDelivery(editDeliveryId, { customer: customer, date: date, time: time, address: $id('deliveryAddress').value, contact: $id('contactPerson').value, phone: $id('contactPhone').value });
+            POS.showToast('Delivery updated!');
+        } else {
+            var newId = deliveries.length > 0 ? Math.max.apply(null, deliveries.map(function(d) { return d.id; })) + 1 : 1;
+            var deliveryId = 'DEL-' + String(newId).padStart(3, '0');
+            await API.saveDelivery({ id: newId, deliveryId: deliveryId, customer: customer, date: date, time: time, address: $id('deliveryAddress').value, contact: $id('contactPerson').value, phone: $id('contactPhone').value, status: 'pending' });
+            POS.showToast('Delivery scheduled!');
+        }
+        POS.closeModal('addDeliveryForm');
+        renderDeliveries();
+    } catch (err) {
+        POS.showToast(err.message || 'Failed to save delivery', true);
+    }
+}
+async function renderDeliveries() {
+    try {
+        deliveries = await API.getDeliveries() || [];
+        filteredDeliveries = [...deliveries];
+    } catch (err) {
+        deliveries = [];
+        POS.showToast('Failed to load deliveries', true);
+    }
+    updateKPIs();
+    var q = $id('searchInput').value.toLowerCase();
+    var st = $id('statusFilter').value;
+    filteredDeliveries = deliveries.filter(function(d) {
+        var text = [(d.customer || ''), (d.address || '')].join(' ').toLowerCase();
+        var matchesSearch = !q || text.indexOf(q) > -1;
+        var matchesStatus = st === 'all' || d.status === st;
+        return matchesSearch && matchesStatus;
+    });
+    $id('deliveryCount').textContent = filteredDeliveries.length + ' deliveries';
+    var tbody = $id('deliveriesTableBody');
+    tbody.innerHTML = filteredDeliveries.map(function(d) {
+        return '<tr><td>' + POS.esc(d.deliveryId || '') + '</td><td>' + POS.esc(d.customer || '') + '</td><td>' + POS.formatDate(d.date) + '</td><td>' + POS.esc(d.time || '') + '</td><td>' + POS.esc(d.address || '') + '</td><td>' + POS.statusBadge(d.status || 'pending') + '</td><td class="action-btns"><button class="icon-btn view" onclick="viewDelivery(' + d.id + ')"><i class="fas fa-eye"></i></button><button class="icon-btn edit" onclick="editDelivery(' + d.id + ')"><i class="fas fa-edit"></i></button><button class="icon-btn delete" onclick="deleteDelivery(' + d.id + ')"><i class="fas fa-trash"></i></button></td></tr>';
+    }).join('') || '<tr><td colspan="7" class="empty-state">No deliveries found</td></tr>';
+}
+function viewDelivery(id) {
+    var d = deliveries.find(function(del) { return del.id == id; });
+    if (!d) return;
+    var modalHtml = '<div class="modal-overlay open" id="viewModal"><div class="modal"><div class="modal-header"><h3>Delivery Details</h3><button class="modal-close" onclick="POS.closeModal(\'viewModal\')">&times;</button></div>' +
+        '<div class="kpi-grid"><div class="kpi-card"><div class="kpi-label">Delivery ID</div><div class="kpi-value">' + POS.esc(d.deliveryId) + '</div></div><div class="kpi-card"><div class="kpi-label">Customer</div><div class="kpi-value">' + POS.esc(d.customer) + '</div></div></div>' +
+        '<div class="form-row" style="margin-top:15px;"><div class="form-group"><label>Date</label><span>' + POS.formatDate(d.date) + '</span></div><div class="form-group"><label>Address</label><span>' + POS.esc(d.address || '-') + '</span></div></div>' +
+        '<div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal(\'viewModal\')">Close</button></div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+function editDelivery(id) {
+    var d = deliveries.find(function(del) { return del.id == id; });
+    if (!d) return;
+    editDeliveryId = id;
+    $id('addDeliveryForm').classList.add('open');
+    $id('deliveryFormTitle').textContent = 'Edit Delivery';
+    loadCustomerOptions().then(function() { $id('customerSelect').value = d.customerId || d.customer; });
+    $id('deliveryDate').value = d.date;
+    $id('deliveryTime').value = d.time;
+    $id('deliveryAddress').value = d.address;
+    $id('contactPerson').value = d.contact;
+    $id('contactPhone').value = d.phone;
+}
+async function deleteDelivery(id) {
+    if (!confirm('Delete this delivery?')) return;
+    try {
+        await API.deleteDelivery(id);
+        POS.showToast('Delivery deleted!');
+        renderDeliveries();
+    } catch (err) {
+        POS.showToast(err.message || 'Delete failed', true);
+    }
+}
+function exportDeliveriesCSV() {
+    POS.exportCSV('deliveries_' + POS.today() + '.csv',
+        ['Delivery ID', 'Customer', 'Date', 'Time', 'Address', 'Status'],
+        filteredDeliveries.map(function(d) {
+            return {
+                'Delivery ID': d.deliveryId || '',
+                Customer: d.customer || '',
+                Date: d.date || '',
+                Time: d.time || '',
+                Address: d.address || '',
+                Status: d.status || ''
+            };
+        })
+    );
+}
+document.addEventListener('DOMContentLoaded', function() {
+    if (!POS.requireAuth()) return;
+    POS.renderSidebar();
+    POS.renderUserMenu();
+    renderDeliveries();
+});
+</script>
+</body>
+</html>
+
+
+

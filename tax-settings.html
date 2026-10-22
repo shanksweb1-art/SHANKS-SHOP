@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax & Vat Settings - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-percent"></i> Tax & Vat Settings</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <h3><i class="fas fa-gear"></i> Tax Configuration</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tax Name</label>
+                    <input type="text" id="taxName" class="form-control" placeholder="e.g. VAT, Sales Tax">
+                </div>
+                <div class="form-group">
+                    <label>Rate (%)</label>
+                    <input type="number" id="taxRate" class="form-control" min="0" max="100" step="0.1" placeholder="0.0">
+                </div>
+                <div class="form-group">
+                    <label>Apply To</label>
+                    <select id="taxApply" class="form-control">
+                        <option value="all">All Products</option>
+                        <option value="category">Specific Category</option>
+                        <option value="product">Specific Product</option>
+                        <option value="none">No Tax</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveTax()"><i class="fas fa-save"></i> Save Configuration</button>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-list"></i> Active Tax Rules</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>Rate</th><th>Apply To</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="taxBody">
+                        <tr><td colspan="5" class="empty-state">No tax rules configured</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-calculator"></i> Tax Estimation</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Subtotal (₦)</label>
+                    <input type="number" id="estSub" class="form-control" placeholder="0.00" step="0.01" oninput="calcEst()">
+                </div>
+                <div class="form-group">
+                    <label>Taxable Amount (₦)</label>
+                    <input type="text" id="estTaxable" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Tax Amount (₦)</label>
+                    <input type="text" id="estTaxAmt" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Total (₦)</label>
+                    <input type="text" id="estTotal" class="form-control" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var taxRules=[];
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function fmt(n){ try { return StoreConfig.formatCurrency(n); } catch(e) { return '₦' + (parseFloat(n)||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2}); } }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){t.style.display='none';},3000); }
+function saveTax(){
+    var name=$('taxName').value.trim();
+    var rate=parseFloat($('taxRate').value)||0;
+    var apply=$('taxApply').value;
+    if(!name){ showToast('Tax name is required', true); return; }
+    var record={ id:'TAX-'+Date.now(), name:name, rate:rate, apply:apply, status:'active' };
+    taxRules.unshift(record);
+    try{ localStorage.setItem('SHEDS_tax_rules', JSON.stringify(taxRules)); }catch(e){}
+    showToast('Tax rule saved');
+    resetTaxForm();
+    renderTaxes();
+}
+function resetTaxForm(){ $('taxName').value='';$('taxRate').value='';$('taxApply').value='all'; }
+function badgeFor(s){ return s==='active'?'<span class="badge badge-approved">Active</span>':'<span class="badge badge-cancelled">Inactive</span>'; }
+function renderTaxes(){
+    var tbody=$('taxBody');
+    if(!taxRules.length){ tbody.innerHTML='<tr><td colspan="5" class="empty-state">No tax rules configured</td></tr>'; return; }
+    tbody.innerHTML=taxRules.map(function(t){
+        var applyLabel=t.apply==='all'?'All Products':t.apply==='category'?'By Category':t.apply==='product'?'By Product':'None';
+        return '<tr><td><strong>'+esc(t.name)+'</strong></td><td>'+esc(t.rate)+'%</td><td>'+esc(applyLabel)+'</td><td>'+badgeFor(t.status)+'</td><td><button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="toggleTax(\''+t.id+'\')"><i class="fas fa-power-off"></i></button> <button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deleteTax(\''+t.id+'\')"><i class="fas fa-trash"></i></button></td></tr>';
+    }).join('');
+}
+function toggleTax(id){
+    var rule=taxRules.find(function(t){return t.id===id;});
+    if(!rule) return;
+    rule.status=rule.status==='active'?'inactive':'active';
+    try{ localStorage.setItem('SHEDS_tax_rules',JSON.stringify(taxRules)); }catch(e){}
+    renderTaxes(); showToast('Tax rule updated');
+}
+function deleteTax(id){ if(!confirm('Delete this tax rule?')) return; taxRules=taxRules.filter(function(t){return t.id!==id;}); try{ localStorage.setItem('SHEDS_tax_rules',JSON.stringify(taxRules)); }catch(e){} renderTaxes(); showToast('Deleted'); }
+function calcEst(){
+    var sub=parseFloat($('estSub').value)||0;
+    var rate=taxRules.find(function(t){return t.status==='active';});
+    var r=rate?rate.rate:0;
+    var taxable=r>0?sub:0;
+    var taxAmt=taxable*(r/100);
+    var total=sub+taxAmt;
+    $('estTaxable').value=fmt(taxable);
+    $('estTaxAmt').value=fmt(taxAmt);
+    $('estTotal').value=fmt(total);
+}
+function loadTaxes(){ try{ taxRules=JSON.parse(localStorage.getItem('SHEDS_tax_rules')||'[]'); if(!Array.isArray(taxRules)) taxRules=[]; }catch(e){ taxRules=[]; } renderTaxes(); }
+document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; loadTaxes(); });
+</script>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescriptions / Rx - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        .btn-danger{background:#ef4444;color:#fff}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .badge-pending{background:#fffbeb;color:#92400e}
+        .badge-dispensed{background:#eff6ff;color:#1e40af}
+        .badge-collected{background:#ecfdf5;color:#065f46}
+        .badge-cancelled{background:#fef2f2;color:#991b1b}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-prescription"></i> Prescriptions / Rx</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <h3><i class="fas fa-plus"></i> New Prescription</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Patient Name</label>
+                    <input type="text" id="rxPatient" class="form-control" placeholder="Full name">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="rxPhone" class="form-control" placeholder="Phone number">
+                </div>
+                <div class="form-group">
+                    <label>Prescribing Doctor</label>
+                    <input type="text" id="rxDoctor" class="form-control" placeholder="Doctor name">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Drug / Product</label>
+                    <input type="text" id="rxDrug" class="form-control" placeholder="Drug name">
+                </div>
+                <div class="form-group">
+                    <label>Dosage</label>
+                    <input type="text" id="rxDosage" class="form-control" placeholder="e.g. 500mg">
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="rxQty" class="form-control" min="1" value="1">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Refills</label>
+                    <input type="number" id="rxRefills" class="form-control" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <input type="text" id="rxNotes" class="form-control" placeholder="Directions or special instructions">
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="saveRx()"><i class="fas fa-save"></i> Save Prescription</button>
+                <button class="btn btn-outline" onclick="resetRx()"><i class="fas fa-eraser"></i> Clear</button>
+            </div>
+        </div>
+        <div class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap;">
+                <h3 style="margin:0;"><i class="fas fa-list"></i> Rx Queue</h3>
+                <select id="rxFilterStatus" class="form-control" style="max-width:180px;" onchange="renderRx()">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="dispensed">Dispensed</option>
+                    <option value="collected">Collected</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Patient</th><th>Doctor</th><th>Drug</th><th>Dosage</th><th>Qty</th><th>Refills</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="rxBody">
+                        <tr><td colspan="9" class="empty-state">No prescriptions recorded yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var prescriptions = [];
+function fmtDate(iso){ if(!iso) return '--'; var d=new Date(iso); return d.toLocaleString('en-NG'); }
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){ t.style.display='none'; },3000); }
+function saveRx(){
+    var patient=$('rxPatient').value.trim();
+    var phone=$('rxPhone').value.trim();
+    var doctor=$('rxDoctor').value.trim();
+    var drug=$('rxDrug').value.trim();
+    var dosage=$('rxDosage').value.trim();
+    var qty=parseInt($('rxQty').value)||0;
+    var refills=parseInt($('rxRefills').value)||0;
+    var notes=$('rxNotes').value.trim();
+    if(!patient||!drug||!dosage||qty<=0){ showToast('Patient name, drug, dosage and quantity are required', true); return; }
+    var record={ id:'RX-'+Date.now(), date:new Date().toISOString(), patient:patient, phone:phone, doctor:doctor, drug:drug, dosage:dosage, qty:qty, refills:refills, notes:notes, status:'pending' };
+    prescriptions.unshift(record);
+    try{ localStorage.setItem('SHEDS_rx', JSON.stringify(prescriptions)); }catch(e){}
+    showToast('Prescription saved');
+    resetRx();
+    renderRx();
+    logAction('edit', record.id, 'New prescription for ' + patient);
+}
+function resetRx(){
+    $('rxPatient').value='';$('rxPhone').value='';$('rxDoctor').value='';$('rxDrug').value='';$('rxDosage').value='';$('rxQty').value=1;$('rxRefills').value=0;$('rxNotes').value='';
+}
+function badgeFor(s){
+    if(s==='pending') return '<span class="badge badge-pending">Pending</span>';
+    if(s==='dispensed') return '<span class="badge badge-dispensed">Dispensed</span>';
+    if(s==='collected') return '<span class="badge badge-collected">Collected</span>';
+    if(s==='cancelled') return '<span class="badge badge-cancelled">Cancelled</span>';
+    return '<span class="badge badge-pending">'+esc(s)+'</span>';
+}
+function renderRx(){
+    var filter = ($('rxFilterStatus').value||'').toLowerCase();
+    var tbody=$('rxBody');
+    var list = prescriptions;
+    if(filter) list = list.filter(function(r){ return r.status===filter; });
+    if(!list.length){ tbody.innerHTML='<tr><td colspan="9" class="empty-state">No prescriptions match filter</td></tr>'; return; }
+    tbody.innerHTML=list.map(function(r){
+        var actions='';
+        if(r.status==='pending') actions+='<button class="btn btn-primary" style="padding:6px 10px;font-size:11px;" onclick="updateRxStatus(\''+r.id+'\',\'dispensed\')"><i class="fas fa-check"></i> Dispense</button> ';
+        if(r.status==='dispensed') actions+='<button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="updateRxStatus(\''+r.id+'\',\'collected\')"><i class="fas fa-box"></i> Collect</button> ';
+        actions+='<button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="updateRxStatus(\''+r.id+'\',\'cancelled\')"><i class="fas fa-times"></i> Cancel</button>';
+        return '<tr><td>'+esc(fmtDate(r.date))+'</td><td>'+esc(r.patient)+(r.phone?'<br><small>'+esc(r.phone)+'</small>':'')+'</td><td>'+esc(r.doctor||'-')+'</td><td>'+esc(r.drug)+'</td><td>'+esc(r.dosage)+'</td><td>'+esc(r.qty)+'</td><td>'+esc(r.refills)+'</td><td>'+badgeFor(r.status)+'</td><td style="display:flex;gap:6px;flex-wrap:wrap;">'+actions+'</td></tr>';
+    }).join('');
+}
+function updateRxStatus(id,status){
+    var rx=prescriptions.find(function(r){return r.id===id;});
+    if(!rx) return;
+    rx.status=status;
+    try{ localStorage.setItem('SHEDS_rx', JSON.stringify(prescriptions)); }catch(e){}
+    renderRx();
+    showToast('Prescription marked as ' + status);
+    logAction('edit', id, 'Rx status -> ' + status);
+}
+function loadRx(){
+    try{ prescriptions=JSON.parse(localStorage.getItem('SHEDS_rx')||'[]'); if(!Array.isArray(prescriptions)) prescriptions=[]; }catch(e){ prescriptions=[]; }
+    renderRx();
+}
+function logAction(action, ref, note){
+    var user=API.getUserName?API.getUserName():'System';
+    API.post('/audit-log',{action:action,entity:'prescription',entity_id:String(ref||''),details:note||'',user:user}).catch(function(){});
+}
+document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; loadRx(); });
+</script>
+</body>
+</html>
+
+
+
+

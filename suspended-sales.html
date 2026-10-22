@@ -1,0 +1,556 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suspended Sales - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <style>
+        .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:2500;padding:20px}
+        .modal-backdrop.open{display:flex}
+        .modal-card{background:#fff;border-radius:16px;width:100%;max-width:760px;max-height:86vh;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,.25)}
+        .modal-head{padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .modal-body{padding:20px;overflow-y:auto;max-height:calc(86vh - 150px)}
+        .modal-actions{padding:16px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+        .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}
+        .detail-box{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+        .detail-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#64748b;font-weight:800;margin-bottom:6px}
+        .detail-value{font-weight:700;color:#1f2937;word-break:break-word}
+        .notes-area{width:100%;min-height:90px;padding:12px;border:1px solid #e5e7eb;border-radius:10px;resize:vertical;font-family:inherit}
+        .sortable{cursor:pointer;user-select:none;white-space:nowrap}
+        .sortable:hover{background:#f1f5f9}
+        .sort-icon{margin-left:4px;font-size:11px;color:#94a3b8}
+        .filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+        .filter-chip{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;cursor:pointer;border:1px solid var(--border);background:#fff;transition:.2s}
+        .filter-chip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+        .row-aged{background:#fef2f2 !important}
+        .row-aged td:first-child{border-left:3px solid #ef4444}
+        .badge-aged{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+        .badge-reason{background:#f1f5f9;color:#475568;border:1px solid #e2e8f0;font-size:11px}
+        .kpi-sub{font-size:11px;color:#64748b;margin-top:4px;font-weight:700}
+        @media(max-width:640px){.detail-grid{grid-template-columns:1fr}.modal-actions .btn{width:100%}.filter-bar{flex-direction:column;align-items:stretch}}
+    </style>
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-pause-circle"></i> Suspended Sales</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-pause"></i> Held Sales</div>
+                <div class="kpi-value" id="kpiHeld">0</div>
+                <div class="kpi-sub" id="kpiHeldSub">Transactions on hold</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-coins"></i> Total Value</div>
+                <div class="kpi-value" id="kpiValue">?0.00</div>
+                <div class="kpi-sub">Combined value</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-clock"></i> Oldest Hold</div>
+                <div class="kpi-value" id="kpiOldest" style="font-size:18px;">--</div>
+                <div class="kpi-sub" id="kpiOldestSub">Ago</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> Stale (>24h)</div>
+                <div class="kpi-value" id="kpiStale" style="color:#ef4444;">0</div>
+                <div class="kpi-sub">Needs attention</div>
+            </div>
+        </div>
+        <div class="page-head">
+            <div>
+                <h3>Held Transactions</h3>
+                <p>Manage suspended sales. Recall, edit, or release transactions back to the POS.</p>
+            </div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="navigateTo('sales.html')"><i class="fas fa-shopping-cart"></i> Sales</button>
+                <button class="btn btn-secondary" onclick="refreshHeld()"><i class="fas fa-sync"></i> Refresh</button>
+                <button class="btn btn-warning" onclick="bulkRecallSelected()" id="bulkRecallBtn" style="display:none;"><i class="fas fa-undo"></i> Recall Selected (<span id="bulkRecallCount">0</span>)</button>
+                <button class="btn btn-danger" onclick="deleteSelectedHeld()"><i class="fas fa-trash-alt"></i> Delete Selected</button>
+                <button class="btn btn-outline" onclick="clearOldHeld()"><i class="fas fa-broom"></i> Clear Old (>24h)</button>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="toolbar">
+                <input id="searchInput" class="search-input" placeholder="Search customer, items, notes..." oninput="renderHeldList()">
+                <select id="reasonFilter" class="form-control" style="width:auto;" onchange="renderHeldList()">
+                    <option value="">All Reasons</option>
+                    <option value="customer_waiting">Customer Waiting</option>
+                    <option value="out_of_stock">Out of Stock</option>
+                    <option value="payment_issue">Payment Issue</option>
+                    <option value="price_check">Price Check</option>
+                    <option value="prescription">Awaiting Rx</option>
+                    <option value="other">Other</option>
+                </select>
+                <select id="ageFilter" class="form-control" style="width:auto;" onchange="renderHeldList()">
+                    <option value="">All Ages</option>
+                    <option value="today">Today</option>
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="week">This Week</option>
+                    <option value="stale">Stale (>24h)</option>
+                </select>
+                <button class="btn btn-info" onclick="exportHeldCSV()"><i class="fas fa-file-export"></i> Export CSV</button>
+                <button class="btn btn-secondary" onclick="printHeldList()"><i class="fas fa-print"></i> Print</button>
+            </div>
+        </div>
+        <div class="table-panel">
+            <div class="table-top">
+                <strong><i class="fas fa-list"></i> Held Transactions List</strong>
+                <span id="selectedCount">Manage suspended transactions</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllHeld" onclick="toggleSelectAllHeld()"></th>
+                            <th class="sortable" onclick="sortHeld('idx')"># <span class="sort-icon" id="sort-idx"></span></th>
+                            <th class="sortable" onclick="sortHeld('date')">Date <span class="sort-icon" id="sort-date">â–¼</span></th>
+                            <th>Customer</th>
+                            <th>Reason <span class="sort-icon"></span></th>
+                            <th class="sortable" onclick="sortHeld('items')">Items <span class="sort-icon" id="sort-items"></span></th>
+                            <th class="sortable" onclick="sortHeld('total')">Total <span class="sort-icon" id="sort-total"></span></th>
+                            <th>Age</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="heldBody">
+                        <tr><td colspan="9" class="empty-state">Loading held transactions...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal-backdrop" id="transactionModal">
+    <div class="modal-card">
+        <div class="modal-head">
+            <h3 id="modalTitle">Transaction Details</h3>
+            <button class="icon-btn" onclick="closeTransactionModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeTransactionModal()">Close</button>
+            <button class="btn btn-primary" onclick="saveTransactionNotes()">Save Notes</button>
+        </div>
+    </div>
+</div>
+<script>
+var heldTransactions = [];
+var currentTransactionIndex = null;
+var selectedHeldIds = [];
+var sortField = 'date';
+var sortDir = 'desc';
+var autoRefreshInterval = null;
+const STALE_HOURS = 24;
+function calculateTotal(t) {
+    return (t.cart || []).reduce(function(s, x) {
+        return s + (parseFloat(x.price || 0) * parseFloat(x.qty || 0)) - (parseFloat(x.discount || 0));
+    }, 0);
+}
+function getItemCount(t) {
+    return (t.cart || []).reduce(function(s, x) { return s + (parseFloat(x.qty || 0)); }, 0);
+}
+function getAgeHours(t) {
+    if (!t.suspendedAt) return 0;
+    var d = new Date(t.suspendedAt.replace(' ', 'T'));
+    if (isNaN(d)) return 0;
+    return (Date.now() - d.getTime()) / (1000 * 60 * 60);
+}
+function formatAge(hours) {
+    if (hours < 1) return Math.round(hours * 60) + 'm';
+    if (hours < 24) return hours.toFixed(1) + 'h';
+    return Math.round(hours / 24) + 'd ' + Math.round(hours % 24) + 'h';
+}
+function isStale(t) { return getAgeHours(t) >= STALE_HOURS; }
+function getReasonLabel(t) { return t.reason || 'other'; }
+function updateSelectedCount(list) {
+    var total = list.reduce(function(sum, t) { return sum + calculateTotal(t); }, 0);
+    var selected = selectedHeldIds.length;
+    $('selectedCount').textContent = list.length + ' transaction' + (list.length === 1 ? '' : 's') + ' | ' + POS.formatCurrency(total) + (selected ? ' | ' + selected + ' selected' : '');
+    var btn = $('bulkRecallBtn');
+    var cnt = $('bulkRecallCount');
+    if (btn && cnt) {
+        if (selected > 0) { btn.style.display = 'inline-flex'; cnt.textContent = selected; }
+        else { btn.style.display = 'none'; }
+    }
+}
+function toggleSelectAllHeld() {
+    var checked = $('selectAllHeld').checked;
+    selectedHeldIds = checked ? heldTransactions.map(function(t, i) { return i; }) : [];
+    renderHeldList();
+}
+function toggleHeldSelection(idx) {
+    var pos = selectedHeldIds.indexOf(idx);
+    if (pos > -1) selectedHeldIds.splice(pos, 1);
+    else selectedHeldIds.push(idx);
+    renderHeldList();
+}
+function sortHeld(field) {
+    if (sortField === field) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    else { sortField = field; sortDir = 'asc'; }
+    renderHeldList();
+}
+function applySort(list) {
+    list = list.slice();
+    list.sort(function(a, b) {
+        var va, vb;
+        if (sortField === 'date') { va = a && a.suspendedAt ? new Date(a.suspendedAt.replace(' ', 'T')).getTime() : 0; vb = b && b.suspendedAt ? new Date(b.suspendedAt.replace(' ', 'T')).getTime() : 0; }
+        else if (sortField === 'total') { va = calculateTotal(a); vb = calculateTotal(b); }
+        else if (sortField === 'items') { va = getItemCount(a); vb = getItemCount(b); }
+        else if (sortField === 'idx') { va = heldTransactions.indexOf(a); vb = heldTransactions.indexOf(b); }
+        else { va = calculateTotal(a); vb = calculateTotal(b); }
+        if (va < vb) return sortDir === 'asc' ? -1 : 1;
+        if (va > vb) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+    return list;
+}
+function deleteSelectedHeld() {
+    if (!selectedHeldIds.length) { POS.showToast('Select transactions to delete', true); return; }
+    if (!confirm('Delete ' + selectedHeldIds.length + ' selected held transaction' + (selectedHeldIds.length === 1 ? '' : 's?') + '\nThis action cannot be undone.')) return;
+    selectedHeldIds.sort(function(a, b) { return b - a; }).forEach(function(idx) {
+        if (heldTransactions[idx]) heldTransactions.splice(idx, 1);
+    });
+    selectedHeldIds = [];
+    saveHeld();
+    loadHeld();
+    POS.showToast('Selected transactions deleted');
+}
+function bulkRecallSelected() {
+    if (!selectedHeldIds.length) { POS.showToast('Select transactions to recall', true); return; }
+    var count = selectedHeldIds.length;
+    if (!confirm('Recall ' + count + ' held transaction' + (count === 1 ? '' : 's') + '?\nEach will be loaded into the Sales cart sequentially. You will need to checkout each one individually.')) return;
+    var sorted = selectedHeldIds.slice().sort(function(a, b) { return b - a; });
+    sorted.forEach(function(idx) {
+        if (!heldTransactions[idx]) return;
+        var t = heldTransactions[idx];
+        localStorage.setItem('salesCart', JSON.stringify(t.cart || []));
+        if (t.customer) localStorage.setItem('salesCustomer', JSON.stringify(t.customer));
+        else localStorage.removeItem('salesCustomer');
+        heldTransactions.splice(idx, 1);
+    });
+    selectedHeldIds = [];
+    saveHeld();
+    loadHeld();
+    POS.showToast(count + ' transaction' + (count === 1 ? '' : 's') + ' recalled - checkout each in Sales');
+    setTimeout(function() { navigateTo('sales.html'); }, 1200);
+}
+function clearSearch() {
+    $('searchInput').value = ''; $('reasonFilter').value = ''; $('ageFilter').value = '';
+    renderHeldList();
+}
+function clearOldHeld() {
+    var stale = heldTransactions.filter(function(t) { return isStale(t); });
+    if (!stale.length) { POS.showToast('No stale transactions (>24h) found'); return; }
+    if (!confirm('Clear ' + stale.length + ' stale transaction' + (stale.length === 1 ? '' : 's') + ' held for more than 24 hours?\n(This does not affect today\'s holds.)')) return;
+    heldTransactions = heldTransactions.filter(function(t) { return !isStale(t); });
+    selectedHeldIds = [];
+    saveHeld();
+    loadHeld();
+    POS.showToast(stale.length + ' stale transactions cleared');
+}
+function openTransactionModal(idx) {
+    var t = heldTransactions[idx];
+    if (!t) return;
+    currentTransactionIndex = idx;
+    var items = (t.cart || []).map(function(x, i) {
+        var lineTotal = (parseFloat(x.price || 0) * parseFloat(x.qty || 0)) - (parseFloat(x.discount || 0));
+        var pkg = x.pkgType ? ' <small>(' + POS.esc(x.pkgType) + ')</small>' : '';
+        return '<tr><td>' + (i + 1) + '</td><td>' + POS.esc(x.name || 'Product') + pkg + '</td><td>' + POS.formatNumber(x.qty || 0) + '</td><td>' + POS.formatCurrency(x.price || 0) + '</td><td>' + POS.formatCurrency(x.discount || 0) + '</td><td>' + POS.formatCurrency(lineTotal) + '</td></tr>';
+    }).join('');
+    var age = getAgeHours(t);
+    var ageStr = formatAge(age);
+    var staleClass = isStale(t) ? 'badge-aged' : 'badge-success';
+    var reason = t.reason ? t.reason.replace(/_/g, ' ').replace(/\b\w/g, function(l){return l.toUpperCase();}) : 'Not specified';
+    $('modalTitle').textContent = 'Transaction Details';
+    $('modalBody').innerHTML =
+        '<div class="detail-grid">' +
+            '<div class="detail-box"><div class="detail-label">Customer</div><div class="detail-value">' + POS.esc(t.customer ? t.customer.name : 'Walk-in Customer') + '</div></div>' +
+            '<div class="detail-box"><div class="detail-label">Suspended At</div><div class="detail-value">' + POS.esc(POS.formatDate(t.suspendedAt)) + ' <small>(' + ageStr + ' ago)</small></div></div>' +
+            '<div class="detail-box"><div class="detail-label">Payment Method</div><div class="detail-value">' + POS.esc((t.payment || '').replace(/_/g, ' ') || 'Not set') + '</div></div>' +
+            '<div class="detail-box"><div class="detail-label">Amount Tendered</div><div class="detail-value">' + POS.formatCurrency(t.tendered || 0) + '</div></div>' +
+            '<div class="detail-box"><div class="detail-label">Hold Reason</div><div class="detail-value"><span class="badge badge-reason">' + POS.esc(reason) + '</span></div></div>' +
+            '<div class="detail-box"><div class="detail-label">Status</div><div class="detail-value"><span class="badge ' + staleClass + '">' + (isStale(t) ? 'STALE' : 'Recent') + '</span></div></div>' +
+        '</div>' +
+        '<div class="detail-box" style="margin-bottom:16px;"><div class="detail-label">Notes</div><div class="detail-value">' + (t.notes ? POS.esc(t.notes) : '<span style="color:#94a3b8;">No notes added</span>') + '</div></div>' +
+        '<table><thead><tr><th>#</th><th>Item</th><th>Qty.</th><th>Price</th><th>Discount</th><th>Total</th></tr></thead><tbody>' +
+        (items || '<tr><td colspan="6" class="empty-state">No items</td></tr>') +
+        '</tbody></table>';
+    POS.openModal('transactionModal');
+}
+function editTransactionNotes(idx) {
+    var t = heldTransactions[idx];
+    if (!t) return;
+    currentTransactionIndex = idx;
+    var reasonOptions = ['customer_waiting','out_of_stock','payment_issue','price_check','prescription','other'];
+    var reasonSelect = reasonOptions.map(function(r) {
+        var label = r.replace(/_/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase();});
+        return '<option value="' + r + '"' + (t.reason === r ? ' selected' : '') + '>' + label + '</option>';
+    }).join('');
+    $('modalTitle').textContent = 'Edit Transaction';
+    $('modalBody').innerHTML =
+        '<div class="detail-grid">' +
+            '<div class="detail-box"><div class="detail-label">Customer</div><div class="detail-value">' + POS.esc(t.customer ? t.customer.name : 'Walk-in Customer') + '</div></div>' +
+            '<div class="detail-box"><div class="detail-label">Total</div><div class="detail-value">' + POS.formatCurrency(calculateTotal(t)) + '</div></div>' +
+        '</div>' +
+        '<div class="form-group" style="margin-bottom:14px;"><label class="required">Hold Reason</label><select id="modalReason" class="form-control">' + reasonSelect + '</select></div>' +
+        '<label>Notes</label>' +
+        '<textarea id="modalNotes" class="notes-area" placeholder="Add transaction notes...">' + POS.esc(t.notes || '') + '</textarea>';
+    POS.openModal('transactionModal');
+    setTimeout(function() { $('modalNotes').focus(); }, 50);
+}
+function saveTransactionNotes() {
+    if (currentTransactionIndex === null || !heldTransactions[currentTransactionIndex]) return;
+    heldTransactions[currentTransactionIndex].notes = $('modalNotes').value.trim();
+    heldTransactions[currentTransactionIndex].reason = $('modalReason').value;
+    saveHeld();
+    closeTransactionModal();
+    loadHeld();
+    POS.showToast('Transaction updated');
+}
+function duplicateHeld(idx) {
+    var t = heldTransactions[idx];
+    if (!t) return;
+    var copy = JSON.parse(JSON.stringify(t));
+    copy.suspendedAt = new Date().toISOString();
+    copy.notes = (copy.notes || '') + ' [DUPLICATED]';
+    copy.reason = copy.reason || 'other';
+    heldTransactions.unshift(copy);
+    saveHeld();
+    loadHeld();
+    POS.showToast('Transaction duplicated - added to top of list');
+}
+function closeTransactionModal() {
+    currentTransactionIndex = null;
+    POS.closeModal('transactionModal');
+}
+function $(id) { return document.getElementById(id); }
+function navigateTo(page){window.location.href=page;}
+function saveHeld() {
+    try { localStorage.setItem('heldTransactions', JSON.stringify(heldTransactions)); } catch (e) {}
+}
+function loadHeld() {
+    try {
+        var raw = localStorage.getItem('heldTransactions') || localStorage.getItem('danzona_hold') || '[]';
+        var parsed = JSON.parse(raw);
+        heldTransactions = Array.isArray(parsed) ? parsed : [];
+        if (heldTransactions.length && localStorage.getItem('danzona_hold')) {
+            localStorage.setItem('heldTransactions', JSON.stringify(heldTransactions));
+            try { localStorage.removeItem('danzona_hold'); } catch(e){}
+        }
+    } catch (e) {
+        heldTransactions = [];
+    }
+    renderHeldList();
+    updateKPIs();
+}
+function updateKPIs() {
+    var held = heldTransactions.length;
+    var total = heldTransactions.reduce(function(sum, t) { return sum + calculateTotal(t); }, 0);
+    var stale = heldTransactions.filter(function(t) { return isStale(t); }).length;
+    var oldest = 0;
+    heldTransactions.forEach(function(t) { var h = getAgeHours(t); if (h > oldest) oldest = h; });
+    $('kpiHeld').textContent = held;
+    $('kpiValue').textContent = POS.formatCurrency(total);
+    $('kpiHeldSub').textContent = held === 1 ? 'Transaction on hold' : 'Transactions on hold';
+    $('kpiStale').textContent = stale;
+    if (stale > 0) $('kpiStale').style.color = '#ef4444';
+    else $('kpiStale').style.color = '#10b981';
+    if (oldest > 0) {
+        $('kpiOldest').textContent = formatAge(oldest);
+        $('kpiOldestSub').textContent = oldest < 1 ? 'Since minutes ago' : 'Since oldest hold';
+    } else {
+        $('kpiOldest').textContent = '--';
+        $('kpiOldestSub').textContent = 'No holds yet';
+    }
+}
+function renderHeldList() {
+    try {
+        var q = $('searchInput').value.toLowerCase();
+        var reasonQ = $('reasonFilter').value;
+        var ageQ = $('ageFilter').value;
+        var now = Date.now();
+        var filtered = heldTransactions.filter(function(t) {
+            var text = [t.customer ? (typeof t.customer === 'object' ? t.customer.name : String(t.customer)) : '', t.notes || '', getReasonLabel(t), JSON.stringify(t.cart || [])].join(' ').toLowerCase();
+            var matchSearch = !q || text.indexOf(q) > -1;
+            var matchReason = !reasonQ || t.reason === reasonQ;
+            var age = getAgeHours(t);
+            var matchAge = true;
+            if (ageQ === 'today') matchAge = age < 24;
+            else if (ageQ === '24h') matchAge = age < 24;
+            else if (ageQ === 'week') matchAge = age < 168;
+            else if (ageQ === 'stale') matchAge = age >= STALE_HOURS;
+            return matchSearch && matchReason && matchAge;
+        });
+        filtered = applySort(filtered);
+        selectedHeldIds = selectedHeldIds.filter(function(idx) { return heldTransactions[idx] !== undefined; });
+        var tbody = $('heldBody');
+        updateSelectedCount(filtered);
+        if (!filtered.length) {
+            if ($('selectAllHeld')) $('selectAllHeld').checked = false;
+            if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No held transactions found</td></tr>';
+            return;
+        }
+        if (tbody) {
+            tbody.innerHTML = filtered.map(function(t, i) {
+                var idx = heldTransactions.indexOf(t);
+                var total = calculateTotal(t);
+                var items = getItemCount(t);
+                var age = getAgeHours(t);
+                var agedClass = isStale(t) ? 'row-aged' : '';
+                var ageBadge = isStale(t) ? '<span class="badge badge-aged">' + formatAge(age) + '</span>' : '<span style="color:#64748b;font-size:12px;">' + formatAge(age) + '</span>';
+                var reasonBadge = '<span class="badge badge-reason">' + POS.esc(getReasonLabel(t).replace(/_/g,' ')) + '</span>';
+                return '<tr class="' + agedClass + '">' +
+                    '<td><input type="checkbox" ' + (selectedHeldIds.indexOf(idx) > -1 ? 'checked' : '') + ' onclick="toggleHeldSelection(' + idx + ')"></td>' +
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td>' + POS.formatDate(t.suspendedAt) + '</td>' +
+                    '<td>' + POS.esc(t.customer ? (typeof t.customer === 'object' ? t.customer.name : String(t.customer)) : 'Walk-in Customer') + '</td>' +
+                    '<td>' + reasonBadge + '</td>' +
+                    '<td>' + POS.formatNumber(items) + '</td>' +
+                    '<td style="font-weight:900;">' + POS.formatCurrency(total) + '</td>' +
+                    '<td>' + ageBadge + '</td>' +
+                    '<td class="action-btns">' +
+                    '<button class="icon-btn view" onclick="openTransactionModal(' + idx + ')" title="View"><i class="fas fa-eye"></i></button>' +
+                    '<button class="icon-btn edit" onclick="editTransactionNotes(' + idx + ')" title="Edit"><i class="fas fa-pencil-alt"></i></button>' +
+                    '<button class="icon-btn view" onclick="duplicateHeld(' + idx + ')" title="Duplicate"><i class="fas fa-copy"></i></button>' +
+                    '<button class="icon-btn view" onclick="copyHeldToCart(' + idx + ')" title="Copy to Cart"><i class="fas fa-clipboard"></i></button>' +
+                    '<button class="icon-btn view" onclick="recallHeld(' + idx + ')" title="Recall (go to Sales)"><i class="fas fa-undo"></i></button>' +
+                    '<button class="icon-btn delete" onclick="deleteHeld(' + idx + ')" title="Delete"><i class="fas fa-trash"></i></button>' +
+                    '</td></tr>';
+            }).join('');
+        }
+        if ($('selectAllHeld')) {
+            var allVisible = filtered.every(function(t) { return selectedHeldIds.indexOf(heldTransactions.indexOf(t)) > -1; });
+            $('selectAllHeld').checked = filtered.length > 0 && allVisible;
+        }
+        updateSortIcons();
+    } catch(e) {
+        console.error('renderHeldList error:', e);
+        var tbody = $('heldBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="empty-state" style="color:#ef4444;">Error loading transactions. Please refresh.</td></tr>';
+    }
+}
+function updateSortIcons() {
+    ['idx','date','items','total'].forEach(function(f) {
+        var el = $('sort-' + f);
+        if (!el) return;
+        el.innerHTML = sortField === f ? (sortDir === 'asc' ? 'â–²' : 'â–¼') : '';
+    });
+}
+function recallHeld(idx) {
+    var t = heldTransactions[idx];
+    if (!t) return;
+    if (!confirm('Recall this held transaction?\nIt will be loaded into the Sales cart. Make sure you checkout or re-suspend it before leaving.')) return;
+    localStorage.setItem('salesCart', JSON.stringify(t.cart || []));
+    if (t.customer) localStorage.setItem('salesCustomer', JSON.stringify(t.customer));
+    else localStorage.removeItem('salesCustomer');
+    heldTransactions.splice(idx, 1);
+    saveHeld();
+    loadHeld();
+    POS.showToast('Recalled - checkout in Sales');
+    setTimeout(function() { navigateTo('sales.html'); }, 900);
+}
+function copyHeldToCart(idx) {
+    var t = heldTransactions[idx];
+    if (!t) return;
+    localStorage.setItem('salesCart', JSON.stringify(t.cart || []));
+    if (t.customer) localStorage.setItem('salesCustomer', JSON.stringify(t.customer));
+    else localStorage.removeItem('salesCustomer');
+    POS.showToast('Cart copied - go to Sales to checkout or re-hold');
+    setTimeout(function() { navigateTo('sales.html'); }, 900);
+}
+function deleteHeld(idx) {
+    if (!confirm('Delete this held transaction? This cannot be undone.')) return;
+    var pos = selectedHeldIds.indexOf(idx);
+    if (pos > -1) selectedHeldIds.splice(pos, 1);
+    heldTransactions.splice(idx, 1);
+    saveHeld();
+    loadHeld();
+    POS.showToast('Transaction deleted');
+}
+function refreshHeld() { loadHeld(); POS.showToast('Refreshed'); }
+function exportHeldCSV() {
+    if (!heldTransactions.length) { POS.showToast('No transactions to export', true); return; }
+    POS.exportCSV('held_transactions_' + POS.today() + '.csv',
+        ['Date', 'Customer', 'Reason', 'Items', 'Total', 'Age (hrs)', 'Notes'],
+        heldTransactions.map(function(t) {
+            return {
+                Date: POS.formatDate(t.suspendedAt),
+                Customer: t.customer ? t.customer.name : 'Walk-in',
+                Reason: getReasonLabel(t).replace(/_/g, ' '),
+                Items: getItemCount(t),
+                Total: calculateTotal(t),
+                'Age (hrs)': getAgeHours(t).toFixed(1),
+                Notes: t.notes || ''
+            };
+        })
+    );
+}
+function printHeldList() {
+    POS.printTable('Held Transactions Report',
+        ['Date', 'Customer', 'Reason', 'Items', 'Total', 'Age'],
+        heldTransactions.map(function(t) {
+            return {
+                Date: POS.formatDate(t.suspendedAt),
+                Customer: t.customer ? t.customer.name : 'Walk-in',
+                Reason: getReasonLabel(t).replace(/_/g, ' '),
+                Items: getItemCount(t),
+                Total: POS.formatCurrency(calculateTotal(t)),
+                Age: formatAge(getAgeHours(t))
+            };
+        })
+    );
+}
+function initPage() {
+    try {
+        if (typeof POS === 'undefined') throw new Error('POS system not loaded. Please refresh the page.');
+        if (!POS.requireAuth()) return;
+        POS.renderSidebar();
+        POS.renderUserMenu();
+        loadHeld();
+        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        autoRefreshInterval = setInterval(loadHeld, 30000);
+    } catch(err) {
+        console.error('Suspended Sales init error:', err);
+        clearLoadingState();
+        var body = document.body;
+        if (body) {
+            body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2 style="color:#ef4444;">Page Error</h2><p>' + (err.message || 'Unknown error') + '</p><p>Please press F12, check the Console tab, and report the error.</p><button onclick="location.reload()" style="padding:10px 20px;cursor:pointer;">Retry</button></div>';
+        }
+    }
+}
+function clearLoadingState() {
+    try {
+        var tbody = $('heldBody');
+        if (tbody && tbody.innerHTML.indexOf('Loading held transactions') > -1) {
+            tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No held transactions found</td></tr>';
+        }
+    } catch(e) {}
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        initPage();
+        setTimeout(clearLoadingState, 2000);
+    });
+} else {
+    initPage();
+    setTimeout(clearLoadingState, 2000);
+}
+</script>
+</body>
+</html>
+
+

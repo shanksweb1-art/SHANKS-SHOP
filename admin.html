@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - SHANKS SHOP MANAGEMENT</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="common.css">
+<script src="api.js"></script>
+<script src="common.js"></script>
+<style>
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --info: #3b82f6;
+  --warning: #f59e0b;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.panel-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.panel-hint { font-size: 13px; color: var(--muted); margin: -6px 0 14px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-outline { background: #fff; color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover { background: #f9fafb; border-color: #d1d5db; }
+.btn-outline.active { background: #ecfdf5; border-color: var(--primary); color: #065f46; }
+.btn-danger { background: #fff; color: var(--danger); border: 1px solid #fecaca; }
+.btn-danger:hover { background: #fef2f2; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.tabs { display: flex; gap: 6px; border-bottom: 2px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.form-control {
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+.form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+.table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.table th, .table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+.table th { background: #f9fafb; color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.table tbody tr:hover { background: #f9fafb; }
+.badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-info { background: #dbeafe; color: #1e40af; }
+.badge-muted { background: #f3f4f6; color: #6b7280; }
+.empty-state { text-align: center; color: #94a3b8; padding: 40px 16px; font-size: 14px; }
+.toast { position: fixed; top: 20px; right: 20px; background: var(--primary); color: #fff; padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; z-index: 2000; font-weight: 500; font-size: 13px; }
+.toast.error { background: var(--danger); }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 1500; backdrop-filter: blur(2px); }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: var(--radius); width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: modalIn 0.2s ease; }
+@keyframes modalIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 15px; font-weight: 700; }
+.modal-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; border-radius: 6px; cursor: pointer; color: var(--muted); font-size: 18px; }
+.modal-close:hover { background: #f3f4f6; color: var(--text); }
+.modal-body { padding: 16px 20px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); }
+.search-box { position: relative; display: flex; align-items: center; }
+.search-box i { position: absolute; left: 10px; color: var(--muted); font-size: 13px; }
+.search-box input { padding: 8px 12px 8px 32px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; width: 220px; }
+.search-box input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16,185,129,0.08); }
+.actions-cell { display: flex; gap: 4px; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; }
+.stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.stat-icon.green { background: #d1fae5; color: #065f46; }
+.stat-icon.blue { background: #dbeafe; color: #1e40af; }
+.stat-icon.purple { background: #f3e8ff; color: #7c3aed; }
+.stat-icon.orange { background: #fef3c7; color: #92400e; }
+.stat-icon.red { background: #fee2e2; color: #991b1b; }
+.stat-value { font-size: 20px; font-weight: 800; }
+.stat-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 22px; transition: 0.2s; cursor: pointer; }
+.switch .slider::before { content: ''; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+.switch input:checked + .slider { background: var(--primary); }
+.switch input:checked + .slider::before { transform: translateX(18px); }
+.switch input:disabled + .slider { opacity: 0.55; cursor: not-allowed; }
+.page-group { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+.page-group-head { background: #f9fafb; padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); display: flex; align-items: center; justify-content: space-between; }
+.page-row { display: grid; grid-template-columns: 46px 1fr 150px 150px 92px; gap: 10px; align-items: center; padding: 9px 14px; border-top: 1px solid var(--border); }
+.page-row:hover { background: #f9fafb; }
+.page-row .page-key { font-size: 11px; color: var(--muted); font-family: Consolas, monospace; }
+.page-row input[type="text"], .page-row select { padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; width: 100%; background: #fff; }
+.page-row input[type="text"]:focus, .page-row select:focus { outline: none; border-color: var(--primary); }
+.row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+.access-denied { text-align: center; padding: 60px 20px; }
+.access-denied i { font-size: 44px; color: var(--danger); margin-bottom: 14px; display: block; }
+.quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.quick-action { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border: 1px solid var(--border); border-radius: 10px; background: #fff; cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%; }
+.quick-action:hover { border-color: var(--primary); background: #f0fdf9; }
+.quick-action i { color: var(--primary); font-size: 15px; }
+.quick-action span { font-size: 13px; font-weight: 600; }
+.activity-list { list-style: none; }
+.activity-list li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.activity-list li:last-child { border-bottom: 0; }
+.activity-list .activity-meta { color: var(--muted); font-size: 11px; }
+.access-block { border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px; background: #fcfcfd; }
+.access-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.access-head > label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.access-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.access-full { font-size: 13px; font-weight: 600; color: var(--text); }
+.access-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; max-height: 320px; overflow-y: auto; }
+.access-group { border: 1px solid var(--border); border-radius: 8px; background: #fff; overflow: hidden; }
+.access-group-head { background: #f9fafb; border-bottom: 1px solid var(--border); padding: 7px 10px; }
+.access-group-head label { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); cursor: pointer; }
+.access-group-body { padding: 6px 10px 9px; max-height: 168px; overflow-y: auto; }
+.access-page { display: flex; align-items: center; gap: 7px; font-size: 12.5px; padding: 3px 0; cursor: pointer; }
+.access-page input { accent-color: var(--primary); }
+.access-grid.disabled { opacity: 0.45; pointer-events: none; }
+.role-pill { display: inline-flex; align-items: center; gap: 5px; }
+.mode-switch { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.pending-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.pending-banner i { font-size: 15px; }
+.pending-banner span { flex: 1; }
+.slot-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; background: #fff; }
+.slot-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--dark); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.slot-head i { color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+  <div class="header">
+    <h2><i class="fas fa-shield-halved"></i> Admin Panel</h2>
+    <div id="userMenu"></div>
+    <div class="header-clock" id="topClock"></div>
+  </div>
+  <div class="content">
+
+    <div id="accessDenied" class="panel access-denied" style="display:none;">
+      <i class="fas fa-lock"></i>
+      <h3>Administrator access required</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px;">Your account does not have permission to open the Admin Panel.</p>
+      <button class="btn btn-primary" onclick="POS.navigateTo('dashboard.html')"><i class="fas fa-arrow-left"></i> Back to Dashboard</button>
+    </div>
+
+    <div id="adminContent" style="display:none;">
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+          <div><div class="stat-value" id="statUsers">0</div><div class="stat-label">User Accounts</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="fas fa-user-check"></i></div>
+          <div><div class="stat-value" id="statActive">0</div><div class="stat-label">Active Users</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red"><i class="fas fa-user-slash"></i></div>
+          <div><div class="stat-value" id="statDisabled">0</div><div class="stat-label">Disabled</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="fas fa-layer-group"></i></div>
+          <div><div class="stat-value" id="statPages">0</div><div class="stat-label">Pages Enabled</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="fas fa-file-lines"></i></div>
+          <div><div class="stat-value" id="statAudit">0</div><div class="stat-label">Audit Entries</div></div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="btn btn-outline active" onclick="switchTab('overview', this)"><i class="fas fa-gauge-high"></i> Overview</button>
+        <button class="btn btn-outline" onclick="switchTab('business', this)"><i class="fas fa-briefcase"></i> Business</button>
+        <button class="btn btn-outline" onclick="switchTab('users', this)"><i class="fas fa-users"></i> Users</button>
+        <button class="btn btn-outline" onclick="switchTab('pages', this)"><i class="fas fa-file-lines"></i> Pages</button>
+        <button class="btn btn-outline" onclick="switchTab('activity', this)"><i class="fas fa-clock-rotate-left"></i> Activity</button>
+        <button class="btn btn-outline" onclick="switchTab('marketing', this)"><i class="fas fa-bullhorn"></i> Marketing</button>
+      </div>
+
+      <!-- OVERVIEW -->
+      <div id="tab-overview" class="tab-pane active">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-bolt"></i> Quick Actions</div>
+          </div>
+          <div class="quick-actions">
+            <button class="quick-action" onclick="openUserModal()"><i class="fas fa-user-plus"></i><span>Add User Account</span></button>
+            <button class="quick-action" onclick="switchTab('users')"><i class="fas fa-users-cog"></i><span>Manage Users</span></button>
+            <button class="quick-action" onclick="switchTab('pages')"><i class="fas fa-sitemap"></i><span>Manage Pages</span></button>
+            <button class="quick-action" onclick="POS.navigateTo('user-roles.html')"><i class="fas fa-user-shield"></i><span>Roles &amp; Permissions</span></button>
+            <button class="quick-action" onclick="POS.navigateTo('config.html')"><i class="fas fa-cog"></i><span>Store Configuration</span></button>
+            <button class="quick-action" onclick="POS.navigateTo('audit-log.html')"><i class="fas fa-clipboard-list"></i><span>Full Audit Log</span></button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-store"></i> Store</div>
+          </div>
+          <table class="table">
+            <tbody>
+              <tr><th style="width:220px;">Business</th><td id="ovPharmacy">-</td></tr>
+              <tr><th>Business type</th><td id="ovBusinessType">-</td></tr>
+              <tr><th>Modules active</th><td id="ovModules">-</td></tr>
+              <tr><th>Signed in as</th><td id="ovAdmin">-</td></tr>
+              <tr><th>Roles defined</th><td id="ovRoles">-</td></tr>
+              <tr><th>Pages available / enabled</th><td id="ovPages">-</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BUSINESS -->
+      <div id="tab-business" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-briefcase"></i> Business Profile</div>
+            <button class="btn btn-outline btn-sm" onclick="loadBusinessProfile()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+          <p class="panel-hint">Tell the system what kind of business this is. The business type loads a recommended set of modules, and you can fine-tune them below. Pages inside a switched-off module are hidden for every account of this business.</p>
+          <div class="form-grid" style="margin-bottom:16px;">
+            <div class="form-group">
+              <label>Business name</label>
+              <input type="text" id="bizProfileName" class="form-control" placeholder="e.g. Shanks Shop Ikeja">
+            </div>
+            <div class="form-group">
+              <label>Business type</label>
+              <select id="bizProfileType" class="form-control" onchange="applyBusinessTypeModules()"></select>
+            </div>
+            <div class="form-group">
+              <label>Address</label>
+              <input type="text" id="bizProfileAddress" class="form-control" placeholder="e.g. 45 Broad Street, Lagos">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="text" id="bizProfilePhone" class="form-control" placeholder="+234 801 234 5678">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="bizProfileEmail" class="form-control" placeholder="admin@yourbusiness.com">
+            </div>
+          </div>
+
+          <div class="access-block">
+            <div class="access-head">
+              <label>Modules for this business</label>
+              <div class="access-toolbar">
+                <button class="btn btn-outline btn-sm" onclick="setAllModules(true)">All on</button>
+                <button class="btn btn-outline btn-sm" onclick="setAllModules(false)">All off</button>
+                <button class="btn btn-outline btn-sm" onclick="applyBusinessTypeModules(true)"><i class="fas fa-magic"></i> Use type defaults</button>
+              </div>
+            </div>
+            <div id="bizModuleGrid" class="access-grid"></div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveBusinessProfile()"><i class="fas fa-save"></i> Save Business Profile</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div id="tab-users" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-user-plus"></i> Create Staff Accounts</div>
+          </div>
+          <p class="panel-hint">Create up to three accounts for this pharmacy &mdash; manager, staff and cashier. They all share the same pharmacy data (stock, sales, customers, reports); only their menus differ. Step 1: fill in the accounts below. Step 2: continue to Page Management to switch off the pages each account must not use. Step 3: create the accounts.</p>
+          <div id="accountSlots"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+            <button class="btn btn-primary" onclick="continueToPageAccess()"><i class="fas fa-arrow-right"></i> Continue to Page Management</button>
+            <button class="btn btn-outline" onclick="createAllNow()"><i class="fas fa-save"></i> Create All Now (default access)</button>
+          </div>
+          <div id="pendingBanner" class="pending-banner" style="display:none;">
+            <i class="fas fa-user-clock"></i>
+            <span id="pendingBannerText"></span>
+            <button class="btn btn-outline btn-sm" onclick="clearPendingAccount()"><i class="fas fa-xmark"></i> Discard</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-users"></i> User Accounts</div>
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" id="userSearch" placeholder="Search accounts..." oninput="renderUsers()">
+            </div>
+          </div>
+          <table class="table">
+            <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Email</th><th>Phone</th><th>Status</th><th>Pages Access</th><th>Last Login</th><th>Actions</th></tr></thead>
+            <tbody id="usersBody"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGES -->
+      <div id="tab-pages" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-sitemap"></i> Page Management</div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-outline btn-sm" onclick="reloadPages()"><i class="fas fa-sync-alt"></i> Refresh</button>
+              <button class="btn btn-danger btn-sm" onclick="resetPages()"><i class="fas fa-rotate-left"></i> Reset to defaults</button>
+            </div>
+          </div>
+
+          <div class="mode-switch">
+            <button class="btn btn-outline active" id="modeBtnStore" onclick="setPageMode('store')"><i class="fas fa-globe"></i> Store Pages (everyone)</button>
+            <button class="btn btn-outline" id="modeBtnAccount" onclick="setPageMode('account')"><i class="fas fa-user-lock"></i> Account Access</button>
+          </div>
+
+          <div id="pageModeStore">
+            <p class="panel-hint">Switch pages off to hide them for every user of this store. This is the store-wide menu control.</p>
+            <div id="pagesBody"><div class="empty-state">Loading...</div></div>
+          </div>
+
+          <div id="pageModeAccount" style="display:none;">
+            <p class="panel-hint">Pick the account, then switch off every page it must not use. Turn a page off to block that account from it. Accounts here share the same pharmacy data &mdash; only their menus differ.</p>
+            <div class="form-grid" style="margin-bottom:12px;">
+              <div class="form-group" style="max-width:460px;">
+                <label>Account</label>
+                <select id="accessAccountSelect" class="form-control" onchange="selectAccessAccount(this.value)"></select>
+              </div>
+            </div>
+            <div id="accessAccountInfo" class="panel-hint"></div>
+
+            <div class="access-block">
+              <div class="access-head">
+                <label>Pages this account can use</label>
+                <div class="access-toolbar">
+                  <button class="btn btn-outline btn-sm" onclick="applyAccessPreset()"><i class="fas fa-magic"></i> Apply role preset</button>
+                  <button class="btn btn-outline btn-sm" onclick="setAllPages('access', true)">Allow all</button>
+                  <button class="btn btn-outline btn-sm" onclick="setAllPages('access', false)">Block all</button>
+                  <label class="access-full" style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                    <input type="checkbox" id="accessFullAccess" onchange="toggleFullAccess('access')"> Full access to all pages
+                  </label>
+                </div>
+              </div>
+              <div class="access-grid" id="accessAccessGrid"></div>
+            </div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-primary" id="createAccountBtn" style="display:none;" onclick="createPendingAccount()"><i class="fas fa-user-plus"></i> Create This Account</button>
+              <button class="btn btn-primary" id="createAllBtn" style="display:none;" onclick="createAllPendingAccounts()"><i class="fas fa-user-plus"></i> Create All Accounts</button>
+              <button class="btn btn-primary" id="saveAccessBtn" style="display:none;" onclick="saveAccountAccess()"><i class="fas fa-save"></i> Save page access</button>
+      <!-- MARKETING -->
+      <div id="tab-marketing" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-bullhorn"></i> Landing Page Content</div>
+            <button class="btn btn-outline btn-sm" onclick="loadMarketing()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+
+          <p class="panel-hint">This is the content shown on the public home page: pricing plans, customer testimonials, release notes and the newsletter signups. Changes appear on the landing page immediately.</p>
+
+          <div class="mode-switch" style="margin-bottom:16px;">
+            <button class="btn btn-outline active" id="mkTabPlans" onclick="switchMarketingTab('plans', this)"><i class="fas fa-tags"></i> Pricing plans</button>
+            <button class="btn btn-outline" id="mkTabTestimonials" onclick="switchMarketingTab('testimonials', this)"><i class="fas fa-quote-right"></i> Testimonials</button>
+            <button class="btn btn-outline" id="mkTabChangelog" onclick="switchMarketingTab('changelog', this)"><i class="fas fa-code-branch"></i> Release notes</button>
+            <button class="btn btn-outline" id="mkTabLeads" onclick="switchMarketingTab('leads', this)"><i class="fas fa-envelope"></i> Leads</button>
+          </div>
+
+          <div id="mkPlans">
+            <div class="form-grid" style="margin-bottom:14px;">
+              <div class="form-group"><label>Plan name</label><input type="text" id="mkPlanName" class="form-control" placeholder="Standard"></div>
+              <div class="form-group"><label>Monthly price (NGN)</label><input type="number" id="mkPlanMonthly" class="form-control" value="0" min="0"></div>
+              <div class="form-group"><label>Yearly price (NGN)</label><input type="number" id="mkPlanYearly" class="form-control" value="0" min="0"></div>
+              <div class="form-group"><label>Highlight</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mkPlanHighlight"> Most popular</label>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Tagline</label><input type="text" id="mkPlanTagline" class="form-control" placeholder="For a single pharmacy running every day"></div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Features (one per line)</label><textarea id="mkPlanFeatures" class="form-control" rows="4" placeholder="Unlimited products, suppliers and customers"></textarea></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+              <button class="btn btn-primary" id="mkPlanSaveBtn" onclick="savePlan()"><i class="fas fa-save"></i> Add plan</button>
+              <button class="btn btn-outline" onclick="resetPlanForm()">Clear</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Plan</th><th>Monthly</th><th>Yearly</th><th>Features</th><th>Highlight</th><th>Active</th><th>Actions</th></tr></thead>
+              <tbody id="mkPlansBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+
+          <div id="mkTestimonials" style="display:none;">
+            <div class="form-grid" style="margin-bottom:14px;">
+              <div class="form-group"><label>Author name</label><input type="text" id="mkTestName" class="form-control" placeholder="Chinedu Okafor"></div>
+              <div class="form-group"><label>Role</label><input type="text" id="mkTestRole" class="form-control" placeholder="Pharmacy Manager"></div>
+              <div class="form-group"><label>Location</label><input type="text" id="mkTestBusiness" class="form-control" placeholder="Lagos"></div>
+              <div class="form-group"><label>Rating</label><input type="number" id="mkTestRating" class="form-control" value="5" min="1" max="5"></div>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Quote</label><textarea id="mkTestQuote" class="form-control" rows="3" placeholder="What the customer said about the platform"></textarea></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+              <button class="btn btn-primary" id="mkTestSaveBtn" onclick="saveTestimonial()"><i class="fas fa-save"></i> Add testimonial</button>
+              <button class="btn btn-outline" onclick="resetTestimonialForm()">Clear</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Author</th><th>Business</th><th>Quote</th><th>Rating</th><th>Published</th><th>Actions</th></tr></thead>
+              <tbody id="mkTestimonialsBody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+
+          <div id="mkChangelog" style="display:none;">
+            <div class="form-grid" style="margin-bottom:14px;">
+              <div class="form-group"><label>Version</label><input type="text" id="mkLogVersion" class="form-control" placeholder="2.5.0"></div>
+              <div class="form-group"><label>Release date</label><input type="date" id="mkLogDate" class="form-control"></div>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Title</label><input type="text" id="mkLogTitle" class="form-control" placeholder="What shipped"></div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Summary</label><textarea id="mkLogSummary" class="form-control" rows="2"></textarea></div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Items (one per line)</label><textarea id="mkLogItems" class="form-control" rows="4"></textarea></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+              <button class="btn btn-primary" id="mkLogSaveBtn" onclick="saveChangelog()"><i class="fas fa-save"></i> Add release note</button>
+              <button class="btn btn-outline" onclick="resetChangelogForm()">Clear</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Version</th><th>Date</th><th>Title</th><th>Summary</th><th>Actions</th></tr></thead>
+              <tbody id="mkChangelogBody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+
+          <div id="mkLeads" style="display:none;">
+            <p class="panel-hint">People who asked to be kept up to date from the landing page. Newest first.</p>
+            <table class="table">
+              <thead><tr><th>Email</th><th>Name</th><th>Business</th><th>Source</th><th>Received</th></tr></thead>
+              <tbody id="mkLeadsBody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div id="tab-activity" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-clock-rotate-left"></i> Recent Admin Activity</div>
+            <button class="btn btn-outline btn-sm" onclick="loadOverview()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+          <ul class="activity-list" id="activityBody"><li class="empty-state">Loading...</li></ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="userModalTitle">Edit Account</div>
+      <button class="modal-close" onclick="closeModal('userModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editUserId">
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name</label><input type="text" id="editName" class="form-control"></div>
+        <div class="form-group"><label>Username</label><input type="text" id="editUsername" class="form-control"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="editPassword" class="form-control" placeholder="Leave blank to keep current"></div>
+        <div class="form-group"><label>Role</label><select id="editRole" class="form-control"></select></div>
+        <div class="form-group"><label>Email</label><input type="email" id="editEmail" class="form-control"></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="editPhone" class="form-control"></div>
+        <div class="form-group"><label>Store</label><input type="text" id="editStore" class="form-control"></div>
+      </div>
+
+      <p class="panel-hint" style="margin:0 0 12px;">Page access for this account is managed in <strong>Page Management &rarr; Account Access</strong>.</p>
+
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="editActive"> Account is active
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('userModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var DB = { users: [], pages: [], roles: [], presets: {}, overview: null, business: null, businessTypes: [], moduleCatalog: [] };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+  function showToast(msg, err) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (err ? ' error' : '');
+    t.style.display = 'block';
+    setTimeout(function() { t.style.display = 'none'; }, 3000);
+  }
+  function openModal(id) { $(id).classList.add('open'); }
+  function closeModal(id) { $(id).classList.remove('open'); }
+  function switchTab(tab, el) {
+    document.querySelectorAll('.tabs .btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    $('tab-' + tab).classList.add('active');
+    if (tab === 'marketing' && typeof loadMarketing === 'function') loadMarketing();
+  }
+  function isAdmin() {
+    try { return POS.isAdminRole ? POS.isAdminRole() : false; } catch (e) { return false; }
+  }
+  function roleOptions() {
+    var seen = {};
+    var list = ['admin', 'manager', 'staff', 'cashier'];
+    DB.roles.forEach(function(r) { if (r.name) list.push(r.name); });
+    DB.users.forEach(function(u) { if (u.role) list.push(u.role); });
+    return list.filter(function(r) { if (seen[r]) return false; seen[r] = true; return true; });
+  }
+  function roleLabel(role) {
+    var map = { admin: 'Administrator', manager: 'Manager', staff: 'Staff', cashier: 'Cashier' };
+    return map[String(role || '').toLowerCase()] || role;
+  }
+  function populateRoleSelects() {
+    var options = roleOptions().map(function(r) {
+      return '<option value="' + esc(r) + '">' + esc(roleLabel(r)) + '</option>';
+    }).join('');
+    [['newRole', null], ['editRole', null]].concat(SLOT_DEFS.map(function(def, i) { return ['slot' + i + 'Role', def.role]; })).forEach(function(pair) {
+      var sel = $(pair[0]);
+      if (!sel) return;
+      var current = sel.value || pair[1];
+      sel.innerHTML = options;
+      if (current) sel.value = current;
+    });
+  }
+
+  // ---------- Page access picker ----------
+  var PENDING_PREFIX = 'pending-';
+  var pendingAccounts = [];
+  var pageMode = 'store';
+  var accessTarget = null;
+
+  function gridId(scope) {
+    if (scope === 'edit') return 'editAccessGrid';
+    if (scope === 'access') return 'accessAccessGrid';
+    return 'newAccessGrid';
+  }
+  function roleSelectId(scope) {
+    if (scope === 'edit') return 'editRole';
+    return null;
+  }
+  function fullAccessId(scope) {
+    if (scope === 'edit') return 'editFullAccess';
+    if (scope === 'access') return 'accessFullAccess';
+    return 'newFullAccess';
+  }
+  function gridPages(scope) {
+    var box = $(gridId(scope));
+    return box ? Array.prototype.slice.call(box.querySelectorAll('input[data-page]')) : [];
+  }
+  function getCheckedPages(scope) {
+    return gridPages(scope)
+      .filter(function(c) { return c.checked; })
+      .map(function(c) { return c.getAttribute('data-page'); });
+  }
+  function setCheckedPages(scope, list) {
+    list = list || [];
+    gridPages(scope).forEach(function(c) {
+      c.checked = list.indexOf(c.getAttribute('data-page')) > -1;
+    });
+    syncGroupToggles(scope);
+  }
+  function setAllPages(scope, checked) {
+    gridPages(scope).forEach(function(c) { c.checked = checked; });
+    syncGroupToggles(scope);
+  }
+  function toggleGroup(scope, group, checked) {
+    gridPages(scope).forEach(function(c) {
+      if (c.getAttribute('data-group') === group) c.checked = checked;
+    });
+    syncGroupToggles(scope);
+  }
+  function syncGroupToggles(scope) {
+    var groups = {};
+    gridPages(scope).forEach(function(c) {
+      var g = c.getAttribute('data-group');
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(c);
+    });
+    Object.keys(groups).forEach(function(g) {
+      var toggle = $(gridId(scope)).querySelector('input[data-group-toggle="' + g + '"]');
+      if (!toggle) return;
+      var all = groups[g].every(function(c) { return c.checked; });
+      var none = groups[g].every(function(c) { return !c.checked; });
+      toggle.checked = all;
+      toggle.indeterminate = !all && !none;
+    });
+  }
+  function buildAccessGrid(scope) {
+    var box = $(gridId(scope));
+    if (!box) return;
+    if (!DB.pages.length) { box.innerHTML = '<div class="empty-state">No pages loaded</div>'; return; }
+    var groups = {};
+    var order = [];
+    DB.pages.forEach(function(p) {
+      if (p.module_enabled === false) return;
+      var g = p.group || 'Other';
+      if (!groups[g]) { groups[g] = []; order.push(g); }
+      groups[g].push(p);
+    });
+    box.innerHTML = order.map(function(group) {
+      var rows = groups[group].map(function(p) {
+        return '<label class="access-page" title="' + esc(p.key) + '">' +
+          '<input type="checkbox" data-page="' + esc(p.key) + '" data-group="' + esc(group) + '" onchange="syncGroupToggles(\'' + scope + '\')">' +
+          '<span>' + esc(p.label) + '</span></label>';
+      }).join('');
+      return '<div class="access-group"><div class="access-group-head">' +
+        '<label><input type="checkbox" data-group-toggle="' + esc(group) + '" onchange="toggleGroup(\'' + scope + '\', \'' + esc(group) + '\', this.checked)"> ' + esc(group) + '</label>' +
+        '</div><div class="access-group-body">' + rows + '</div></div>';
+    }).join('');
+    syncGroupToggles(scope);
+  }
+  function presetForRole(role) {
+    return (DB.presets && DB.presets[String(role || '').toLowerCase()]) || null;
+  }
+  function applyRolePreset(scope, silent) {
+    var roleSel = roleSelectId(scope);
+    var role = roleSel ? $(roleSel).value : (accessTarget ? accessTarget.role : '');
+    var preset = presetForRole(role);
+    if (!preset) { if (!silent) showToast('No preset for this role, select pages manually', true); return; }
+    var fullEl = $(fullAccessId(scope));
+    if (fullEl) fullEl.checked = false;
+    toggleFullAccess(scope);
+    setCheckedPages(scope, preset);
+    if (!silent) showToast('Applied ' + roleLabel(role) + ' preset');
+  }
+  function onRoleChange(scope) {
+    var roleSel = roleSelectId(scope);
+    var role = roleSel ? $(roleSel).value : (accessTarget ? accessTarget.role : '');
+    var full = String(role || '').toLowerCase() === 'admin';
+    var fullEl = $(fullAccessId(scope));
+    if (fullEl) fullEl.checked = full;
+    toggleFullAccess(scope);
+    if (!full && gridPages(scope).length) applyRolePreset(scope);
+  }
+  function toggleFullAccess(scope) {
+    var box = $(gridId(scope));
+    if (!box) return;
+    var fullEl = $(fullAccessId(scope));
+    box.classList.toggle('disabled', !!(fullEl && fullEl.checked));
+  }
+  function accessPayload(scope) {
+    var fullEl = $(fullAccessId(scope));
+    if (fullEl && fullEl.checked) return null;
+    var pages = getCheckedPages(scope);
+    if (!pages.length) return null;
+    if (pages.indexOf('dashboard.html') === -1) pages.push('dashboard.html');
+    return pages;
+  }
+
+  // ---------- Page management modes ----------
+  function setPageMode(mode) {
+    pageMode = mode;
+    $('modeBtnStore').classList.toggle('active', mode === 'store');
+    $('modeBtnAccount').classList.toggle('active', mode === 'account');
+    $('pageModeStore').style.display = mode === 'store' ? 'block' : 'none';
+    $('pageModeAccount').style.display = mode === 'account' ? 'block' : 'none';
+    if (mode === 'account') {
+      renderAccessAccounts();
+    }
+  }
+  function renderAccessAccounts() {
+    var sel = $('accessAccountSelect');
+    var options = [];
+    pendingAccounts.forEach(function(p, idx) {
+      options.push('<option value="' + PENDING_PREFIX + idx + '">New ' + esc(p.title) + ': ' + esc(p.name || p.username) + ' (' + esc(p.username) + ')</option>');
+    });
+    DB.users.forEach(function(u) {
+      options.push('<option value="' + u.id + '">' + esc(u.name || u.username) + ' (' + esc(u.username) + ') - ' + esc(roleLabel(u.role)) + '</option>');
+    });
+    sel.innerHTML = options.join('') || '<option value="">No accounts</option>';
+    if (pendingAccounts.length) {
+      sel.value = PENDING_PREFIX + '0';
+      selectAccessAccount(PENDING_PREFIX + '0');
+    } else if (DB.users.length) {
+      selectAccessAccount(String(DB.users[0].id));
+    } else {
+      accessTarget = null;
+      $('accessAccountInfo').textContent = 'No accounts yet.';
+      $('createAccountBtn').style.display = 'none';
+      $('createAllBtn').style.display = 'none';
+      $('saveAccessBtn').style.display = 'none';
+    }
+  }
+  function selectAccessAccount(value) {
+    saveCurrentAccessState();
+    var isPending = String(value).indexOf(PENDING_PREFIX) === 0;
+    if (isPending) {
+      var index = parseInt(String(value).substring(PENDING_PREFIX.length), 10);
+      if (!pendingAccounts[index]) return;
+      var p = pendingAccounts[index];
+      accessTarget = {
+        id: null,
+        index: index,
+        name: p.name,
+        username: p.username,
+        role: p.role,
+        page_access: p.pages,
+        pending: true
+      };
+    } else {
+      var u = DB.users.find(function(x) { return String(x.id) === String(value); });
+      if (!u) return;
+      accessTarget = {
+        id: u.id,
+        index: -1,
+        name: u.name,
+        username: u.username,
+        role: u.role,
+        page_access: u.page_access,
+        pending: false
+      };
+    }
+    $('accessAccountInfo').innerHTML = 'Configuring pages for <strong>' + esc(accessTarget.name || accessTarget.username) + '</strong> (' + esc(accessTarget.username) + ') &mdash; role <strong>' + esc(roleLabel(accessTarget.role)) + '</strong>';
+    $('createAccountBtn').style.display = accessTarget.pending ? 'inline-flex' : 'none';
+    $('createAllBtn').style.display = pendingAccounts.length > 1 ? 'inline-flex' : 'none';
+    $('saveAccessBtn').style.display = accessTarget.pending ? 'none' : 'inline-flex';
+    var fullAccess;
+    if (accessTarget.pending) {
+      var pending = pendingAccounts[accessTarget.index];
+      fullAccess = pending ? !!pending.full : false;
+    } else {
+      fullAccess = (accessTarget.page_access === null || accessTarget.page_access === undefined);
+    }
+    $('accessFullAccess').checked = fullAccess;
+    buildAccessGrid('access');
+    toggleFullAccess('access');
+    if (fullAccess) {
+      setAllPages('access', true);
+    } else {
+      var preset = presetForRole(accessTarget.role);
+      setCheckedPages('access', accessTarget.page_access || preset || []);
+    }
+  }
+  function applyAccessPreset() {
+    if (!accessTarget) { showToast('Select an account first', true); return; }
+    var preset = presetForRole(accessTarget.role);
+    if (!preset) { showToast('No preset for this role, select pages manually', true); return; }
+    $('accessFullAccess').checked = false;
+    toggleFullAccess('access');
+    setCheckedPages('access', preset);
+    if (accessTarget.pending) {
+      var p = pendingAccounts[accessTarget.index];
+      if (p) { p.pages = preset.slice(); p.full = false; }
+    }
+    showToast('Applied ' + roleLabel(accessTarget.role) + ' preset');
+  }
+  async function saveAccountAccess() {
+    if (!accessTarget || accessTarget.pending) return;
+    try {
+      await API.updateAdminUser(accessTarget.id, { page_access: accessPayload('access') });
+      showToast('Page access saved for ' + accessTarget.username);
+      await loadUsers();
+      await loadOverview();
+    } catch (e) { showToast(e.message || 'Could not save access', true); }
+  }
+
+  // ---------- Pending account flow ----------
+  var SLOT_DEFS = [
+    { role: 'manager', title: 'Manager', icon: 'fa-user-tie' },
+    { role: 'staff', title: 'Staff', icon: 'fa-user' },
+    { role: 'cashier', title: 'Cashier', icon: 'fa-money-bill-wave' }
+  ];
+
+  function roleSelectHtml() {
+    return roleOptions().map(function(r) {
+      return '<option value="' + esc(r) + '">' + esc(roleLabel(r)) + '</option>';
+    }).join('');
+  }
+  function renderAccountSlots() {
+    var box = $('accountSlots');
+    if (!box) return;
+    box.innerHTML = SLOT_DEFS.map(function(def, i) {
+      return '<div class="slot-card">' +
+        '<div class="slot-head" id="slotHead' + i + '"><i class="fas ' + def.icon + '"></i> ' + esc(def.title) + ' Account</div>' +
+        '<div class="form-grid">' +
+          '<div class="form-group"><label>Full Name</label><input type="text" id="slot' + i + 'Name" class="form-control" placeholder="Full name"></div>' +
+          '<div class="form-group"><label>Username</label><input type="text" id="slot' + i + 'Username" class="form-control" placeholder="username"></div>' +
+          '<div class="form-group"><label>Password</label><input type="password" id="slot' + i + 'Password" class="form-control" placeholder="Min 6 characters"></div>' +
+          '<div class="form-group"><label>Role</label><select id="slot' + i + 'Role" class="form-control" onchange="onSlotRoleChange(' + i + ')">' + roleSelectHtml() + '</select></div>' +
+          '<div class="form-group"><label>Email</label><input type="email" id="slot' + i + 'Email" class="form-control" placeholder="user@pharmacy.com"></div>' +
+          '<div class="form-group"><label>Phone</label><input type="tel" id="slot' + i + 'Phone" class="form-control" placeholder="+234 801 234 5678"></div>' +
+          '<div class="form-group"><label>Store</label><input type="text" id="slot' + i + 'Store" class="form-control" value="main"></div>' +
+        '</div>' +
+        '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="slot' + i + 'Active" checked> Account is active</label>' +
+      '</div>';
+    }).join('');
+    SLOT_DEFS.forEach(function(def, i) {
+      var sel = $('slot' + i + 'Role');
+      if (sel) sel.value = def.role;
+    });
+  }
+  function onSlotRoleChange(index) {
+    var role = $('slot' + index + 'Role').value;
+    var head = $('slotHead' + index);
+    var def = null;
+    SLOT_DEFS.forEach(function(d) { if (d.role === role) def = d; });
+    if (head && def) head.innerHTML = '<i class="fas ' + def.icon + '"></i> ' + esc(def.title) + ' Account';
+    var pending = pendingAccounts.filter(function(p) { return p.slot === index; })[0];
+    if (pending) {
+      pending.role = role;
+      pending.pages = (presetForRole(role) || []).slice();
+      pending.full = String(role || '').toLowerCase() === 'admin';
+    }
+  }
+  function collectSlots() {
+    var list = [];
+    for (var i = 0; i < SLOT_DEFS.length; i++) {
+      var name = $('slot' + i + 'Name').value.trim();
+      var username = $('slot' + i + 'Username').value.trim();
+      var password = $('slot' + i + 'Password').value;
+      var role = $('slot' + i + 'Role').value;
+      if (!name && !username && !password) continue;
+      if (!username || !password) {
+        showToast(SLOT_DEFS[i].title + ' account needs a username and password', true);
+        return null;
+      }
+      if (password.length < 6) {
+        showToast(SLOT_DEFS[i].title + ' password must be at least 6 characters', true);
+        return null;
+      }
+      var existing = pendingAccounts.filter(function(p) { return p.slot === i; })[0];
+      list.push({
+        slot: i,
+        title: SLOT_DEFS[i].title,
+        name: name || username,
+        username: username,
+        password: password,
+        role: role,
+        store: $('slot' + i + 'Store').value.trim() || 'main',
+        email: $('slot' + i + 'Email').value.trim(),
+        phone: $('slot' + i + 'Phone').value.trim(),
+        active: $('slot' + i + 'Active').checked,
+        pages: existing ? existing.pages : ((presetForRole(role) || []).slice()),
+        full: existing ? existing.full : (String(role || '').toLowerCase() === 'admin')
+      });
+    }
+    var seen = {};
+    for (var j = 0; j < list.length; j++) {
+      var key = list[j].username.toLowerCase();
+      if (seen[key]) { showToast('Duplicate username in this batch: ' + list[j].username, true); return null; }
+      seen[key] = true;
+    }
+    if (!list.length) { showToast('Fill in at least one account', true); return null; }
+    return list;
+  }
+  function clearSlotForms() {
+    SLOT_DEFS.forEach(function(def, i) {
+      ['Name', 'Username', 'Password', 'Email', 'Phone'].forEach(function(f) {
+        var el = $('slot' + i + f);
+        if (el) el.value = '';
+      });
+      var store = $('slot' + i + 'Store');
+      if (store) store.value = 'main';
+      var active = $('slot' + i + 'Active');
+      if (active) active.checked = true;
+      var role = $('slot' + i + 'Role');
+      if (role) role.value = def.role;
+    });
+  }
+  function updatePendingBanner() {
+    var banner = $('pendingBanner');
+    if (!pendingAccounts.length) { banner.style.display = 'none'; return; }
+    banner.style.display = 'flex';
+    var summary = pendingAccounts.map(function(p) {
+      return p.title + ' (' + p.username + ')';
+    }).join(', ');
+    $('pendingBannerText').innerHTML = '<strong>' + pendingAccounts.length + ' account(s) ready:</strong> ' + esc(summary) + ' &mdash; configure their pages before creating them';
+  }
+  function continueToPageAccess() {
+    var list = collectSlots();
+    if (!list) return;
+    pendingAccounts = list;
+    updatePendingBanner();
+    setPageMode('account');
+    switchTab('pages');
+    showToast('Configure the pages for each account, then create them');
+  }
+  function clearPendingAccount() {
+    pendingAccounts = [];
+    updatePendingBanner();
+    setPageMode('store');
+  }
+  function saveCurrentAccessState() {
+    if (!accessTarget || !accessTarget.pending) return;
+    var p = pendingAccounts[accessTarget.index];
+    if (!p) return;
+    var fullEl = $('accessFullAccess');
+    p.full = !!(fullEl && fullEl.checked);
+    p.pages = accessPayload('access') || [];
+  }
+  async function createPendingAccount() {
+    if (!accessTarget || !accessTarget.pending) return;
+    saveCurrentAccessState();
+    var p = pendingAccounts[accessTarget.index];
+    if (!p) return;
+    var payload = {
+      name: p.name,
+      username: p.username,
+      password: p.password,
+      role: p.role,
+      store: p.store,
+      email: p.email,
+      phone: p.phone,
+      active: p.active,
+      page_access: p.full ? null : p.pages
+    };
+    try {
+      await API.createAdminUser(payload);
+      showToast(p.title + ' account created');
+      pendingAccounts.splice(accessTarget.index, 1);
+      accessTarget = null;
+      updatePendingBanner();
+      await loadUsers();
+      await loadOverview();
+      renderAccessAccounts();
+      if (pendingAccounts.length) {
+        selectAccessAccount('pending-0');
+      } else {
+        setPageMode('store');
+        switchTab('users');
+        clearSlotForms();
+      }
+    } catch (e) { showToast(e.message || 'Create failed', true); }
+  }
+  async function createAllPendingAccounts() {
+    if (!pendingAccounts.length) { showToast('No accounts to create', true); return; }
+    saveCurrentAccessState();
+    var created = 0;
+    var failed = [];
+    for (var i = 0; i < pendingAccounts.length; i++) {
+      var p = pendingAccounts[i];
+      var payload = {
+        name: p.name,
+        username: p.username,
+        password: p.password,
+        role: p.role,
+        store: p.store,
+        email: p.email,
+        phone: p.phone,
+        active: p.active,
+        page_access: p.full ? null : p.pages
+      };
+      try {
+        await API.createAdminUser(payload);
+        created++;
+      } catch (e) {
+        failed.push(p.username + ': ' + (e.message || 'failed'));
+      }
+    }
+    pendingAccounts = [];
+    updatePendingBanner();
+    await loadUsers();
+    await loadOverview();
+    clearSlotForms();
+    setPageMode('store');
+    switchTab('users');
+    if (failed.length) {
+      showToast(created + ' created, ' + failed.length + ' failed - ' + failed[0], true);
+    } else {
+      showToast(created + ' account(s) created');
+    }
+  }
+  async function createAllNow() {
+    var list = collectSlots();
+    if (!list) return;
+    var created = 0;
+    var failed = [];
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i];
+      var payload = {
+        name: p.name,
+        username: p.username,
+        password: p.password,
+        role: p.role,
+        store: p.store,
+        email: p.email,
+        phone: p.phone,
+        active: p.active,
+        page_access: p.full ? null : p.pages
+      };
+      try {
+        await API.createAdminUser(payload);
+        created++;
+      } catch (e) {
+        failed.push(p.username + ': ' + (e.message || 'failed'));
+      }
+    }
+    clearSlotForms();
+    await loadUsers();
+    await loadOverview();
+    if (failed.length) {
+      showToast(created + ' created, ' + failed.length + ' failed - ' + failed[0], true);
+    } else {
+      showToast(created + ' account(s) created');
+    }
+  }
+
+  // ---------- Business profile ----------
+  async function loadBusinessProfile() {
+    try {
+      var profile = await API.getBusinessProfile();
+      DB.business = profile || null;
+      DB.businessTypes = (profile && profile.business_types) || DB.businessTypes;
+      DB.moduleCatalog = (profile && profile.module_catalog) || DB.moduleCatalog;
+    } catch (e) {
+      DB.business = null;
+      showToast(e.message || 'Could not load the business profile', true);
+    }
+    renderBusinessProfile();
+  }
+  function renderBusinessProfile() {
+    var b = DB.business;
+    if (!b) return;
+    $('bizProfileName').value = b.name || '';
+    $('bizProfileAddress').value = b.address || '';
+    $('bizProfilePhone').value = b.phone || '';
+    $('bizProfileEmail').value = b.email || '';
+    var sel = $('bizProfileType');
+    sel.innerHTML = DB.businessTypes.map(function(t) {
+      return '<option value="' + esc(t.key) + '">' + esc(t.label) + '</option>';
+    }).join('');
+    sel.value = b.business_type || 'general';
+    renderModuleGrid(b.modules || []);
+  }
+  function renderModuleGrid(activeModules) {
+    var grid = $('bizModuleGrid');
+    if (!DB.moduleCatalog.length) { grid.innerHTML = '<div class="empty-state">Loading modules...</div>'; return; }
+    grid.innerHTML = DB.moduleCatalog.map(function(m) {
+      var on = activeModules.indexOf(m.key) > -1;
+      var locked = m.key === 'core' || m.key === 'session';
+      return '<label class="access-page" style="padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:#fff;">' +
+        '<input type="checkbox" class="module-check" data-module="' + esc(m.key) + '"' + (on ? ' checked' : '') + (locked ? ' disabled' : '') + '>' +
+        '<i class="fas ' + esc(m.icon) + '"></i>' +
+        '<span><strong>' + esc(m.label) + '</strong><br><span style="color:var(--muted);font-size:11px;">' + esc(m.description) + '</span></span>' +
+        '</label>';
+    }).join('');
+  }
+  function applyBusinessTypeModules(useDefaults) {
+    var sel = $('bizProfileType');
+    var type = DB.businessTypes.find(function(t) { return t.key === sel.value; });
+    if (!type) return;
+    if (useDefaults === false) return;
+    renderModuleGrid(type.modules || []);
+  }
+  function setAllModules(on) {
+    var boxes = document.querySelectorAll('#bizModuleGrid .module-check');
+    for (var i = 0; i < boxes.length; i++) {
+      if (boxes[i].disabled) continue;
+      boxes[i].checked = !!on;
+    }
+  }
+  function collectModules() {
+    var out = [];
+    var boxes = document.querySelectorAll('#bizModuleGrid .module-check');
+    for (var i = 0; i < boxes.length; i++) {
+      if (boxes[i].checked) out.push(boxes[i].getAttribute('data-module'));
+    }
+    return out;
+  }
+  async function saveBusinessProfile() {
+    var payload = {
+      name: $('bizProfileName').value.trim(),
+      business_type: $('bizProfileType').value,
+      address: $('bizProfileAddress').value.trim(),
+      phone: $('bizProfilePhone').value.trim(),
+      email: $('bizProfileEmail').value.trim(),
+      modules: collectModules()
+    };
+    if (!payload.name) { showToast('Business name is required', true); return; }
+    try {
+      var res = await API.updateBusinessProfile(payload);
+      if (res && res.profile) {
+        DB.business = res.profile;
+        DB.businessTypes = res.profile.business_types || DB.businessTypes;
+        DB.moduleCatalog = res.profile.module_catalog || DB.moduleCatalog;
+        if (API.setBusiness) API.setBusiness(res.profile);
+        renderBusinessProfile();
+      }
+      showToast('Business profile saved');
+      await loadOverview();
+      await loadPages();
+    } catch (e) { showToast(e.message || 'Save failed', true); }
+  }
+
+  // ---------- Overview ----------
+  async function loadOverview() {
+    try {
+      DB.overview = await API.getAdminOverview();
+    } catch (e) {
+      DB.overview = null;
+      showToast(e.message || 'Could not load overview', true);
+    }
+    var o = DB.overview;
+    if (!o) return;
+    $('statUsers').textContent = o.users || 0;
+    $('statActive').textContent = o.active_users || 0;
+    $('statDisabled').textContent = o.disabled_users || 0;
+    $('statPages').textContent = o.pages_enabled || 0;
+    $('statAudit').textContent = o.audit_entries || 0;
+    $('ovPharmacy').textContent = (o.pharmacy && o.pharmacy.name) || '-';
+    $('ovBusinessType').textContent = (o.business && o.business.business_label) || '-';
+    $('ovModules').textContent = (o.business && o.business.modules) ? o.business.modules.length : 0;
+    $('ovAdmin').textContent = o.admin_user ? ((o.admin_user.name || o.admin_user.username) + ' (' + o.admin_user.username + ')') : '-';
+    $('ovRoles').textContent = o.roles || 0;
+    $('ovPages').textContent = (o.pages_enabled || 0) + ' of ' + (o.pages_total || 0) + ' enabled';
+    renderActivity();
+  }
+  function renderActivity() {
+    var items = (DB.overview && DB.overview.recent_activity) || [];
+    var ul = $('activityBody');
+    if (!items.length) { ul.innerHTML = '<li class="empty-state">No admin activity recorded yet</li>'; return; }
+    ul.innerHTML = items.map(function(a) {
+      return '<li><i class="fas fa-circle" style="color:var(--primary);font-size:8px;margin-top:6px;"></i><div>' +
+        '<div><strong>' + esc(a.user_name || 'system') + '</strong> ' + esc(a.action || '') +
+        ' <span style="color:var(--muted);">' + esc(a.entity_type || '') + (a.entity_id ? ' #' + esc(a.entity_id) : '') + '</span></div>' +
+        '<div class="activity-meta">' + esc(a.details || '') + (a.created_at ? ' &middot; ' + esc(a.created_at) : '') + '</div>' +
+        '</div></li>';
+    }).join('');
+  }
+
+  // ---------- Users ----------
+  async function loadUsers() {
+    try {
+      DB.users = await API.getAdminUsers() || [];
+    } catch (e) {
+      DB.users = [];
+      showToast(e.message || 'Could not load users', true);
+    }
+    renderUsers();
+    populateRoleSelects();
+  }
+  function renderUsers() {
+    var tb = $('usersBody');
+    var query = ($('userSearch') ? $('userSearch').value : '').toLowerCase();
+    var rows = DB.users.filter(function(u) {
+      return !query ||
+        (u.name || '').toLowerCase().indexOf(query) > -1 ||
+        (u.username || '').toLowerCase().indexOf(query) > -1 ||
+        (u.role || '').toLowerCase().indexOf(query) > -1 ||
+        (u.email || '').toLowerCase().indexOf(query) > -1;
+    });
+    if (!rows.length) { tb.innerHTML = '<tr><td colspan="8" class="empty-state">No accounts found</td></tr>'; return; }
+    var me = (API.getUserName ? API.getUserName() : '') || '';
+    tb.innerHTML = rows.map(function(u) {
+      var isSelf = u.username === me;
+      var fullAccess = (u.page_access === null || u.page_access === undefined);
+      var accessCell = fullAccess
+        ? '<span class="badge badge-success">All pages</span>'
+        : '<span class="badge badge-info">' + u.page_access.length + ' page(s)</span>';
+      return '<tr>' +
+        '<td><strong>' + esc(u.name || '-') + '</strong>' + (isSelf ? ' <span class="badge badge-info">You</span>' : '') + '</td>' +
+        '<td>' + esc(u.username) + '</td>' +
+        '<td><span class="badge badge-info">' + esc(roleLabel(u.role)) + '</span></td>' +
+        '<td>' + esc(u.email || '-') + '</td>' +
+        '<td>' + esc(u.phone || '-') + '</td>' +
+        '<td><span class="badge ' + (u.active ? 'badge-success' : 'badge-danger') + '">' + (u.active ? 'Active' : 'Disabled') + '</span></td>' +
+        '<td>' + accessCell + '</td>' +
+        '<td>' + (u.last_login ? esc(String(u.last_login).replace('T', ' ').slice(0, 16)) : '-') + '</td>' +
+        '<td class="actions-cell">' +
+          '<button class="btn btn-outline btn-sm" title="Edit" onclick="editUser(' + u.id + ')"><i class="fas fa-edit"></i></button> ' +
+          '<button class="btn btn-outline btn-sm" title="' + (u.active ? 'Disable' : 'Enable') + '" onclick="toggleUser(' + u.id + ')"><i class="fas fa-' + (u.active ? 'ban' : 'check') + '"></i></button> ' +
+          '<button class="btn btn-danger btn-sm" title="Delete" onclick="deleteUser(' + u.id + ')"><i class="fas fa-trash"></i></button>' +
+        '</td></tr>';
+    }).join('');
+  }
+  async function createUser() {
+    var list = collectSlots();
+    if (!list) return;
+    await createAllNow();
+  }
+  function editUser(id) {
+    var u = DB.users.find(function(x) { return String(x.id) === String(id); });
+    if (!u) return;
+    $('userModalTitle').textContent = 'Edit ' + (u.name || u.username);
+    $('editUserId').value = u.id;
+    $('editName').value = u.name || '';
+    $('editUsername').value = u.username || '';
+    $('editPassword').value = '';
+    $('editEmail').value = u.email || '';
+    $('editPhone').value = u.phone || '';
+    $('editStore').value = u.store || 'main';
+    $('editActive').checked = !!u.active;
+    populateRoleSelects();
+    $('editRole').value = u.role || 'staff';
+    openModal('userModal');
+  }
+  async function saveUser() {
+    var id = $('editUserId').value;
+    if (!id) return;
+    var payload = {
+      name: $('editName').value.trim(),
+      username: $('editUsername').value.trim(),
+      role: $('editRole').value || 'staff',
+      store: $('editStore').value.trim() || 'main',
+      email: $('editEmail').value.trim(),
+      phone: $('editPhone').value.trim(),
+      active: $('editActive').checked
+    };
+    var password = $('editPassword').value;
+    if (password) {
+      if (password.length < 6) { showToast('Password must be at least 6 characters', true); return; }
+      payload.password = password;
+    }
+    try {
+      await API.updateAdminUser(id, payload);
+      showToast('Account updated');
+      closeModal('userModal');
+      await loadUsers();
+      await loadOverview();
+    } catch (e) { showToast(e.message || 'Update failed', true); }
+  }
+  async function toggleUser(id) {
+    var u = DB.users.find(function(x) { return String(x.id) === String(id); });
+    if (!u) return;
+    try {
+      await API.updateAdminUser(id, { active: !u.active });
+      showToast(u.active ? 'Account disabled' : 'Account enabled');
+      await loadUsers();
+      await loadOverview();
+    } catch (e) { showToast(e.message || 'Update failed', true); }
+  }
+  async function deleteUser(id) {
+    var u = DB.users.find(function(x) { return String(x.id) === String(id); });
+    if (!u) return;
+    if (!confirm('Delete account "' + (u.name || u.username) + '"? This cannot be undone.')) return;
+    try {
+      await API.deleteAdminUser(id);
+      showToast('Account deleted');
+      await loadUsers();
+      await loadOverview();
+    } catch (e) { showToast(e.message || 'Delete failed', true); }
+  }
+
+  // ---------- Pages ----------
+  async function loadPages() {
+    try {
+      DB.pages = await API.getAdminPages() || [];
+    } catch (e) {
+      DB.pages = [];
+      showToast(e.message || 'Could not load pages', true);
+    }
+    renderPages();
+  }
+  function renderPages() {
+    var box = $('pagesBody');
+    if (!DB.pages.length) { box.innerHTML = '<div class="empty-state">No pages available</div>'; return; }
+    var groups = {};
+    var order = [];
+    DB.pages.forEach(function(p) {
+      var g = p.group || 'Other';
+      if (!groups[g]) { groups[g] = []; order.push(g); }
+      groups[g].push(p);
+    });
+    box.innerHTML = order.map(function(group) {
+      var rows = groups[group].sort(function(a, b) { return (a.sort_order || 0) - (b.sort_order || 0); }).map(function(p) {
+        var moduleOff = p.module_enabled === false;
+        return '<div class="page-row"' + (moduleOff ? ' style="opacity:.55"' : '') + '>' +
+          '<label class="switch"><input type="checkbox" ' + (p.enabled ? 'checked' : '') + ' onchange="togglePage(\'' + esc(p.key) + '\', this.checked)"><span class="slider"></span></label>' +
+          '<div><input type="text" value="' + esc(p.label) + '" onchange="updatePage(\'' + esc(p.key) + '\', {label: this.value})"><div class="page-key">' + esc(p.key) + (p.admin_only ? ' &middot; admin only' : '') + (p.module ? ' &middot; ' + esc(p.module_label || p.module) : '') + (moduleOff ? ' &middot; <span style="color:#b45309">module off</span>' : '') + (p.customised ? ' &middot; customised' : '') + '</div></div>' +
+          '<input type="text" value="' + esc(p.icon) + '" placeholder="fa-icon" onchange="updatePage(\'' + esc(p.key) + '\', {icon: this.value})">' +
+          '<input type="text" value="' + esc(p.group) + '" placeholder="Group" onchange="updatePage(\'' + esc(p.key) + '\', {group: this.value})">' +
+          '<div class="row-actions">' +
+            '<button class="btn btn-outline btn-sm" title="Reset this page" onclick="resetPage(\'' + esc(p.key) + '\')"><i class="fas fa-rotate-left"></i></button>' +
+          '</div></div>';
+      }).join('');
+      return '<div class="page-group"><div class="page-group-head"><span>' + esc(group) + '</span><span>' + groups[group].length + ' page(s)</span></div>' + rows + '</div>';
+    }).join('');
+  }
+  async function togglePage(key, enabled) {
+    try {
+      await API.updateAdminPage(key, { enabled: enabled });
+      showToast(enabled ? 'Page enabled' : 'Page hidden');
+      await loadPages();
+      await loadOverview();
+    } catch (e) {
+      showToast(e.message || 'Update failed', true);
+      await loadPages();
+    }
+  }
+  async function updatePage(key, changes) {
+    try {
+      await API.updateAdminPage(key, changes);
+      showToast('Page updated');
+      await loadPages();
+      await loadOverview();
+    } catch (e) { showToast(e.message || 'Update failed', true); }
+  }
+  async function resetPage(key) {
+    try {
+      var current = DB.pages.find(function(p) { return p.key === key; });
+      if (!current) return;
+      await API.updateAdminPage(key, {
+        label: current.default_label,
+        group: current.default_group,
+        icon: current.default_icon,
+        enabled: true
+      });
+      showToast('Page restored to default');
+      await loadPages();
+      await loadOverview();
+    } catch (e) { showToast(e.message || 'Reset failed', true); }
+  }
+  async function resetPages() {
+    if (!confirm('Restore every page to its default name, group and visibility?')) return;
+    try {
+      await API.resetAdminPages();
+      showToast('Pages restored to defaults');
+      await loadPages();
+      await loadOverview();
+    } catch (e) { showToast(e.message || 'Reset failed', true); }
+  }
+  async function reloadPages() {
+    await loadPages();
+    showToast('Pages refreshed');
+  }
+
+  async function loadRoles() {
+    try { DB.roles = await API.get('/roles') || []; } catch (e) { DB.roles = []; }
+    populateRoleSelects();
+  }
+  async function loadPresets() {
+    try {
+      var res = await API.getAdminRolePresets();
+      DB.presets = (res && res.presets) || {};
+    } catch (e) { DB.presets = {}; }
+  }
+
+  window.init = async function() {
+    if (!API.isLoggedIn || !API.isLoggedIn()) { window.location.href = 'login.html'; return; }
+    if (typeof POS !== 'undefined') {
+      try { POS.renderSidebar(); } catch (e) {}
+      try { POS.renderUserMenu(); } catch (e) {}
+      try { POS.startClock(); } catch (e) {}
+    }
+    if (!isAdmin()) {
+      $('accessDenied').style.display = 'block';
+      return;
+    }
+    $('adminContent').style.display = 'block';
+    try {
+    await loadRoles();
+    await loadPresets();
+    renderAccountSlots();
+    await Promise.all([loadOverview(), loadUsers(), loadPages(), loadBusinessProfile()]);
+    setPageMode('store');
+    } catch (e) {
+      showToast('Could not load the admin panel: ' + (e && e.message ? e.message : e), true);
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', function() { setTimeout(window.init, 100); });
+  if (document.readyState !== 'loading') setTimeout(window.init, 100);
+
+  window.switchTab = switchTab;
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+  window.showToast = showToast;
+  window.createUser = createUser;
+  window.editUser = editUser;
+  window.saveUser = saveUser;
+  window.toggleUser = toggleUser;
+  window.deleteUser = deleteUser;
+  window.togglePage = togglePage;
+  window.updatePage = updatePage;
+  window.resetPage = resetPage;
+  window.resetPages = resetPages;
+  window.reloadPages = reloadPages;
+  window.loadOverview = loadOverview;
+  window.loadBusinessProfile = loadBusinessProfile;
+  window.saveBusinessProfile = saveBusinessProfile;
+  window.applyBusinessTypeModules = applyBusinessTypeModules;
+  window.setAllModules = setAllModules;
+  window.setPageMode = setPageMode;
+  window.selectAccessAccount = selectAccessAccount;
+  window.applyAccessPreset = applyAccessPreset;
+  window.saveAccountAccess = saveAccountAccess;
+  window.continueToPageAccess = continueToPageAccess;
+  window.clearPendingAccount = clearPendingAccount;
+  window.createPendingAccount = createPendingAccount;
+  window.createAllPendingAccounts = createAllPendingAccounts;
+  window.createAllNow = createAllNow;
+  window.renderAccountSlots = renderAccountSlots;
+  window.onSlotRoleChange = onSlotRoleChange;
+  window.buildAccessGrid = buildAccessGrid;
+  window.applyRolePreset = applyRolePreset;
+  window.onRoleChange = onRoleChange;
+  window.toggleFullAccess = toggleFullAccess;
+  window.setAllPages = setAllPages;
+  window.toggleGroup = toggleGroup;
+  window.syncGroupToggles = syncGroupToggles;
+  window.getCheckedPages = getCheckedPages;
+  window.setCheckedPages = setCheckedPages;
+  // ---------- Landing page content (marketing) ----------
+  var MK = { plans: [], testimonials: [], changelog: [], leads: [], editPlanId: null, editTestId: null, editLogId: null };
+
+  function switchMarketingTab(tab, el) {
+    ['plans', 'testimonials', 'changelog', 'leads'].forEach(function(name) {
+      var box = $('mk' + name.charAt(0).toUpperCase() + name.slice(1));
+      if (box) box.style.display = name === tab ? '' : 'none';
+    });
+    var buttons = document.querySelectorAll('#tab-marketing .mode-switch .btn');
+    for (var i = 0; i < buttons.length; i++) buttons[i].classList.remove('active');
+    if (el) el.classList.add('active');
+    if (tab === 'leads') loadLeads();
+  }
+
+  async function loadMarketing() {
+    try {
+      var p = await API.get('/admin/plans');
+      MK.plans = (p && p.plans) || [];
+      renderPlans();
+    } catch (e) { showToast('Could not load plans: ' + (e.message || 'error'), true); }
+    try {
+      var t = await API.get('/admin/testimonials');
+      MK.testimonials = (t && t.testimonials) || [];
+      renderTestimonials();
+    } catch (e) { showToast('Could not load testimonials: ' + (e.message || 'error'), true); }
+    try {
+      var c = await API.get('/admin/changelog');
+      MK.changelog = (c && c.changelog) || [];
+      renderChangelog();
+    } catch (e) { showToast('Could not load release notes: ' + (e.message || 'error'), true); }
+  }
+
+  async function loadLeads() {
+    try {
+      var l = await API.get('/admin/leads');
+      MK.leads = (l && l.leads) || [];
+      renderLeads();
+    } catch (e) { showToast('Could not load leads: ' + (e.message || 'error'), true); }
+  }
+
+  function renderPlans() {
+    var body = $('mkPlansBody');
+    if (!body) return;
+    if (!MK.plans.length) { body.innerHTML = '<tr><td colspan="7" class="empty-state">No plans yet.</td></tr>'; return; }
+    body.innerHTML = MK.plans.map(function(p) {
+      var features = (p.features || []).length;
+      return '<tr>' +
+        '<td><strong>' + esc(p.name || '') + '</strong><br><small style="color:#64748b;">' + esc(p.tagline || '') + '</small></td>' +
+        '<td>' + Number(p.price_monthly || 0).toLocaleString() + '</td>' +
+        '<td>' + Number(p.price_yearly || 0).toLocaleString() + '</td>' +
+        '<td>' + features + '</td>' +
+        '<td>' + (p.highlight ? 'Yes' : '-') + '</td>' +
+        '<td>' + (p.is_active ? 'Yes' : 'No') + '</td>' +
+        '<td><button class="btn btn-outline btn-sm" onclick="editPlan(' + p.id + ')"><i class="fas fa-pen"></i></button> ' +
+        '<button class="btn btn-danger btn-sm" onclick="deletePlan(' + p.id + ')"><i class="fas fa-trash"></i></button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function resetPlanForm() {
+    MK.editPlanId = null;
+    $('mkPlanName').value = '';
+    $('mkPlanTagline').value = '';
+    $('mkPlanMonthly').value = '0';
+    $('mkPlanYearly').value = '0';
+    $('mkPlanFeatures').value = '';
+    $('mkPlanHighlight').checked = false;
+    var btn = $('mkPlanSaveBtn');
+    if (btn) btn.innerHTML = '<i class="fas fa-save"></i> Add plan';
+  }
+
+  function editPlan(id) {
+    var p = MK.plans.filter(function(x) { return x.id === id; })[0];
+    if (!p) return;
+    MK.editPlanId = id;
+    $('mkPlanName').value = p.name || '';
+    $('mkPlanTagline').value = p.tagline || '';
+    $('mkPlanMonthly').value = p.price_monthly || 0;
+    $('mkPlanYearly').value = p.price_yearly || 0;
+    $('mkPlanFeatures').value = (p.features || []).join('\n');
+    $('mkPlanHighlight').checked = !!p.highlight;
+    var btn = $('mkPlanSaveBtn');
+    if (btn) btn.innerHTML = '<i class="fas fa-save"></i> Update plan';
+  }
+
+  async function savePlan() {
+    var name = ($('mkPlanName').value || '').trim();
+    if (!name) { showToast('Plan name is required', true); return; }
+    var payload = {
+      name: name,
+      tagline: ($('mkPlanTagline').value || '').trim(),
+      price_monthly: parseFloat($('mkPlanMonthly').value) || 0,
+      price_yearly: parseFloat($('mkPlanYearly').value) || 0,
+      features: ($('mkPlanFeatures').value || '').split('\n').map(function(s) { return s.trim(); }).filter(Boolean),
+      highlight: $('mkPlanHighlight').checked
+    };
+    try {
+      if (MK.editPlanId) await API.put('/admin/plans/' + MK.editPlanId, payload);
+      else await API.post('/admin/plans', payload);
+      showToast(MK.editPlanId ? 'Plan updated' : 'Plan added');
+      resetPlanForm();
+      await loadMarketing();
+    } catch (e) { showToast('Could not save the plan: ' + (e.message || 'error'), true); }
+  }
+
+  async function deletePlan(id) {
+    if (!confirm('Delete this plan? It disappears from the landing page.')) return;
+    try {
+      await API.delete('/admin/plans/' + id);
+      showToast('Plan deleted');
+      if (MK.editPlanId === id) resetPlanForm();
+      await loadMarketing();
+    } catch (e) { showToast('Could not delete the plan: ' + (e.message || 'error'), true); }
+  }
+
+  function renderTestimonials() {
+    var body = $('mkTestimonialsBody');
+    if (!body) return;
+    if (!MK.testimonials.length) { body.innerHTML = '<tr><td colspan="6" class="empty-state">No testimonials yet.</td></tr>'; return; }
+    body.innerHTML = MK.testimonials.map(function(t) {
+      var quote = String(t.quote || '');
+      if (quote.length > 90) quote = quote.slice(0, 90) + '...';
+      return '<tr>' +
+        '<td><strong>' + esc(t.author_name || '') + '</strong><br><small style="color:#64748b;">' + esc(t.author_role || '') + '</small></td>' +
+        '<td>' + esc(t.business || '-') + '</td>' +
+        '<td>' + esc(quote) + '</td>' +
+        '<td>' + (t.rating || 5) + '</td>' +
+        '<td>' + (t.is_published ? 'Yes' : 'No') + '</td>' +
+        '<td><button class="btn btn-outline btn-sm" onclick="editTestimonial(' + t.id + ')"><i class="fas fa-pen"></i></button> ' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteTestimonial(' + t.id + ')"><i class="fas fa-trash"></i></button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function resetTestimonialForm() {
+    MK.editTestId = null;
+    $('mkTestName').value = '';
+    $('mkTestRole').value = '';
+    $('mkTestBusiness').value = '';
+    $('mkTestQuote').value = '';
+    $('mkTestRating').value = '5';
+    var btn = $('mkTestSaveBtn');
+    if (btn) btn.innerHTML = '<i class="fas fa-save"></i> Add testimonial';
+  }
+
+  function editTestimonial(id) {
+    var t = MK.testimonials.filter(function(x) { return x.id === id; })[0];
+    if (!t) return;
+    MK.editTestId = id;
+    $('mkTestName').value = t.author_name || '';
+    $('mkTestRole').value = t.author_role || '';
+    $('mkTestBusiness').value = t.business || '';
+    $('mkTestQuote').value = t.quote || '';
+    $('mkTestRating').value = t.rating || 5;
+    var btn = $('mkTestSaveBtn');
+    if (btn) btn.innerHTML = '<i class="fas fa-save"></i> Update testimonial';
+  }
+
+  async function saveTestimonial() {
+    var name = ($('mkTestName').value || '').trim();
+    var quote = ($('mkTestQuote').value || '').trim();
+    if (!name || !quote) { showToast('Author name and quote are required', true); return; }
+    var payload = {
+      author_name: name,
+      author_role: ($('mkTestRole').value || '').trim(),
+      business: ($('mkTestBusiness').value || '').trim(),
+      quote: quote,
+      rating: parseInt($('mkTestRating').value, 10) || 5
+    };
+    try {
+      if (MK.editTestId) await API.put('/admin/testimonials/' + MK.editTestId, payload);
+      else await API.post('/admin/testimonials', payload);
+      showToast(MK.editTestId ? 'Testimonial updated' : 'Testimonial added');
+      resetTestimonialForm();
+      await loadMarketing();
+    } catch (e) { showToast('Could not save the testimonial: ' + (e.message || 'error'), true); }
+  }
+
+  async function deleteTestimonial(id) {
+    if (!confirm('Delete this testimonial?')) return;
+    try {
+      await API.delete('/admin/testimonials/' + id);
+      showToast('Testimonial deleted');
+      if (MK.editTestId === id) resetTestimonialForm();
+      await loadMarketing();
+    } catch (e) { showToast('Could not delete the testimonial: ' + (e.message || 'error'), true); }
+  }
+
+  function renderChangelog() {
+    var body = $('mkChangelogBody');
+    if (!body) return;
+    if (!MK.changelog.length) { body.innerHTML = '<tr><td colspan="5" class="empty-state">No release notes yet.</td></tr>'; return; }
+    body.innerHTML = MK.changelog.map(function(c) {
+      var summary = String(c.summary || '');
+      if (summary.length > 80) summary = summary.slice(0, 80) + '...';
+      return '<tr>' +
+        '<td><strong>' + esc(c.version || '') + '</strong></td>' +
+        '<td>' + esc(c.released_on || '-') + '</td>' +
+        '<td>' + esc(c.title || '') + '</td>' +
+        '<td>' + esc(summary) + '</td>' +
+        '<td><button class="btn btn-outline btn-sm" onclick="editChangelog(' + c.id + ')"><i class="fas fa-pen"></i></button> ' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteChangelog(' + c.id + ')"><i class="fas fa-trash"></i></button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function resetChangelogForm() {
+    MK.editLogId = null;
+    $('mkLogVersion').value = '';
+    $('mkLogDate').value = '';
+    $('mkLogTitle').value = '';
+    $('mkLogSummary').value = '';
+    $('mkLogItems').value = '';
+    var btn = $('mkLogSaveBtn');
+    if (btn) btn.innerHTML = '<i class="fas fa-save"></i> Add release note';
+  }
+
+  function editChangelog(id) {
+    var c = MK.changelog.filter(function(x) { return x.id === id; })[0];
+    if (!c) return;
+    MK.editLogId = id;
+    $('mkLogVersion').value = c.version || '';
+    $('mkLogDate').value = c.released_on || '';
+    $('mkLogTitle').value = c.title || '';
+    $('mkLogSummary').value = c.summary || '';
+    $('mkLogItems').value = (c.items || []).join('\n');
+    var btn = $('mkLogSaveBtn');
+    if (btn) btn.innerHTML = '<i class="fas fa-save"></i> Update release note';
+  }
+
+  async function saveChangelog() {
+    var version = ($('mkLogVersion').value || '').trim();
+    var title = ($('mkLogTitle').value || '').trim();
+    if (!version || !title) { showToast('Version and title are required', true); return; }
+    var payload = {
+      version: version,
+      released_on: ($('mkLogDate').value || '').trim(),
+      title: title,
+      summary: ($('mkLogSummary').value || '').trim(),
+      items: ($('mkLogItems').value || '').split('\n').map(function(s) { return s.trim(); }).filter(Boolean)
+    };
+    try {
+      if (MK.editLogId) await API.put('/admin/changelog/' + MK.editLogId, payload);
+      else await API.post('/admin/changelog', payload);
+      showToast(MK.editLogId ? 'Release note updated' : 'Release note added');
+      resetChangelogForm();
+      await loadMarketing();
+    } catch (e) { showToast('Could not save the release note: ' + (e.message || 'error'), true); }
+  }
+
+  async function deleteChangelog(id) {
+    if (!confirm('Delete this release note?')) return;
+    try {
+      await API.delete('/admin/changelog/' + id);
+      showToast('Release note deleted');
+      if (MK.editLogId === id) resetChangelogForm();
+      await loadMarketing();
+    } catch (e) { showToast('Could not delete the release note: ' + (e.message || 'error'), true); }
+  }
+
+  function renderLeads() {
+    var body = $('mkLeadsBody');
+    if (!body) return;
+    if (!MK.leads.length) { body.innerHTML = '<tr><td colspan="5" class="empty-state">No signups yet.</td></tr>'; return; }
+    body.innerHTML = MK.leads.map(function(l) {
+      return '<tr>' +
+        '<td>' + esc(l.email || '') + '</td>' +
+        '<td>' + esc(l.name || '-') + '</td>' +
+        '<td>' + esc(l.pharmacy || '-') + '</td>' +
+        '<td>' + esc(l.source || '-') + '</td>' +
+        '<td>' + esc(l.created_at || '-') + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  window.switchMarketingTab = switchMarketingTab;
+  window.loadMarketing = loadMarketing;
+  window.savePlan = savePlan;
+  window.editPlan = editPlan;
+  window.deletePlan = deletePlan;
+  window.resetPlanForm = resetPlanForm;
+  window.saveTestimonial = saveTestimonial;
+  window.editTestimonial = editTestimonial;
+  window.deleteTestimonial = deleteTestimonial;
+  window.resetTestimonialForm = resetTestimonialForm;
+  window.saveChangelog = saveChangelog;
+  window.editChangelog = editChangelog;
+  window.deleteChangelog = deleteChangelog;
+  window.resetChangelogForm = resetChangelogForm;
+})();
+</script>
+</body>
+</html>

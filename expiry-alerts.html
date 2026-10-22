@@ -1,0 +1,180 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expiry & Batch Alerts - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        .btn-danger{background:#ef4444;color:#fff}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .badge-critical{background:#fef2f2;color:#991b1b}
+        .badge-warning{background:#fffbeb;color:#92400e}
+        .badge-ok{background:#ecfdf5;color:#065f46}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-triangle-exclamation"></i> Expiry & Batch Alerts</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <h3><i class="fas fa-plus"></i> Add Batch / Expiry Record</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Product</label>
+                    <input type="text" id="batchProduct" class="form-control" placeholder="Product name">
+                </div>
+                <div class="form-group">
+                    <label>Batch / Lot Number</label>
+                    <input type="text" id="batchNo" class="form-control" placeholder="Batch #">
+                </div>
+                <div class="form-group">
+                    <label>Expiry Date</label>
+                    <input type="date" id="batchExpiry" class="form-control">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="batchQty" class="form-control" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Alert Threshold (days before expiry)</label>
+                    <input type="number" id="batchThreshold" class="form-control" min="1" value="30">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="batchLocation" class="form-control" placeholder="Store / shelf">
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="saveBatch()"><i class="fas fa-save"></i> Save Record</button>
+                <button class="btn btn-outline" onclick="resetBatch()"><i class="fas fa-eraser"></i> Clear</button>
+            </div>
+        </div>
+        <div class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap;">
+                <h3 style="margin:0;"><i class="fas fa-list"></i> Alerts</h3>
+                <select id="alertFilter" class="form-control" style="max-width:180px;" onchange="renderBatches()">
+                    <option value="">All</option>
+                    <option value="critical">Critical / Expired</option>
+                    <option value="warning">Warning</option>
+                    <option value="ok">OK</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Product</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Days Left</th><th>Location</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="batchBody">
+                        <tr><td colspan="8" class="empty-state">No batch records yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var batches=[];
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){ t.style.display='none'; },3000); }
+function daysBetween(a,b){ var d1=new Date(a), d2=new Date(b); return Math.ceil((d2-d1)/(1000*60*60*24)); }
+function statusFor(expiry, threshold){
+    var days=daysBetween(new Date(), expiry);
+    var th=parseInt(threshold)||30;
+    if(days<=0) return 'critical';
+    if(days<=th) return 'warning';
+    return 'ok';
+}
+function saveBatch(){
+    var product=$('batchProduct').value.trim();
+    var batchNo=$('batchNo').value.trim();
+    var expiry=$('batchExpiry').value;
+    var qty=parseInt($('batchQty').value)||0;
+    var threshold=parseInt($('batchThreshold').value)||30;
+    var location=$('batchLocation').value.trim();
+    if(!product||!batchNo||!expiry||qty<=0){ showToast('Product, batch number, expiry and quantity are required', true); return; }
+    var record={ id:'BCH-'+Date.now(), date:new Date().toISOString(), product:product, batchNo:batchNo, expiry:expiry, qty:qty, threshold:threshold, location:location };
+    batches.unshift(record);
+    try{ localStorage.setItem('SHEDS_batches', JSON.stringify(batches)); }catch(e){}
+    showToast('Batch record saved');
+    resetBatch();
+    renderBatches();
+    var st=statusFor(expiry, threshold);
+    if(st==='critical'||st==='warning') logAction('edit', record.id, 'Batch alert: '+product+' '+st);
+}
+function resetBatch(){
+    $('batchProduct').value='';$('batchNo').value='';$('batchExpiry').value='';$('batchQty').value=1;$('batchThreshold').value=30;$('batchLocation').value='';
+}
+function badgeFor(s){
+    if(s==='critical') return '<span class="badge badge-critical">Expired / Critical</span>';
+    if(s==='warning') return '<span class="badge badge-warning">Near Expiry</span>';
+    return '<span class="badge badge-ok">OK</span>';
+}
+function renderBatches(){
+    var filter=($('alertFilter').value||'').toLowerCase();
+    var tbody=$('batchBody');
+    if(!batches.length){ tbody.innerHTML='<tr><td colspan="8" class="empty-state">No batch records yet</td></tr>'; return; }
+    var list=batches;
+    if(filter){ list=list.filter(function(b){ return statusFor(b.expiry,b.threshold)===filter; }); }
+    if(!list.length){ tbody.innerHTML='<tr><td colspan="8" class="empty-state">No matching alerts</td></tr>'; return; }
+    tbody.innerHTML=list.map(function(b){
+        var st=statusFor(b.expiry,b.threshold);
+        var days=daysBetween(new Date(), b.expiry);
+        var actions='';
+        if(st==='critical'||st==='warning') actions+='<button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="removeBatch(\''+b.id+'\')"><i class="fas fa-trash"></i> Remove</button>';
+        return '<tr><td>'+esc(b.product)+'</td><td>'+esc(b.batchNo)+'</td><td>'+esc(b.expiry)+'</td><td>'+esc(b.qty)+'</td><td>'+esc(days)+' days</td><td>'+esc(b.location||'-')+'</td><td>'+badgeFor(st)+'</td><td>'+actions+'</td></tr>';
+    }).join('');
+}
+function removeBatch(id){
+    if(!confirm('Remove this batch record?')) return;
+    batches=batches.filter(function(b){return b.id!==id;});
+    try{ localStorage.setItem('SHEDS_batches', JSON.stringify(batches)); }catch(e){}
+    renderBatches();
+    showToast('Batch record removed');
+}
+function loadBatches(){
+    try{ batches=JSON.parse(localStorage.getItem('SHEDS_batches')||'[]'); if(!Array.isArray(batches)) batches=[]; }catch(e){ batches=[]; }
+    renderBatches();
+}
+function logAction(action, ref, note){
+    var user=API.getUserName?API.getUserName():'System';
+    API.post('/audit-log',{action:action,entity:'expiry_batch',entity_id:String(ref||''),details:note||'',user:user}).catch(function(){});
+}
+document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; loadBatches(); });
+</script>
+</body>
+</html>
+
+
+
+
