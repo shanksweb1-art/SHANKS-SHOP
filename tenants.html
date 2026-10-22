@@ -1233,7 +1233,7 @@
             const token = API.platformToken();
             if (!token) return;
             try {
-                payments = await API.getAdminPayments(token);
+                payments = await API.listAdminPayments(token);
                 const tbody = document.getElementById('paymentsTableBody');
                 if (!payments.length) {
                     tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-credit-card"></i><p>No payments recorded</p></div></td></tr>';
@@ -1346,7 +1346,7 @@
             if (id) {
                 await API.updateAdminPlan(id, data, token);
             } else {
-                await API.createAdminPlan(data, token);
+                await API.saveAdminPlan(data, token);
             }
             showToast('Plan saved');
             closeModal('planModal');
