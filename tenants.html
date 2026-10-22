@@ -1258,7 +1258,7 @@
             const token = API.platformToken();
             if (!token) return;
             try {
-                plans = await API.getAdminPlans(token);
+                plans = await API.platformListPlans(token);
                 const tbody = document.getElementById('plansTableBody');
                 if (!plans.length) {
                     tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-box"></i><p>No plans found</p></div></td></tr>';
@@ -1344,9 +1344,9 @@
                 max_branches: document.getElementById('planBranches').value
             };
             if (id) {
-                await API.updateAdminPlan(id, data, token);
+                await API.platformUpdatePlan(id, data, token);
             } else {
-                await API.saveAdminPlan(data, token);
+                await API.platformCreatePlan(data, token);
             }
             showToast('Plan saved');
             closeModal('planModal');
@@ -1356,7 +1356,7 @@
         async function deletePlan(id) {
             if (!confirm('Delete this plan?')) return;
             const token = API.platformToken();
-            await API.deleteAdminPlan(id, token);
+            await API.platformDeletePlan(id, token);
             showToast('Plan deleted');
             loadPlans();
         }
