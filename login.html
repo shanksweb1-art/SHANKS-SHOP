@@ -8,31 +8,34 @@
 <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #2c3e50, #1a2533); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .login-container { background: white; border-radius: 10px; padding: 2.5rem; width: 100%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-    .brand-logo { width: 88px; height: 88px; object-fit: contain; display: block; margin: 0 auto 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 22px; padding: 9px; box-shadow: 0 8px 20px rgba(15,23,42,.08); }
-    .login-container h2 { color: #2c3e50; margin-bottom: 0.5rem; text-align: center; }
-    .login-container .subtitle { color: #718096; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem; }
-    .tab-switch { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; }
-    .tab-switch button { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; font-size: 1rem; font-weight: 500; color: #a0aec0; border-bottom: 2px solid transparent; margin-bottom: -2px; }
-    .tab-switch button.active { color: #3498db; border-bottom-color: #3498db; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .login-container { background: #fff; border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 460px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); }
+    .brand-logo { width: 72px; height: 72px; object-fit: contain; display: block; margin: 0 auto 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 8px; box-shadow: 0 4px 12px rgba(15,23,42,.08); }
+    .login-container h2 { color: #0f172a; margin-bottom: 0.25rem; text-align: center; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+    .login-container .subtitle { color: #64748b; text-align: center; margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 400; }
+    .tab-switch { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; gap: 0; }
+    .tab-switch button { flex: 1; padding: 10px 8px; border: none; background: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #94a3b8; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s, border-color 0.2s; }
+    .tab-switch button.active { color: #10b981; border-bottom-color: #10b981; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; margin-bottom: 0.4rem; color: #4a5568; font-weight: 500; font-size: 0.9rem; }
-    .form-group input, .form-group select { width: 100%; padding: 0.75rem; border: 1.5px solid #ddd; border-radius: 5px; font-size: 0.95rem; transition: border-color 0.3s; }
-    .form-group input:focus, .form-group select:focus { outline: none; border-color: #3498db; }
+    .form-group label { display: block; margin-bottom: 0.4rem; color: #334155; font-weight: 600; font-size: 0.85rem; }
+    .form-group input, .form-group select { width: 100%; padding: 0.7rem 0.85rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; transition: border-color 0.2s, box-shadow 0.2s; background: #fff; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .field-hint { font-size: 0.78rem; color: #718096; margin-top: 0.35rem; line-height: 1.4; }
-    .login-btn { width: 100%; padding: 0.85rem; background: #3498db; color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; margin-top: 0.5rem; }
-    .login-btn:hover { background: #2980b9; }
+    .login-btn { width: 100%; padding: 0.75rem 1rem; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 0.75rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .login-btn:hover { background: #059669; }
     .register-btn { background: #10b981; }
     .register-btn:hover { background: #047857; }
-    .back-link { display: block; text-align: center; margin-top: 1.5rem; color: #3498db; text-decoration: none; cursor: pointer; font-size: 0.9rem; }
-    .notification-toast { position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 5px; display: none; z-index: 1000; color: white; font-weight: 500; }
+    .back-link { display: block; text-align: center; margin-top: 1.25rem; color: #64748b; text-decoration: none; cursor: pointer; font-size: 0.85rem; transition: color 0.2s; }
+    .notification-toast { position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 10px; display: none; z-index: 1000; color: white; font-weight: 500; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-width: 400px; }
     .notification-toast.success { background: #48bb78; }
     .notification-toast.error { background: #f56565; }
     .notification-toast.info { background: #4299e1; }
@@ -120,6 +123,7 @@
         </div>
 
         <a class="back-link" onclick="window.location.href='index.html'"><i class="fas fa-home"></i> Back to Home</a>
+    <div style="text-align:center;margin-top:1.5rem;font-size:0.75rem;color:#94a3b8;">&copy; 2026 SHANKS SHOP MANAGEMENT. All rights reserved.</div>
     </div>
     <div class="notification-toast" id="toast"></div>
 
