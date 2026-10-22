@@ -381,6 +381,7 @@
         // ---------- Helpers ----------
         function showToast(msg, type) {
             var t = document.getElementById('toast');
+            if (!t) return;
             t.textContent = msg;
             t.className = 'toast ' + (type || 'info');
             t.style.display = 'block';
@@ -405,8 +406,14 @@
             }
         }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openModal(id) {
+            var m = document.getElementById(id);
+            if (m) m.style.display = 'flex';
+        }
+        function closeModal(id) {
+            var m = document.getElementById(id);
+            if (m) m.style.display = 'none';
+        }
 
         function formatDate(val) {
             if (!val) return '-';
@@ -429,12 +436,15 @@
 
         // ---------- Platform sign in ----------
         async function platformSignIn() {
-            var username = document.getElementById('platformUser').value.trim();
-            var password = document.getElementById('platformPass').value;
+            var userInput = document.getElementById('platformUser');
+            var passInput = document.getElementById('platformPass');
+            if (!userInput || !passInput) return;
+            var username = userInput.value.trim();
+            var password = passInput.value;
             if (!username || !password) { showToast('Enter the platform username and password', 'error'); return; }
             var res = await API.platformLogin(username, password);
             if (res && res.error) { showToast(res.error, 'error'); return; }
-            document.getElementById('platformPass').value = '';
+            passInput.value = '';
             showToast('Signed in as ' + username, 'success');
             renderPlatformBadge();
             loadAll();
@@ -451,9 +461,11 @@
 
         // ---------- Tenants ----------
         async function loadTenants() {
-            var token = getToken(); if (!token) return;
+            var token = getToken();
+            if (!token) return;
             try {
                 tenants = await API.getAdminTenants(token);
+                if (!Array.isArray(tenants)) tenants = [];
                 renderTenants();
             } catch (e) {
                 showToast(e.message || 'Failed to load tenants', 'error');
@@ -462,6 +474,7 @@
 
         function renderTenants() {
             var tbody = document.getElementById('tenantsTable');
+            if (!tbody) return;
             var filtered = filterTenantsList();
             if (!filtered.length) {
                 tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);">No tenants found</td></tr>';
@@ -507,9 +520,13 @@
         function escapeJs(s) { return String(s || '').replace(/'/g, "\\'").replace(/\\/g, '\\\\'); }
 
         function filterTenantsList() {
-            var search = document.getElementById('searchInput').value.toLowerCase();
-            var statusFilter = document.getElementById('statusFilter').value;
-            var subFilter = document.getElementById('subFilter').value;
+            var searchInput = document.getElementById('searchInput');
+            var statusInput = document.getElementById('statusFilter');
+            var subInput = document.getElementById('subFilter');
+            var search = searchInput ? searchInput.value.toLowerCase() : '';
+            var statusFilter = statusInput ? statusInput.value : '';
+            var subFilter = subInput ? subInput.value : '';
+            if (!Array.isArray(tenants)) tenants = [];
             return tenants.filter(function(t) {
                 var matchSearch = !search ||
                     (t.name || '').toLowerCase().includes(search) ||
@@ -529,12 +546,13 @@
         function updateBulkBar() {
             var bar = document.getElementById('bulkBar');
             var count = document.getElementById('bulkCount');
+            if (!bar) return;
             if (selectedIds.size > 0) {
                 bar.classList.add('active');
-                count.textContent = selectedIds.size;
+                if (count) count.textContent = selectedIds.size;
             } else {
                 bar.classList.remove('active');
-                count.textContent = '0';
+                if (count) count.textContent = '0';
             }
         }
 
