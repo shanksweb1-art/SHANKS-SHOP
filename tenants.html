@@ -565,6 +565,7 @@
 
         function toggleSelectAll() {
             var cb = document.getElementById('selectAll');
+            if (!cb) return;
             var visible = filterTenantsList();
             if (cb.checked) {
                 visible.forEach(function(t) { selectedIds.add(t.id); });
@@ -577,7 +578,8 @@
 
         function clearSelection() {
             selectedIds = new Set();
-            document.getElementById('selectAll').checked = false;
+            var selectAll = document.getElementById('selectAll');
+            if (selectAll) selectAll.checked = false;
             updateBulkBar();
             renderTenants();
         }
@@ -622,16 +624,21 @@
 
         async function notifyTenant(id, name) {
             notifyTenantId = id;
-            document.getElementById('notifyTenantName').textContent = name;
-            document.getElementById('notifySubject').value = 'Subscription reminder';
-            document.getElementById('notifyBody').value = 'Your subscription needs attention. Please renew to avoid service interruption.';
+            var notifyTenantName = document.getElementById('notifyTenantName');
+            var notifySubject = document.getElementById('notifySubject');
+            var notifyBody = document.getElementById('notifyBody');
+            if (notifyTenantName) notifyTenantName.textContent = name || '';
+            if (notifySubject) notifySubject.value = 'Subscription reminder';
+            if (notifyBody) notifyBody.value = 'Your subscription needs attention. Please renew to avoid service interruption.';
             openModal('notifyModal');
         }
 
         async function sendNotification() {
             var token = getToken(); if (!token) return;
-            var subject = document.getElementById('notifySubject').value.trim();
-            var body = document.getElementById('notifyBody').value.trim();
+            var subjectInput = document.getElementById('notifySubject');
+            var bodyInput = document.getElementById('notifyBody');
+            var subject = subjectInput ? subjectInput.value.trim() : '';
+            var body = bodyInput ? bodyInput.value.trim() : '';
             if (!subject || !body) { showToast('Subject and message are required', 'error'); return; }
             try {
                 var res = await API.notifySubscription(notifyTenantId, { subject: subject, body: body }, token);
@@ -647,7 +654,8 @@
             var t = tenants.find(function(x) { return x.id === id; });
             if (!t) return;
             detailTenantId = id;
-            document.getElementById('detailName').textContent = t.name || '';
+            var detailName = document.getElementById('detailName');
+            if (detailName) detailName.textContent = t.name || '';
             var content = '';
             content += '<div class="detail-row"><span class="detail-label">ID:</span><span>' + t.id + '</span></div>';
             content += '<div class="detail-row"><span class="detail-label">Name:</span><span>' + escapeHtml(t.name || '') + '</span></div>';
@@ -664,19 +672,24 @@
             content += '<div class="detail-row"><span class="detail-label">Branches:</span><span>' + (t.branch_count || 0) + '</span></div>';
             content += '<div class="detail-row"><span class="detail-label">Sales:</span><span>' + (t.sale_count || 0) + '</span></div>';
             content += '<div class="detail-row"><span class="detail-label">Revenue:</span><span>' + (t.total_sales || 0) + '</span></div>';
-            document.getElementById('detailContent').innerHTML = content;
+            var detailContent = document.getElementById('detailContent');
+            if (detailContent) detailContent.innerHTML = content;
             loadPlansForSelect();
-            document.getElementById('tenantDetail').classList.add('active');
+            var tenantDetail = document.getElementById('tenantDetail');
+            if (tenantDetail) tenantDetail.classList.add('active');
         }
 
         function hideDetail() {
-            document.getElementById('tenantDetail').classList.remove('active');
+            var tenantDetail = document.getElementById('tenantDetail');
+            if (tenantDetail) tenantDetail.classList.remove('active');
             detailTenantId = null;
         }
 
         async function loadPlansForSelect() {
             var select = document.getElementById('detailPlanSelect');
+            if (!select) return;
             select.innerHTML = '<option value="">Select a plan</option>';
+            if (!Array.isArray(plans)) return;
             plans.forEach(function(p) {
                 select.innerHTML += '<option value="' + p.id + '">' + escapeHtml(p.name || '') + ' (' + escapeHtml(p.slug || '') + ')</option>';
             });
@@ -759,6 +772,7 @@
             var token = getToken(); if (!token) return;
             try {
                 var tenantsWithSubs = await API.getAdminTenants(token);
+                if (!Array.isArray(tenantsWithSubs)) tenantsWithSubs = [];
                 var now = new Date();
                 var alerts = tenantsWithSubs.filter(function(t) {
                     if (!t.current_period_end) return false;
@@ -768,6 +782,7 @@
                 });
                 var container = document.getElementById('alertsList');
                 var panel = document.getElementById('alertsPanel');
+                if (!container || !panel) return;
                 if (alerts.length === 0) {
                     panel.style.display = 'none';
                     return;
@@ -796,7 +811,9 @@
             var token = getToken(); if (!token) return;
             try {
                 var stats = await API.tenantUsageStats(token);
+                if (!Array.isArray(stats)) stats = [];
                 var container = document.getElementById('statsGrid');
+                if (!container) return;
                 var totalTenants = stats.length;
                 var activeTenants = stats.filter(function(s) { return s.status === 'active'; }).length;
                 var suspendedTenants = stats.filter(function(s) { return s.status === 'suspended'; }).length;
@@ -827,7 +844,9 @@
             var token = getToken(); if (!token) return;
             try {
                 plans = await API.platformListPlans(token);
+                if (!Array.isArray(plans)) plans = [];
                 var tbody = document.getElementById('plansTable');
+                if (!tbody) return;
                 if (!plans.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);">No plans found</td></tr>'; return; }
                 tbody.innerHTML = plans.map(function(p) {
                     return '<tr>' +
@@ -963,7 +982,9 @@
             var token = getToken(); if (!token) return;
             try {
                 var payments = await API.listAdminPayments(token);
+                if (!Array.isArray(payments)) payments = [];
                 var tbody = document.getElementById('paymentsTable');
+                if (!tbody) return;
                 if (!payments.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">No payments found</td></tr>'; return; }
                 tbody.innerHTML = payments.map(function(p) {
                     return '<tr>' +
