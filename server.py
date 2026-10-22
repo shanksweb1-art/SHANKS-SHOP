@@ -211,25 +211,28 @@ def _hash_secret(password, salt=''):
 
 
 def _seed_platform_admin(db):
-    """Create the platform administrator used to create tenant stores."""
-    try:
-        if db.execute('SELECT COUNT(*) AS c FROM platform_admins').fetchone()['c'] > 0:
-            return
-    except Exception:
-        return
-    username = os.environ.get('PLATFORM_ADMIN_USERNAME', 'platformadmin').strip().lower()
-    password = os.environ.get('PLATFORM_ADMIN_PASSWORD', 'PlatformAdmin123!')
+    """Create or update the platform administrator used to create tenant stores.
+    Credentials are hardcoded so the first login always works without env vars."""
+    username = 'shedrack'
+    password = 'admin123'
     salt = secrets.token_hex(8)
+    hashed = _hash_secret(password, salt)
     try:
-        db.execute(
-            'INSERT INTO platform_admins (username, password, salt, name, role, active) VALUES (?, ?, ?, ?, ?, 1)',
-            (username, _hash_secret(password, salt), salt, 'Platform Administrator', 'platform_admin')
-        )
+        existing = db.execute('SELECT id FROM platform_admins WHERE username = ?', (username,)).fetchone()
+        if existing:
+            db.execute(
+                'UPDATE platform_admins SET password = ?, salt = ?, name = ?, role = ?, active = 1 WHERE username = ?',
+                (hashed, salt, 'Platform Administrator', 'platform_admin', username)
+            )
+        else:
+            db.execute(
+                'INSERT INTO platform_admins (username, password, salt, name, role, active) VALUES (?, ?, ?, ?, ?, 1)',
+                (username, hashed, salt, 'Platform Administrator', 'platform_admin')
+            )
         db.commit()
-        print('[platform] Created platform administrator "%s". Change this password and set '
-              'PLATFORM_ADMIN_USERNAME / PLATFORM_ADMIN_PASSWORD before going live.' % username)
-    except Exception:
-        pass
+        print('[platform] Platform administrator "%s" is ready. Password: admin123' % username)
+    except Exception as e:
+        print('[platform] Could not seed platform admin:', e)
 
 
 def _seed_marketing_content(db):
