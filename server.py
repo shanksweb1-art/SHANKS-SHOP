@@ -4780,9 +4780,12 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-API-Key, X-Username'
     return response
 
-@app.route('/api/health', methods=['OPTIONS'])
-@app.route('/api/<path:path>', methods=['OPTIONS'])
-def handle_options(path=''):
+@app.route('/api/admin/tenants', methods=['OPTIONS'])
+@app.route('/api/admin/tenants/<path:path>', methods=['OPTIONS'])
+@app.route('/api/admin/payments', methods=['OPTIONS'])
+@app.route('/api/platform/admin/plans', methods=['OPTIONS'])
+@app.route('/api/platform/admin/plans/<path:path>', methods=['OPTIONS'])
+def handle_platform_options(path=''):
     return '', 204
 
 with app.app_context():

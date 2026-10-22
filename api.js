@@ -370,103 +370,123 @@ var API = (function() {
 
         // Platform Admin (tenant and plan management)
         getAdminTenants: function(platformToken) {
-            return fetch('/api/admin/tenants?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants?platform_token=' + encodeURIComponent(token), {
                 headers: { 'Content-Type': 'application/json' }
             }).then(function(res) { return res.json(); });
         },
         updateAdminTenant: function(id, data, platformToken) {
-            return fetch('/api/admin/tenants/' + id + '?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants/' + id + '?platform_token=' + encodeURIComponent(token), {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
             }).then(function(res) { return res.json(); });
         },
         deleteAdminTenant: function(id, platformToken) {
-            return fetch('/api/admin/tenants/' + id + '?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants/' + id + '?platform_token=' + encodeURIComponent(token), {
                 method: 'DELETE'
             }).then(function(res) { return res.json(); });
         },
         suspendAdminTenant: function(id, platformToken) {
-            return fetch('/api/admin/tenants/' + id + '/suspend?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants/' + id + '/suspend?platform_token=' + encodeURIComponent(token), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }
             }).then(function(res) { return res.json(); });
         },
         reactivateAdminTenant: function(id, platformToken) {
-            return fetch('/api/admin/tenants/' + id + '/reactivate?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants/' + id + '/reactivate?platform_token=' + encodeURIComponent(token), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }
             }).then(function(res) { return res.json(); });
         },
         notifySubscription: function(id, data, platformToken) {
-            return fetch('/api/admin/tenants/' + id + '/notify-subscription?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants/' + id + '/notify-subscription?platform_token=' + encodeURIComponent(token), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {})
             }).then(function(res) { return res.json(); });
         },
         assignPlanToTenant: function(id, data, platformToken) {
-            return fetch('/api/admin/tenants/' + id + '/plan?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants/' + id + '/plan?platform_token=' + encodeURIComponent(token), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {})
             }).then(function(res) { return res.json(); });
         },
         bulkTenantAction: function(data, platformToken) {
-            return fetch('/api/admin/tenants/bulk?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants/bulk?platform_token=' + encodeURIComponent(token), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {})
             }).then(function(res) { return res.json(); });
         },
         tenantUsageStats: function(platformToken) {
-            return fetch('/api/admin/tenants/stats?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants/stats?platform_token=' + encodeURIComponent(token), {
                 headers: { 'Content-Type': 'application/json' }
             }).then(function(res) { return res.json(); });
         },
         listAdminPayments: function(platformToken) {
-            return fetch('/api/admin/payments?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/payments?platform_token=' + encodeURIComponent(token), {
                 headers: { 'Content-Type': 'application/json' }
             }).then(function(res) { return res.json(); });
         },
         recordAdminPayment: function(data, platformToken) {
-            return fetch('/api/admin/payments?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/payments?platform_token=' + encodeURIComponent(token), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {})
             }).then(function(res) { return res.json(); });
         },
         autoSuspendExpired: function(platformToken) {
-            return fetch('/api/admin/tenants/auto-suspend?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/tenants/auto-suspend?platform_token=' + encodeURIComponent(token), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }
             }).then(function(res) { return res.json(); });
         },
         // Platform-admin plan management
         platformListPlans: function(platformToken) {
-            return fetch('/api/platform/admin/plans?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/platform/admin/plans?platform_token=' + encodeURIComponent(token), {
                 headers: { 'Content-Type': 'application/json' }
             }).then(function(res) { return res.json(); });
         },
         platformCreatePlan: function(data, platformToken) {
-            return fetch('/api/platform/admin/plans?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/platform/admin/plans?platform_token=' + encodeURIComponent(token), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {})
             }).then(function(res) { return res.json(); });
         },
         platformUpdatePlan: function(id, data, platformToken) {
-            return fetch('/api/platform/admin/plans/' + id + '?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/platform/admin/plans/' + id + '?platform_token=' + encodeURIComponent(token), {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {})
             }).then(function(res) { return res.json(); });
         },
         platformDeletePlan: function(id, platformToken) {
-            return fetch('/api/platform/admin/plans/' + id + '?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/platform/admin/plans/' + id + '?platform_token=' + encodeURIComponent(token), {
                 method: 'DELETE', headers: { 'Content-Type': 'application/json' }
             }).then(function(res) { return res.json(); });
         },
         getAdminPlans: function(platformToken) {
-            return fetch('/api/admin/plans?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/plans?platform_token=' + encodeURIComponent(token), {
                 headers: { 'Content-Type': 'application/json' }
             }).then(function(res) { return res.json(); });
         },
         saveAdminPlan: function(data, platformToken) {
-            return fetch('/api/admin/plans?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/plans?platform_token=' + encodeURIComponent(token), {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
             }).then(function(res) { return res.json(); });
         },
         updateAdminPlan: function(id, data, platformToken) {
-            return fetch('/api/admin/plans/' + id + '?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/plans/' + id + '?platform_token=' + encodeURIComponent(token), {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
             }).then(function(res) { return res.json(); });
         },
         deleteAdminPlan: function(id, platformToken) {
-            return fetch('/api/admin/plans/' + id + '?platform_token=' + encodeURIComponent(platformToken), {
+            var token = platformToken || API.platformToken();
+            return fetch('/api/admin/plans/' + id + '?platform_token=' + encodeURIComponent(token), {
                 method: 'DELETE'
             }).then(function(res) { return res.json(); });
         }
