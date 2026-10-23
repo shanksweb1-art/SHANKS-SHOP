@@ -209,9 +209,13 @@ ul{list-style:none;}
 @media(max-width:968px){.nav-links{display:none;}.stats-grid{grid-template-columns:repeat(2,1fr);}.footer-grid{grid-template-columns:1fr 1fr;}}
 @media(max-width:640px){.stats-grid{grid-template-columns:1fr;}.stat-item{border-right:none;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:16px;}.stat-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}.footer-grid{grid-template-columns:1fr;}}
 
-/* WhatsApp Float */
-.whatsapp-float{position:fixed;width:60px;height:60px;bottom:24px;right:24px;background:#25D366;color:#fff;border-radius:50%;text-align:center;font-size:30px;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:9999;display:flex;align-items:center;justify-content:center;transition:.2s;text-decoration:none;}
-.whatsapp-float:hover{transform:scale(1.1);background:#128C7E;}
+/* Chat float */
+.chat-float{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+.chat-float-btn{width:54px;height:54px;border-radius:50%;color:#fff;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.25);transition:.2s;text-decoration:none;}
+.chat-float-btn:hover{transform:translateY(-3px) scale(1.08);box-shadow:0 8px 20px rgba(0,0,0,.3);}
+.chat-float-btn.whatsapp{background:#25D366;}
+.chat-float-btn.messenger{background:#0084FF;}
+.chat-float-btn.facebook{background:#1877F2;}
 </style>
 <script type="application/ld+json">
 {
@@ -1489,20 +1493,11 @@ ul{list-style:none;}
         }
 
     </script>
-    <!--Start of Tawk.to Script-->
-    <script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    (function(){
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/6a860711ae3056344ea70116/1k0don81m';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
-    <!--End of Tawk.to Script-->
-    <a href="https://wa.me/2348012345678" class="whatsapp-float" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a>
+    <div class="chat-float">
+        <a class="chat-float-btn" href="https://wa.me/2348012345678" target="_blank" rel="noopener" title="Chat on WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        <a class="chat-float-btn" href="https://m.me/shanksshop" target="_blank" rel="noopener" title="Chat on Facebook Messenger"><i class="fab fa-facebook-messenger"></i></a>
+        <a class="chat-float-btn" href="https://www.facebook.com/shanksshop" target="_blank" rel="noopener" title="Visit us on Facebook"><i class="fab fa-facebook-f"></i></a>
+    </div>
 </body>
 </html>
 
