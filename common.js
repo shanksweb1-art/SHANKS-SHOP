@@ -406,7 +406,7 @@ function renderSubWarning(sub) {
 
     async function loadSubWarning() {
         try {
-            if (!API || !API isLoggedIn || !API isLoggedIn()) return;
+            if (!API || !API.hasOwnProperty('isLoggedIn') || !API.isLoggedIn()) return;
             var res = await API.get('/me/access');
             if (res && res.subscription !== undefined) {
                 renderSubWarning(res.subscription);
@@ -441,8 +441,8 @@ function initCommon() {
                 renderSidebar();
                 checkPageAccess();
             });
+        }
 }
-    }
     function requireAuth() {
         if (API.isLoggedIn && API.isLoggedIn()) return true;
         if (getQueryParameter('demo') === '1') return true;
