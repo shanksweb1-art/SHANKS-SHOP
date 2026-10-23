@@ -1194,41 +1194,6 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        async function doLogin() {
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            const res = await API.platformLogin(username, password);
-            if (res && res.error) {
-                showToast(res.error, true);
-                return;
-            }
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('platformStatus').innerHTML = '<i class="fas fa-circle" style="color: #10b981; font-size: 0.5rem;"></i> ' + username;
-            loadAll();
-        }
-
-        function logout() {
-            API.clearPlatformSession();
-            document.getElementById('loginSection').classList.remove('hidden');
-            document.getElementById('mainContent').classList.add('hidden');
-            document.getElementById('platformStatus').innerHTML = '<i class="fas fa-circle" style="color: #fbbf24; font-size: 0.5rem;"></i> Not logged in';
-        }
-
-        function showTab(tab, el) {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('tab-' + tab).classList.add('active');
-        }
-
-        async function loadAll() {
-            await loadTenants();
-            await loadPlans();
-            await loadPayments();
-        }
-
         async function loadPayments() {
             const token = API.platformToken();
             if (!token) return;
