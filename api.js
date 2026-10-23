@@ -481,8 +481,20 @@ var API = (function() {
         generateInvoice: function(id, amount, dueDate, token) {
             return fetch('/api/admin/tenants/' + id + '/invoice?platform_token=' + encodeURIComponent(token || API.platformToken()), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({amount, due_date: dueDate}) }).then(r => r.json());
         },
-        getTenantUsage: function(id, token) {
-            return fetch('/api/admin/tenants/' + id + '/usage?platform_token=' + encodeURIComponent(token || API.platformToken()), { headers: {'Content-Type': 'application/json'} }).then(r => r.json());
+        getTenantInvoices: function(id, token) {
+            return fetch('/api/admin/tenants/' + id + '/invoices?platform_token=' + encodeURIComponent(token || API.platformToken())).then(r => r.json());
+        },
+        createTenantInvoice: function(id, data, token) {
+            return fetch('/api/admin/tenants/' + id + '/invoices?platform_token=' + encodeURIComponent(token || API.platformToken()), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }).then(r => r.json());
+        },
+        markInvoicePaid: function(id, token) {
+            return fetch('/api/admin/invoices/' + id + '/mark-paid?platform_token=' + encodeURIComponent(token || API.platformToken()), { method: 'POST', headers: {'Content-Type': 'application/json'} }).then(r => r.json());
+        },
+        getTenantReminders: function(id, token) {
+            return fetch('/api/admin/tenants/' + id + '/reminders?platform_token=' + encodeURIComponent(token || API.platformToken())).then(r => r.json());
+        },
+        sendTenantReminder: function(id, data, token) {
+            return fetch('/api/admin/tenants/' + id + '/reminders?platform_token=' + encodeURIComponent(token || API.platformToken()), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }).then(r => r.json());
         },
         getAdminPlans: function(platformToken) {
             var token = platformToken || API.platformToken();

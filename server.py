@@ -1910,24 +1910,58 @@ def generate_invoice(tid):
     return jsonify({'success': True, 'invoice_number': invoice_number}), 201
 
 # ---------- Tenant Usage vs Limits ----------
-@app.route('/api/admin/tenants/<int:tid>/usage', methods=['GET'])
+# ---------- Tenant Invoices ----------
+@app.route('/api/admin/tenants/<int:tid>/invoices', methods=['GET'])
 @require_super_admin
-def get_tenant_usage(tid):
+def list_tenant_invoices(tid):
     db = get_db()
-    users = db.execute('SELECT COUNT(*) as c FROM users WHERE pharmacy_id = ?', (tid,)).fetchone()['c']
-    products = db.execute('SELECT COUNT(*) as c FROM products WHERE pharmacy_id = ?', (tid,)).fetchone()['c']
-    branches = db.execute('SELECT COUNT(*) as c FROM branches WHERE pharmacy_id = ?', (tid,)).fetchone()['c']
-    sales = db.execute('SELECT COUNT(*) as c, COALESCE(SUM(total),0) as total FROM sales WHERE pharmacy_id = ?', (tid,)).fetchone()
-    sub = db.execute('''SELECT sp.max_users, sp.max_products, sp.max_branches 
-                        FROM subscriptions s LEFT JOIN subscription_plans sp ON sp.id = s.plan_id 
-                        WHERE s.pharmacy_id = ?''', (tid,)).fetchone()
-    return jsonify({
-        'users': {'current': users, 'limit': sub['max_users'] if sub else None},
-        'products': {'current': products, 'limit': sub['max_products'] if sub else None},
-        'branches': {'current': branches, 'limit': sub['max_branches'] if sub else None},
-        'sales_count': sales['c'],
-        'revenue': float(sales['total'])
-    })
+    invoices = db.execute('SELECT * FROM tenant_invoices WHERE pharmacy_id = ? ORDER BY created_at DESC', (tid,)).fetchall()
+    return jsonify([dict(i) for i in invoices])
+
+@app.route('/api/admin/tenants/<int:tid>/invoices', methods=['POST'])
+@require_super_admin
+def create_tenant_invoice(tid):
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    amount = float(data.get('amount', 0))
+    due_date = data.get('due_date')
+    notes = data.get('notes', '')
+    invoice_number = f'INV-{tid}-{datetime.now().strftime("%Y%m%d%H%M%S")}'
+    now = datetime.now().isoformat()
+    db.execute('INSERT INTO tenant_invoices (pharmacy_id, invoice_number, amount, status, due_date, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+               (tid, invoice_number, amount, 'pending', due_date, notes, now))
+    db.commit()
+    return jsonify({'success': True, 'invoice_number': invoice_number}), 201
+
+@app.route('/api/admin/invoices/<int:invoice_id>/mark-paid', methods=['POST'])
+@require_super_admin
+def mark_invoice_paid(invoice_id):
+    db = get_db()
+    now = datetime.now().isoformat()
+    db.execute('UPDATE tenant_invoices SET status = ?, paid_at = ? WHERE id = ?', ('paid', now, invoice_id))
+    db.commit()
+    return jsonify({'success': True})
+
+# ---------- Tenant Reminders ----------
+@app.route('/api/admin/tenants/<int:tid>/reminders', methods=['GET'])
+@require_super_admin
+def list_tenant_reminders(tid):
+    db = get_db()
+    reminders = db.execute('SELECT * FROM tenant_reminders WHERE pharmacy_id = ? ORDER BY sent_at DESC', (tid,)).fetchall()
+    return jsonify([dict(r) for r in reminders])
+
+@app.route('/api/admin/tenants/<int:tid>/reminders', methods=['POST'])
+@require_super_admin
+def send_tenant_reminder(tid):
+    data = request.get_json(silent=True) or {}
+    reminder_type = data.get('type', 'email')
+    message = data.get('message', '')
+    db = get_db()
+    now = datetime.now().isoformat()
+    db.execute('INSERT INTO tenant_reminders (pharmacy_id, type, message, sent_by, sent_at) VALUES (?, ?, ?, ?, ?)',
+               (tid, reminder_type, message, (g.platform_admin or {}).get('username', 'platform'), now))
+    db.commit()
+    return jsonify({'success': True}), 201
 
 
 @app.route('/api/platform/admin/plans', methods=['GET'])

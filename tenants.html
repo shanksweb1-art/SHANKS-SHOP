@@ -873,10 +873,46 @@
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <!-- Invoice Modal -->
+  <div class="modal" id="invoiceModal">
+    <div class="modal-card">
+      <header class="modal-header">
+        <div><h3><i class="fas fa-file-invoice"></i> Create Invoice</h3><p id="invTenantName">Tenant</p></div>
+        <button class="icon-button" onclick="closeModal('invoiceModal')"><i class="fas fa-xmark"></i></button>
+      </header>
+      <div class="modal-body">
+        <input type="hidden" id="invTenantId">
+        <div class="field"><label class="field-label">Amount</label><input class="field-input" id="invAmount" type="number" step="0.01"></div>
+        <div class="field"><label class="field-label">Due Date</label><input class="field-input" id="invDue" type="date"></div>
+        <div class="field"><label class="field-label">Notes</label><textarea class="field-input" id="invNotes" style="min-height:80px"></textarea></div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-subtle" onclick="closeModal('invoiceModal')">Cancel</button>
+        <button class="btn btn-success" onclick="createInvoice()"><i class="fas fa-check"></i> Create Invoice</button>
+      </footer>
+    </div>
+  </div>
 
-  <script>
-    let tenants = [];
+  <!-- Reminder Modal -->
+  <div class="modal" id="reminderModal">
+    <div class="modal-card">
+      <header class="modal-header">
+        <div><h3><i class="fas fa-bell"></i> Send Reminder</h3><p id="remTenantName">Tenant</p></div>
+        <button class="icon-button" onclick="closeModal('reminderModal')"><i class="fas fa-xmark"></i></button>
+      </header>
+      <div class="modal-body">
+        <input type="hidden" id="remTenantId">
+        <div class="field"><label class="field-label">Type</label><select class="field-input" id="remType"><option value="email">Email</option><option value="sms">SMS</option><option value="in-app">In-App</option></select></div>
+        <div class="field"><label class="field-label">Message</label><textarea class="field-input" id="remMessage" style="min-height:100px"></textarea></div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-subtle" onclick="closeModal('reminderModal')">Cancel</button>
+        <button class="btn btn-success" onclick="sendReminder()"><i class="fas fa-paper-plane"></i> Send Reminder</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
     function showToast(msg, error = false) {
       const toast = document.getElementById('toast');
@@ -960,7 +996,9 @@
             <div class="actions">
               ${t.status === 'suspended' ? `<button class="btn btn-sm btn-success" onclick="reactivate(${t.id})"><i class="fas fa-play"></i> Reactivate</button>` : t.status === 'active' ? `<button class="btn btn-sm btn-warning" onclick="suspend(${t.id})"><i class="fas fa-pause"></i> Suspend</button>` : ''}
               ${t.status === 'pending' && t.setup_path ? `<button class="btn btn-sm btn-subtle" onclick="copySetup('${escapeHtml(t.setup_path)}')"><i class="fas fa-link"></i> Copy setup</button>` : ''}
-              <button class="icon-button" onclick="notify(${t.id})" title="Notify"><i class="fas fa-bell"></i></button>
+              <button class="btn btn-sm btn-subtle" onclick="openInvoiceModal(${t.id}, '${escapeHtml(t.name||'')}')" title="Create Invoice"><i class="fas fa-file-invoice"></i></button>
+              <button class="btn btn-sm btn-subtle" onclick="openReminderModal(${t.id}, '${escapeHtml(t.name||'')}')" title="Send Reminder"><i class="fas fa-bell"></i></button>
+              <button class="icon-button" onclick="notify(${t.id})" title="Notify"><i class="fas fa-envelope"></i></button>
               <button class="icon-button" onclick="removeTenant(${t.id})" title="Delete"><i class="fas fa-trash"></i></button>
             </div>
           </td>
@@ -1029,12 +1067,45 @@
       showToast('Notification sent');
     }
 
-    async function removeTenant(id) {
-      if (!confirm('Permanently delete this tenant?')) return;
+    function openInvoiceModal(id, name) {
+      document.getElementById('invTenantId').value = id;
+      document.getElementById('invTenantName').textContent = name;
+      document.getElementById('invAmount').value = '';
+      document.getElementById('invDue').value = '';
+      document.getElementById('invNotes').value = '';
+      document.getElementById('invoiceModal').classList.add('is-open');
+    }
+
+    function openReminderModal(id, name) {
+      document.getElementById('remTenantId').value = id;
+      document.getElementById('remTenantName').textContent = name;
+      document.getElementById('remMessage').value = '';
+      document.getElementById('reminderModal').classList.add('is-open');
+    }
+
+    async function createInvoice() {
+      const id = document.getElementById('invTenantId').value;
       const token = API.platformToken();
-      await API.deleteAdminTenant(id, token);
-      showToast('Tenant deleted');
-      loadTenants();
+      const payload = { amount: parseFloat(document.getElementById('invAmount').value||0), due_date: document.getElementById('invDue').value, notes: document.getElementById('invNotes').value };
+      try {
+        const res = await API.createTenantInvoice(id, payload, token);
+        if (res.error) return showToast(res.error, true);
+        closeModal('invoiceModal');
+        showToast('Invoice created');
+      } catch(e) { showToast('Failed to create invoice', true); }
+    }
+
+    async function sendReminder() {
+      const id = document.getElementById('remTenantId').value;
+      const token = API.platformToken();
+      const payload = { type: document.getElementById('remType').value, message: document.getElementById('remMessage').value };
+      if (!payload.message) return showToast('Message required', true);
+      try {
+        const res = await API.sendTenantReminder(id, payload, token);
+        if (res.error) return showToast(res.error, true);
+        closeModal('reminderModal');
+        showToast('Reminder sent');
+      } catch(e) { showToast('Failed to send reminder', true); }
     }
 
     async function autoSuspend() {
