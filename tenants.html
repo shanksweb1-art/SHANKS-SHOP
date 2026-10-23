@@ -1,590 +1,1080 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tenant Management | Platform Admin</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="api.js"></script>
-    <style>
-        :root {
-            --primary: #0f766e; --primary-hover: #115e59; --primary-light: #ccfbf1;
-            --bg: #f1f5f9; --surface: #ffffff; --border: #e2e8f0;
-            --text-primary: #0f172a; --text-secondary: #475569; --text-muted: #94a3b8;
-            --success: #059669; --success-light: #d1fae5;
-            --warning: #d97706; --warning-light: #fef3c7;
-            --danger: #dc2626; --danger-light: #fee2e2;
-            --info: #2563eb; --info-light: #dbeafe;
-            --radius: 12px; --shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-        .header { background: linear-gradient(135deg, var(--primary) 0%, #134e4a 100%); color: white; padding: 1.25rem 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .header-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-        .header-brand { display: flex; align-items: center; gap: 0.75rem; }
-        .header-brand .logo { width: 36px; height: 36px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .header-brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
-        .header-brand p { font-size: 0.75rem; opacity: 0.8; font-weight: 400; }
-        .header-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-        .user-badge { display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.875rem; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 0.8125rem; font-weight: 500; }
-        .btn { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 1rem; border: none; border-radius: 6px; font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; text-decoration: none; font-family: inherit; }
-        .btn-primary { background: white; color: var(--primary); }
-        .btn-primary:hover { background: #f1f5f9; }
-        .btn-ghost { background: rgba(255,255,255,0.1); color: white; }
-        .btn-ghost:hover { background: rgba(255,255,255,0.2); }
-        .btn-success { background: var(--success); color: white; }
-        .btn-success:hover { background: #047857; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-warning:hover { background: #b45309; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-danger:hover { background: #b91c1c; }
-        .btn-secondary { background: #64748b; color: white; }
-        .btn-secondary:hover { background: #475569; }
-        .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .main { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem; }
-        .auth-card { max-width: 420px; margin: 6rem auto; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-lg); overflow: hidden; }
-        .auth-header { padding: 2rem 2rem 1.5rem; text-align: center; }
-        .auth-header h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.375rem; letter-spacing: -0.02em; }
-        .auth-header p { color: var(--text-secondary); font-size: 0.875rem; }
-        .auth-body { padding: 0 2rem 2rem; display: flex; flex-direction: column; gap: 1rem; }
-        .form-group { display: flex; flex-direction: column; gap: 0.375rem; margin-bottom: 1rem; }
-        .form-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
-        .form-input { padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; }
-        .form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,118,110,0.1); }
-        .app-content { display: none; }
-        .app-content.active { display: block; }
-        .nav-tabs { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
-        .nav-tab { padding: 0.75rem 1.25rem; background: none; border: none; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s ease; display: flex; align-items: center; gap: 0.5rem; font-family: inherit; }
-        .nav-tab:hover { color: var(--text-primary); }
-        .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
-        .tab-pane { display: none; }
-        .tab-pane.active { display: block; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .stat-card { background: var(--surface); padding: 1.25rem; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; gap: 1rem; }
-        .stat-icon { width: 2.75rem; height: 2.75rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; flex-shrink: 0; }
-        .stat-icon.blue { background: var(--info-light); color: var(--info); }
-        .stat-icon.green { background: var(--success-light); color: var(--success); }
-        .stat-icon.orange { background: var(--warning-light); color: var(--warning); }
-        .stat-icon.red { background: var(--danger-light); color: var(--danger); }
-        .stat-content { flex: 1; }
-        .stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1; }
-        .stat-label { font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem; }
-        .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
-        .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-        .card-title { font-size: 1.0625rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
-        .card-body { padding: 1.5rem; }
-        .filters { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
-        .filters input, .filters select { padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; font-family: inherit; background: var(--surface); }
-        .filters input:focus, .filters select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,118,110,0.1); }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-        thead { background: #f8fafc; }
-        th { padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        tbody tr:hover { background: #f8fafc; }
-        tbody tr:last-child td { border-bottom: none; }
-        .badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-        .badge-success { background: var(--success-light); color: var(--success); }
-        .badge-warning { background: var(--warning-light); color: var(--warning); }
-        .badge-danger { background: var(--danger-light); color: var(--danger); }
-        .badge-info { background: var(--info-light); color: var(--info); }
-        .badge-secondary { background: #f1f5f9; color: var(--text-secondary); }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--surface); border-radius: var(--radius); max-width: 520px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 1.5rem; box-shadow: var(--shadow-lg); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-        .modal-title { font-size: 1.125rem; font-weight: 600; }
-        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 0; line-height: 1; transition: color 0.15s; }
-        .close-btn:hover { color: var(--text-primary); }
-        .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.875rem 1.25rem; background: var(--success); color: white; border-radius: var(--radius); display: none; z-index: 1001; font-weight: 500; font-size: 0.875rem; box-shadow: var(--shadow-lg); }
-        .toast.show { display: block; animation: slideIn 0.3s ease; }
-        .toast.error { background: var(--danger); }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .hidden { display: none !important; }
-        .empty-state { text-align: center; padding: 3rem 1.5rem; color: var(--text-muted); }
-        .empty-state i { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; }
-        .empty-state p { font-size: 0.875rem; }
-        .actions { display: flex; gap: 0.375rem; flex-wrap: wrap; }
-        .loading-spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.6s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 768px) { .main { padding: 1rem; } .header { padding: 1rem; } .header-container { flex-direction: column; align-items: flex-start; } .stats-grid { grid-template-columns: 1fr; } }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tenant Management | Platform Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="api.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e5e7eb;
+      --text-primary: #111827;
+      --text-secondary: #4b5563;
+      --text-tertiary: #6b7280;
+      --primary: #0f766e;
+      --primary-hover: #115e59;
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --info: #2563eb;
+      --radius: 10px;
+      --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.02), 0 1px 3px 0 rgb(0 0 0 / 0.01);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, #134e4a 100%);
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.9rem 2rem;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .brand-mark {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(6px);
+    }
+
+    .brand-text h1 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .brand-text p {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      font-size: 0.8rem;
+    }
+
+    .status-dot {
+      width: 0.4rem;
+      height: 0.4rem;
+      border-radius: 50%;
+      background: #f59e0b;
+    }
+
+    .status-dot.online {
+      background: #22c55e;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.45rem 0.95rem;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 150ms ease;
+    }
+
+    .btn-ghost {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .btn-primary {
+      background: #fff;
+      color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: #f8fafc;
+    }
+
+    .btn-subtle {
+      background: var(--surface);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+
+    .btn-subtle:hover {
+      background: #f8fafc;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      filter: brightness(0.98);
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.7rem;
+      font-size: 0.8rem;
+      border-radius: 8px;
+    }
+
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .auth-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 140px);
+    }
+
+    .auth-card {
+      width: min(420px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .auth-header {
+      padding: 2rem 2rem 1.2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .auth-header h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .auth-header p {
+      color: var(--text-tertiary);
+      font-size: 0.9rem;
+    }
+
+    .auth-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 0 2rem 2rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .field-label {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .field-input {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 0.55rem 0.8rem;
+      font-size: 0.95rem;
+    }
+
+    .field-input:focus {
+      outline: none;
+      border-color: rgba(15, 118, 110, 0.8);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.06);
+    }
+
+    .app {
+      display: none;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .app.active {
+      display: flex;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .page-heading h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .page-heading p {
+      color: var(--text-tertiary);
+      font-size: 0.95rem;
+    }
+
+    .page-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-card {
+      grid-column: span 3;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.1rem 1.3rem;
+    }
+
+    @media (max-width: 1200px) {
+      .stat-card {
+        grid-column: span 6;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .stat-card {
+        grid-column: span 12;
+      }
+
+      .header-inner,
+      main {
+        padding: 1rem;
+      }
+    }
+
+    .stat-icon {
+      width: 2.6rem;
+      height: 2.6rem;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-icon.teal {
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--primary);
+    }
+
+    .stat-icon.green {
+      background: rgba(5, 150, 105, 0.12);
+      color: var(--success);
+    }
+
+    .stat-icon.amber {
+      background: rgba(217, 119, 6, 0.12);
+      color: var(--warning);
+    }
+
+    .stat-icon.red {
+      background: rgba(220, 38, 38, 0.12);
+      color: var(--danger);
+    }
+
+    .stat-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .stat-label {
+      color: var(--text-tertiary);
+      font-size: 0.9rem;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 600;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.1rem 1.6rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .panel-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .panel-title {
+      font-weight: 600;
+    }
+
+    .panel-subtitle {
+      color: var(--text-tertiary);
+      font-size: 0.9rem;
+    }
+
+    .panel-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.25rem 0.8rem;
+    }
+
+    .toolbar-input {
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+      min-width: 220px;
+    }
+
+    .toolbar-input:focus {
+      outline: none;
+    }
+
+    .toolbar-select {
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+    }
+
+    thead th {
+      text-align: left;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      padding: 0.8rem 1.6rem;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 0.9rem 1.6rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+      font-size: 0.95rem;
+    }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tenant-name {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tenant-name strong {
+      font-weight: 500;
+    }
+
+    .tenant-name span {
+      color: var(--text-tertiary);
+      font-size: 0.85rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: rgba(5, 150, 105, 0.14);
+      color: var(--success);
+    }
+
+    .badge-warning {
+      background: rgba(217, 119, 6, 0.14);
+      color: var(--warning);
+    }
+
+    .badge-danger {
+      background: rgba(220, 38, 38, 0.14);
+      color: var(--danger);
+    }
+
+    .badge-neutral {
+      background: rgba(100, 116, 139, 0.14);
+      color: var(--text-secondary);
+    }
+
+    .badge-dot {
+      width: 0.35rem;
+      height: 0.35rem;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .row-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .icon-btn {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+    }
+
+    .icon-btn:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 20;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(560px, 100%);
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 1.4rem 1.8rem 1rem;
+    }
+
+    .modal-header h3 {
+      font-weight: 600;
+    }
+
+    .modal-header p {
+      color: var(--text-tertiary);
+      font-size: 0.9rem;
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 0 1.8rem 1.4rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .grid.single {
+      grid-template-columns: 1fr;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.6rem;
+      padding: 1rem 1.8rem 1.4rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--text-primary);
+      color: #fff;
+      padding: 0.7rem 1.2rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      display: none;
+      box-shadow: var(--shadow-md);
+    }
+
+    .toast.show {
+      display: inline-flex;
+    }
+
+    .toast.error {
+      background: var(--danger);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="header">
-        <div class="header-container">
-            <div class="header-brand">
-                <div class="logo"><i class="fas fa-building"></i></div>
-                <div>
-                    <h1>Platform Admin</h1>
-                    <p>Tenant Management Console</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <div class="user-badge" id="platformStatus"><i class="fas fa-circle" style="color:#fbbf24;font-size:0.5rem;"></i> Not logged in</div>
-                <button class="btn btn-ghost" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                <a href="platform.html" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Platform</a>
-            </div>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark">
+          <i class="fas fa-shield-halved"></i>
         </div>
+        <div class="brand-text">
+          <h1>Platform Administration</h1>
+          <p>Tenant &amp; Subscription Management</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-pill" id="sessionPill">
+          <span class="status-dot"></span>
+          <span id="sessionLabel">Not authenticated</span>
+        </div>
+        <button class="btn btn-ghost" id="logoutBtn" style="display:none" onclick="logout()">
+          <i class="fas fa-arrow-right-from-bracket"></i>
+          Sign out
+        </button>
+        <a class="btn btn-primary" href="platform.html">
+          <i class="fas fa-layer-group"></i>
+          Platform Home
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="auth-wrapper" id="authView">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="brand-mark" style="margin:0 auto 0.8rem;background:rgba(15,118,110,0.12);color:var(--primary)">
+            <i class="fas fa-lock"></i>
+          </div>
+          <h2>Platform Sign In</h2>
+          <p>Enter your platform credentials to continue</p>
+        </div>
+        <div class="auth-body">
+          <div class="field">
+            <label class="field-label">Username</label>
+            <input class="field-input" id="authUser" value="shedrack" autocomplete="username">
+          </div>
+          <div class="field">
+            <label class="field-label">Password</label>
+            <input class="field-input" id="authPass" type="password" value="admin123" autocomplete="current-password">
+          </div>
+          <button class="btn btn-success" style="justify-content:center;padding:0.6rem 1rem" onclick="signIn()">
+            <i class="fas fa-right-to-bracket"></i>
+            Sign in
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="main">
-        <div class="auth-card" id="loginSection">
-            <div class="auth-header">
-                <h2><i class="fas fa-shield-alt"></i> Platform Login</h2>
-                <p>Sign in to manage tenant stores</p>
-            </div>
-            <div class="auth-body">
-                <div class="form-group">
-                    <label class="form-label">Username</label>
-                    <input type="text" id="loginUsername" class="form-input" placeholder="Platform username" value="shedrack">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="loginPassword" class="form-input" placeholder="Password" value="admin123">
-                </div>
-                <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
-            </div>
+    <div class="app" id="appView">
+      <div class="page-header">
+        <div class="page-heading">
+          <h2>Tenants</h2>
+          <p>Manage stores, subscriptions, and access across the platform</p>
         </div>
-
-        <div class="app-content" id="mainContent">
-            <div class="nav-tabs">
-                <button class="nav-tab active" onclick="showTab('tenants', this)"><i class="fas fa-store"></i> Tenants</button>
-                <button class="nav-tab" onclick="showTab('payments', this)"><i class="fas fa-credit-card"></i> Payments</button>
-                <button class="nav-tab" onclick="showTab('plans', this)"><i class="fas fa-box"></i> Plans</button>
-            </div>
-
-            <div id="tab-tenants" class="tab-pane active">
-                <div class="stats-grid" id="stats"></div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-list"></i> All Tenants</div>
-                        <div style="display:flex;gap:0.5rem;">
-                            <button class="btn btn-primary" onclick="openCreateStoreModal()"><i class="fas fa-plus"></i> Create Store</button>
-                            <button class="btn btn-secondary" onclick="refreshTenants()"><i class="fas fa-sync"></i> Refresh</button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="filters">
-                            <input type="text" id="searchFilter" placeholder="Search tenants..." onkeyup="filterTenants()">
-                            <select id="statusFilter" onchange="filterTenants()">
-                                <option value="">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="suspended">Suspended</option>
-                                <option value="pending">Pending</option>
-                            </select>
-                            <button class="btn btn-secondary btn-sm" onclick="autoSuspendExpired()"><i class="fas fa-pause-circle"></i> Auto-Suspend</button>
-                            <button class="btn btn-secondary btn-sm" onclick="exportTenants()"><i class="fas fa-download"></i> Export CSV</button>
-                        </div>
-                        <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>ID</th><th>Name</th><th>Business Type</th><th>Plan</th><th>Subscription</th><th>Status</th><th>Users</th><th>Created</th><th>Actions</th></tr></thead>
-                                <tbody id="tenantsTableBody"><tr><td colspan="9"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading tenants...</p></div></td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-payments" class="tab-pane">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-credit-card"></i> Payments</div>
-                        <button class="btn btn-primary" onclick="openPaymentModal()"><i class="fas fa-plus"></i> Record Payment</button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Date</th><th>Tenant</th><th>Amount</th><th>Method</th><th>Reference</th><th>Description</th></tr></thead>
-                                <tbody id="paymentsTableBody"><tr><td colspan="6"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading payments...</p></div></td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-plans" class="tab-pane">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-box"></i> Subscription Plans</div>
-                        <button class="btn btn-primary" onclick="openPlanModal()"><i class="fas fa-plus"></i> Add Plan</button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-wrapper">
-                            <table>
-                                <thead><tr><th>Name</th><th>Price/Month</th><th>Price/Year</th><th>Max Users</th><th>Max Products</th><th>Status</th><th>Actions</th></tr></thead>
-                                <tbody id="plansTableBody"><tr><td colspan="7"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading plans...</p></div></td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="page-actions">
+          <button class="btn btn-subtle" onclick="loadTenants()">
+            <i class="fas fa-rotate"></i>
+            Refresh
+          </button>
+          <button class="btn btn-primary" onclick="openCreate()">
+            <i class="fas fa-plus"></i>
+            Create store
+          </button>
         </div>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <div class="stat-icon teal"><i class="fas fa-store"></i></div>
+          <div class="stat-meta">
+            <span class="stat-label">Total tenants</span>
+            <span class="stat-value" id="statTotal">0</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-icon green"><i class="fas fa-circle-check"></i></div>
+          <div class="stat-meta">
+            <span class="stat-label">Active</span>
+            <span class="stat-value" id="statActive">0</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-icon amber"><i class="fas fa-clock"></i></div>
+          <div class="stat-meta">
+            <span class="stat-label">Pending setup</span>
+            <span class="stat-value" id="statPending">0</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-icon red"><i class="fas fa-ban"></i></div>
+          <div class="stat-meta">
+            <span class="stat-label">Suspended</span>
+            <span class="stat-value" id="statSuspended">0</span>
+          </div>
+        </article>
+      </div>
+
+      <section class="panel">
+        <header class="panel-header">
+          <div class="panel-title-group">
+            <h3 class="panel-title">Tenant list</h3>
+            <p class="panel-subtitle">Overview of all registered stores</p>
+          </div>
+          <div class="panel-toolbar">
+            <div class="toolbar-group">
+              <i class="fas fa-magnifying-glass" style="color:var(--text-tertiary)"></i>
+              <input class="toolbar-input" id="searchInput" placeholder="Search by store name..." oninput="applyFilters()">
+            </div>
+            <select class="toolbar-select" id="statusFilter" onchange="applyFilters()">
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
+            </select>
+            <button class="btn btn-subtle btn-sm" onclick="autoSuspend()"><i class="fas fa-shield-halved"></i> Auto-suspend expired</button>
+            <button class="btn btn-subtle btn-sm" onclick="exportCSV()"><i class="fas fa-file-export"></i> Export</button>
+          </div>
+        </header>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Store</th>
+                <th>Business type</th>
+                <th>Plan</th>
+                <th>Subscription</th>
+                <th>Status</th>
+                <th>Users</th>
+                <th>Created</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tenantsBody"></tbody>
+          </table>
+        </div>
+      </section>
     </div>
+  </main>
 
-    <!-- Modals -->
-    <div id="createStoreModal" class="modal">
-        <div class="modal-content" style="max-width:620px;">
-            <div class="modal-header">
-                <h2 class="modal-title"><i class="fas fa-store"></i> Create Store Account</h2>
-                <button class="close-btn" onclick="closeModal('createStoreModal')">&times;</button>
-            </div>
-            <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1rem;">The store is created as <strong>pending</strong>. The store administrator sets their own login on the setup page next.</p>
-            <div class="form-group"><label class="form-label">Business Name *</label><input type="text" id="csName" class="form-input" required placeholder="e.g. Shanks Shop Ikeja"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-                <div class="form-group"><label class="form-label">Business Type *</label>
-                    <select id="csType" class="form-input" required>
-                        <option value="pharmacy">Pharmacy / Health Store</option><option value="retail">Retail Store</option><option value="supermarket">Supermarket</option>
-                        <option value="boutique">Boutique / Fashion</option><option value="electronics">Electronics / Gadgets</option><option value="hardware">Hardware / Building Materials</option>
-                        <option value="restaurant">Restaurant / Cafe</option><option value="services">Services / Salon / Clinic</option><option value="general">General Business</option><option value="other">Other Business</option>
-                    </select>
-                </div>
-                <div class="form-group"><label class="form-label">Email</label><input type="email" id="csEmail" class="form-input" placeholder="admin@yourbusiness.com"></div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-                <div class="form-group"><label class="form-label">Address</label><input type="text" id="csAddress" class="form-input" placeholder="e.g. 45 Broad Street, Lagos"></div>
-                <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="csPhone" class="form-input" placeholder="+234 801 234 5678"></div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Staff Logins (optional)</label>
-                <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">Optional extra logins. The administrator sets their own login on the next page.</p>
-                <div id="csExtraAccounts"></div>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="addCsAccount()"><i class="fas fa-plus"></i> Add Account</button>
-            </div>
-            <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1rem;">
-                <button class="btn btn-secondary" onclick="closeModal('createStoreModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="submitCreateStore()"><i class="fas fa-store"></i> Create Store</button>
-            </div>
+  <div class="modal" id="createModal">
+    <div class="modal-card">
+      <header class="modal-header">
+        <div>
+          <h3>Create store account</h3>
+          <p>Generate a pending store and share the setup link with the owner</p>
         </div>
-    </div>
-
-    <div id="setupLinkModal" class="modal">
-        <div class="modal-content" style="max-width:560px;">
-            <div class="modal-header">
-                <h2 class="modal-title"><i class="fas fa-link"></i> Setup Link</h2>
-                <button class="close-btn" onclick="closeModal('setupLinkModal')">&times;</button>
-            </div>
-            <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1rem;">The store is created as <strong>pending</strong>. Send this link to the store administrator — they set their own login there and the account becomes active.</p>
-            <div class="form-group"><label class="form-label">Setup Link</label><input type="text" id="setupLinkField" class="form-input" readonly style="background:#f8fafc;"></div>
-            <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1rem;">
-                <button class="btn btn-secondary" onclick="closeModal('setupLinkModal')">Close</button>
-                <button class="btn btn-primary" onclick="copySetupLink()"><i class="fas fa-copy"></i> Copy</button>
-            </div>
+        <button class="icon-btn" onclick="closeModal('createModal')"><i class="fas fa-xmark"></i></button>
+      </header>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label">Business name</label>
+          <input class="field-input" id="storeName" placeholder="e.g. Danlami Pharmacy">
         </div>
-    </div>
-
-    <div id="paymentModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Record Payment</h2>
-                <button class="close-btn" onclick="closeModal('paymentModal')">&times;</button>
-            </div>
-            <div class="form-group"><label class="form-label">Tenant</label><select id="paymentTenant" class="form-input"></select></div>
-            <div class="form-group"><label class="form-label">Amount</label><input type="number" id="paymentAmount" class="form-input"></div>
-            <div class="form-group"><label class="form-label">Method</label><input type="text" id="paymentMethod" class="form-input" placeholder="e.g., Bank Transfer, Cash"></div>
-            <div class="form-group"><label class="form-label">Reference</label><input type="text" id="paymentRef" class="form-input"></div>
-            <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="savePayment()">Save Payment</button>
+        <div class="grid">
+          <div class="field">
+            <label class="field-label">Business type</label>
+            <select class="field-input" id="storeType">
+              <option value="pharmacy">Pharmacy</option>
+              <option value="retail">Retail</option>
+              <option value="supermarket">Supermarket</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="general">General</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Contact phone</label>
+            <input class="field-input" id="storePhone" placeholder="Optional">
+          </div>
         </div>
-    </div>
-
-    <div id="planModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="planModalTitle">Add Plan</h2>
-                <button class="close-btn" onclick="closeModal('planModal')">&times;</button>
-            </div>
-            <input type="hidden" id="planId">
-            <div class="form-group"><label class="form-label">Plan Name</label><input type="text" id="planName" class="form-input"></div>
-            <div class="form-group"><label class="form-label">Slug</label><input type="text" id="planSlug" class="form-input"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-                <div class="form-group"><label class="form-label">Monthly Price</label><input type="number" id="planMonthly" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Yearly Price</label><input type="number" id="planYearly" class="form-input"></div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
-                <div class="form-group"><label class="form-label">Max Users</label><input type="number" id="planUsers" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Max Products</label><input type="number" id="planProducts" class="form-input"></div>
-                <div class="form-group"><label class="form-label">Max Branches</label><input type="number" id="planBranches" class="form-input"></div>
-            </div>
-            <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="savePlan()">Save Plan</button>
+        <div class="field">
+          <label class="field-label">Address</label>
+          <input class="field-input" id="storeAddress" placeholder="Optional">
         </div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-subtle" onclick="closeModal('createModal')">Cancel</button>
+        <button class="btn btn-primary" style="background:var(--primary);color:#fff" onclick="createStore()">
+          <i class="fas fa-check"></i>
+          Create store
+        </button>
+      </footer>
     </div>
+  </div>
 
-    <div id="toast" class="toast"></div>
+  <div class="modal" id="setupModal">
+    <div class="modal-card">
+      <header class="modal-header">
+        <div>
+          <h3>Setup link ready</h3>
+          <p>Share this link with the store administrator to complete setup</p>
+        </div>
+        <button class="icon-btn" onclick="closeModal('setupModal')"><i class="fas fa-xmark"></i></button>
+      </header>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label">Setup URL</label>
+          <input class="field-input" id="setupUrl" readonly>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-subtle" onclick="closeModal('setupModal')">Done</button>
+        <button class="btn btn-primary" style="background:var(--primary);color:#fff" onclick="copySetup()">
+          <i class="fas fa-copy"></i>
+          Copy link
+        </button>
+      </footer>
+    </div>
+  </div>
 
-    <script>
-        const state = { tenants: [], plans: [], payments: [] };
+  <div class="toast" id="toast"></div>
 
-        const $ = (id) => document.getElementById(id);
-        const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  <script>
+    let tenants = [];
 
-        function showToast(msg, error = false) {
-            const t = $('toast');
-            t.textContent = msg;
-            t.className = 'toast show' + (error ? ' error' : '');
-            clearTimeout(t._timer);
-            t._timer = setTimeout(() => { t.className = 'toast'; }, 3000);
-        }
+    function showToast(msg, error = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast show' + (error ? ' error' : '');
+      setTimeout(() => toast.classList.remove('show'), 2600);
+    }
 
-        function openModal(id) {
-            const m = $(id);
-            if (m) { m.classList.add('active'); document.body.style.overflow = 'hidden'; }
-        }
-        function closeModal(id) {
-            const m = $(id);
-            if (m) { m.classList.remove('active'); document.body.style.overflow = ''; }
-        }
-        document.addEventListener('click', (e) => { if (e.target.classList && e.target.classList.contains('modal')) closeModal(e.target.id); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id)); });
+    function escapeHtml(str = '') {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
-        async function doLogin() {
-            const username = $('loginUsername').value.trim();
-            const password = $('loginPassword').value;
-            const res = await API.platformLogin(username, password);
-            if (res && res.error) { showToast(res.error, true); return; }
-            $('loginSection').classList.add('hidden');
-            $('mainContent').classList.remove('hidden');
-            $('platformStatus').innerHTML = '<i class="fas fa-circle" style="color:#10b981;font-size:0.5rem;"></i> ' + esc(username);
-            loadAll();
-        }
-        function logout() {
-            API.clearPlatformSession();
-            $('loginSection').classList.remove('hidden');
-            $('mainContent').classList.add('hidden');
-            $('platformStatus').innerHTML = '<i class="fas fa-circle" style="color:#fbbf24;font-size:0.5rem;"></i> Not logged in';
-        }
-        function showTab(tab, el) {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            el.classList.add('active');
-            $('tab-' + tab).classList.add('active');
-        }
+    async function signIn() {
+      const user = document.getElementById('authUser').value.trim();
+      const pass = document.getElementById('authPass').value;
+      const res = await API.platformLogin(user, pass);
+      if (res && res.error) {
+        showToast(res.error, true);
+        return;
+      }
+      document.getElementById('authView').classList.add('hidden');
+      document.getElementById('appView').classList.add('active');
+      document.getElementById('sessionPill').innerHTML = '<span class="status-dot online"></span><span id="sessionLabel">' + escapeHtml(user) + '</span>';
+      document.getElementById('logoutBtn').style.display = 'inline-flex';
+      loadTenants();
+    }
 
-        async function loadAll() { await Promise.all([loadTenants(), loadPlans(), loadPayments()]); }
+    function logout() {
+      API.clearPlatformSession();
+      location.reload();
+    }
 
-        async function loadTenants() {
-            const token = API.platformToken();
-            if (!token) return;
-            try {
-                state.tenants = await API.getAdminTenants(token) || [];
-                renderStats();
-                renderTenants();
-            } catch (e) { showToast('Failed to load tenants: ' + (e.message || ''), true); }
-        }
-        function renderStats() {
-            const t = state.tenants;
-            $('stats').innerHTML = `
-                <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-store"></i></div><div class="stat-content"><div class="stat-value">${t.length}</div><div class="stat-label">Total Tenants</div></div></div>
-                <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-content"><div class="stat-value">${t.filter(x => x.status === 'active').length}</div><div class="stat-label">Active</div></div></div>
-                <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-clock"></i></div><div class="stat-content"><div class="stat-value">${t.filter(x => x.status === 'pending').length}</div><div class="stat-label">Pending Setup</div></div></div>
-                <div class="stat-card"><div class="stat-icon red"><i class="fas fa-pause-circle"></i></div><div class="stat-content"><div class="stat-value">${t.filter(x => x.status === 'suspended').length}</div><div class="stat-label">Suspended</div></div></div>`;
-        }
-        function renderTenants() {
-            const tbody = $('tenantsTableBody');
-            const search = $('searchFilter').value.toLowerCase();
-            const status = $('statusFilter').value;
-            const filtered = state.tenants.filter(t => (!search || (t.name || '').toLowerCase().includes(search)) && (!status || t.status === status));
-            if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="fas fa-store-slash"></i><p>No tenants found</p></div></td></tr>'; return; }
-            tbody.innerHTML = filtered.map(t => {
-                const statusCell = t.status === 'pending'
-                    ? '<span class="badge badge-warning">pending setup</span>' + (t.setup_path ? ` <button class="btn btn-secondary btn-sm" onclick="copySetup('${esc(t.setup_path).replace(/'/g, "\\'")}')" title="Copy setup link"><i class="fas fa-copy"></i></button>` : '')
-                    : `<span class="badge badge-${t.status === 'active' ? 'success' : t.status === 'suspended' ? 'danger' : 'warning'}">${esc(t.status || 'active')}</span>`;
-                const subCls = t.sub_status === 'active' ? 'success' : t.sub_status === 'trial' ? 'warning' : 'secondary';
-                return `<tr>
-                    <td>${t.id}</td>
-                    <td><strong>${esc(t.name || '')}</strong></td>
-                    <td>${esc(t.business_label || t.business_type || '-')}</td>
-                    <td>${esc(t.plan_name || '-')}</td>
-                    <td><span class="badge badge-${subCls}">${esc(t.sub_status || 'none')}</span></td>
-                    <td>${statusCell}</td>
-                    <td>${t.user_count || 0}</td>
-                    <td>${t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}</td>
-                    <td><div class="actions">
-                        ${t.status === 'suspended' ? `<button class="btn btn-success btn-sm" onclick="reactivateTenant(${t.id})"><i class="fas fa-play"></i> Reactivate</button>` : t.status === 'active' ? `<button class="btn btn-warning btn-sm" onclick="suspendTenant(${t.id})"><i class="fas fa-pause"></i> Suspend</button>` : ''}
-                        <button class="btn btn-secondary btn-sm" onclick="notifyTenant(${t.id})"><i class="fas fa-bell"></i> Notify</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteTenant(${t.id})"><i class="fas fa-trash"></i> Delete</button>
-                    </div></td>
-                </tr>`;
-            }).join('');
-        }
-        function filterTenants() { renderTenants(); }
-        async function refreshTenants() { await loadTenants(); showToast('Tenants refreshed'); }
+    async function loadTenants() {
+      const token = API.platformToken();
+      if (!token) return;
+      try {
+        tenants = await API.getAdminTenants(token);
+        if (!Array.isArray(tenants)) tenants = [];
+        renderStats();
+        applyFilters();
+      } catch (e) {
+        showToast('Failed to load tenants', true);
+      }
+    }
 
-        function openCreateStoreModal() {
-            ['csName','csAddress','csPhone','csEmail'].forEach(id => $(id).value = '');
-            $('csType').value = 'pharmacy';
-            $('csExtraAccounts').innerHTML = '';
-            openModal('createStoreModal');
-        }
-        function addCsAccount() {
-            const row = document.createElement('div');
-            row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;';
-            row.innerHTML = '<input type="text" placeholder="Username" class="cs-acc-username" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;">' +
-                '<input type="password" placeholder="Password" class="cs-acc-password" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;">' +
-                '<input type="text" placeholder="Full name" class="cs-acc-name" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;">';
-            $('csExtraAccounts').appendChild(row);
-        }
-        async function submitCreateStore() {
-            const name = $('csName').value.trim();
-            const businessType = $('csType').value;
-            const address = $('csAddress').value.trim();
-            const phone = $('csPhone').value.trim();
-            const email = $('csEmail').value.trim();
-            if (!name) { showToast('Business name is required', true); return; }
-            const accounts = [];
-            for (const row of document.querySelectorAll('#csExtraAccounts > div')) {
-                const u = row.querySelector('.cs-acc-username').value.trim();
-                const p = row.querySelector('.cs-acc-password').value;
-                const n = row.querySelector('.cs-acc-name').value.trim();
-                if (!u && !p) continue;
-                if (!u || !p) { showToast('Every account needs a username and a password', true); return; }
-                if (p.length < 4) { showToast('Password must be at least 4 characters', true); return; }
-                accounts.push({ username: u, password: p, name: n || u, role: 'staff' });
-            }
-            try {
-                const token = API.platformToken();
-                const res = await API.registerPharmacy({ name, business_type: businessType, address, phone, email, accounts });
-                if (res && res.error) { showToast(res.error, true); return; }
-                closeModal('createStoreModal');
-                $('setupLinkField').value = window.location.origin + (res.setup_path || ('/admin-setup.html?token=' + res.setup_token));
-                openModal('setupLinkModal');
-                await loadTenants();
-            } catch (e) { showToast('Failed to create store: ' + (e.message || 'unknown error'), true); }
-        }
-        function copySetup(path) {
-            const url = window.location.origin + path;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(() => showToast('Setup link copied to clipboard')).catch(() => showToast(url));
-            } else showToast(url);
-        }
-        function copySetupLink() {
-            const field = $('setupLinkField');
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(field.value).then(() => showToast('Setup link copied'));
-            } else { field.select(); document.execCommand('copy'); showToast('Setup link copied'); }
-        }
+    function renderStats() {
+      const total = tenants.length;
+      const active = tenants.filter(t => t.status === 'active').length;
+      const pending = tenants.filter(t => t.status === 'pending').length;
+      const suspended = tenants.filter(t => t.status === 'suspended').length;
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statActive').textContent = active;
+      document.getElementById('statPending').textContent = pending;
+      document.getElementById('statSuspended').textContent = suspended;
+    }
 
-        async function suspendTenant(id) { const token = API.platformToken(); await API.suspendAdminTenant(id, token); showToast('Tenant suspended'); refreshTenants(); }
-        async function reactivateTenant(id) { const token = API.platformToken(); await API.reactivateAdminTenant(id, token); showToast('Tenant reactivated'); refreshTenants(); }
-        async function notifyTenant(id) {
-            const token = API.platformToken();
-            const subject = prompt('Subject:', 'Subscription Reminder');
-            const body = prompt('Message:', 'Please renew your subscription to avoid service interruption.');
-            if (!subject || !body) return;
-            await API.notifySubscription(id, { subject, body }, token);
-            showToast('Notification sent');
-        }
-        async function deleteTenant(id) {
-            if (!confirm('Delete this tenant? This cannot be undone.')) return;
-            const token = API.platformToken();
-            await API.deleteAdminTenant(id, token);
-            showToast('Tenant deleted');
-            refreshTenants();
-        }
-        async function autoSuspendExpired() { const token = API.platformToken(); await API.autoSuspendExpired(token); showToast('Expired tenants suspended'); refreshTenants(); }
-        function exportTenants() {
-            let csv = 'ID,Name,Business Type,Plan,Status,Users,Created\n';
-            state.tenants.forEach(t => { csv += `${t.id},"${t.name || ''}","${t.business_type || ''}","${t.plan_name || ''}",${t.status},${t.user_count || 0},${t.created_at || ''}\n`; });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'tenants.csv'; a.click();
-            URL.revokeObjectURL(url);
-        }
+    function applyFilters() {
+      const term = document.getElementById('searchInput').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+      const body = document.getElementById('tenantsBody');
+      let list = tenants.filter(t => {
+        const matchTerm = !term || (t.name && t.name.toLowerCase().includes(term));
+        const matchStatus = status === 'all' || t.status === status;
+        return matchTerm && matchStatus;
+      });
+      if (list.length === 0) {
+        body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-tertiary)">No tenants match the current filters</td></tr>';
+        return;
+      }
+      body.innerHTML = list.map(t => {
+        let statusBadge = '';
+        if (t.status === 'active') statusBadge = '<span class="badge badge-success"><span class="badge-dot"></span>Active</span>';
+        else if (t.status === 'pending') statusBadge = '<span class="badge badge-warning"><span class="badge-dot"></span>Pending</span>';
+        else if (t.status === 'suspended') statusBadge = '<span class="badge badge-danger"><span class="badge-dot"></span>Suspended</span>';
+        else statusBadge = '<span class="badge badge-neutral"><span class="badge-dot"></span>' + escapeHtml(t.status) + '</span>';
 
-        async function loadPayments() {
-            const token = API.platformToken();
-            if (!token) return;
-            try {
-                state.payments = await API.listAdminPayments(token) || [];
-                const tbody = $('paymentsTableBody');
-                if (!state.payments.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-credit-card"></i><p>No payments recorded</p></div></td></tr>'; return; }
-                tbody.innerHTML = state.payments.map(p => `<tr>
-                    <td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}</td>
-                    <td>${esc(p.tenant_name || '-')}</td>
-                    <td><strong>${p.amount || 0}</strong></td>
-                    <td>${esc(p.method || '-')}</td>
-                    <td>${esc(p.reference || '-')}</td>
-                    <td>${esc(p.description || '-')}</td>
-                </tr>`).join('');
-            } catch (e) { showToast('Failed to load payments: ' + (e.message || ''), true); }
-        }
-        function openPaymentModal() {
-            $('paymentTenant').innerHTML = state.tenants.map(t => `<option value="${t.id}">${esc(t.name || '')}</option>`).join('');
-            openModal('paymentModal');
-        }
-        async function savePayment() {
-            const token = API.platformToken();
-            const data = { tenant_id: $('paymentTenant').value, amount: $('paymentAmount').value, method: $('paymentMethod').value, reference: $('paymentRef').value };
-            await API.recordAdminPayment(data, token);
-            showToast('Payment recorded');
-            closeModal('paymentModal');
-            loadPayments();
-        }
+        let subBadge = '<span class="badge badge-neutral">None</span>';
+        if (t.sub_status === 'active') subBadge = '<span class="badge badge-success"><span class="badge-dot"></span>Active</span>';
+        else if (t.sub_status === 'trial') subBadge = '<span class="badge badge-warning"><span class="badge-dot"></span>Trial</span>';
 
-        async function loadPlans() {
-            const token = API.platformToken();
-            if (!token) return;
-            try {
-                state.plans = await API.platformListPlans(token) || [];
-                const tbody = $('plansTableBody');
-                if (!state.plans.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-box"></i><p>No plans found</p></div></td></tr>'; return; }
-                tbody.innerHTML = state.plans.map(p => `<tr>
-                    <td><strong>${esc(p.name || '')}</strong></td>
-                    <td>${p.monthly_price || 0}</td>
-                    <td>${p.yearly_price || 0}</td>
-                    <td>${p.max_users || '-'}</td>
-                    <td>${p.max_products || '-'}</td>
-                    <td><span class="badge badge-${p.active ? 'success' : 'secondary'}">${p.active ? 'Active' : 'Inactive'}</span></td>
-                    <td><div class="actions">
-                        <button class="btn btn-secondary btn-sm" onclick="openPlanModal(${p.id})"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-danger btn-sm" onclick="deletePlan(${p.id})"><i class="fas fa-trash"></i></button>
-                    </div></td>
-                </tr>`).join('');
-            } catch (e) { showToast('Failed to load plans: ' + (e.message || ''), true); }
-        }
-        function openPlanModal(id) {
-            $('planId').value = id || '';
-            if (id) {
-                const plan = state.plans.find(p => p.id === id);
-                if (plan) {
-                    $('planName').value = plan.name || '';
-                    $('planSlug').value = plan.slug || '';
-                    $('planMonthly').value = plan.monthly_price || '';
-                    $('planYearly').value = plan.yearly_price || '';
-                    $('planUsers').value = plan.max_users || '';
-                    $('planProducts').value = plan.max_products || '';
-                    $('planBranches').value = plan.max_branches || '';
-                }
-            } else {
-                ['planName','planSlug','planMonthly','planYearly','planUsers','planProducts','planBranches'].forEach(id => $(id).value = '');
-            }
-            $('planModalTitle').textContent = id ? 'Edit Plan' : 'Add Plan';
-            openModal('planModal');
-        }
-        async function savePlan() {
-            const token = API.platformToken();
-            const id = $('planId').value;
-            const data = {
-                name: $('planName').value, slug: $('planSlug').value,
-                monthly_price: $('planMonthly').value, yearly_price: $('planYearly').value,
-                max_users: $('planUsers').value, max_products: $('planProducts').value, max_branches: $('planBranches').value
-            };
-            if (id) await API.platformUpdatePlan(id, data, token); else await API.platformCreatePlan(data, token);
-            showToast('Plan saved');
-            closeModal('planModal');
-            loadPlans();
-        }
-        async function deletePlan(id) {
-            if (!confirm('Delete this plan?')) return;
-            const token = API.platformToken();
-            await API.platformDeletePlan(id, token);
-            showToast('Plan deleted');
-            loadPlans();
-        }
-    </script>
+        return `<tr>
+          <td>${t.id}</td>
+          <td><div class="tenant-name"><strong>${escapeHtml(t.name || '-')}</strong><span>${escapeHtml(t.email || '')}</span></div></td>
+          <td>${escapeHtml(t.business_label || t.business_type || '-')}</td>
+          <td>${escapeHtml(t.plan_name || '-')}</td>
+          <td>${subBadge}</td>
+          <td>${statusBadge}</td>
+          <td>${t.user_count || 0}</td>
+          <td>${t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}</td>
+          <td style="text-align:right">
+            <div class="row-actions" style="justify-content:flex-end">
+              ${t.status === 'suspended' ? `<button class="btn btn-sm btn-success" onclick="reactivate(${t.id})"><i class="fas fa-play"></i> Reactivate</button>` : t.status === 'active' ? `<button class="btn btn-sm btn-warning" onclick="suspend(${t.id})"><i class="fas fa-pause"></i> Suspend</button>` : ''}
+              ${t.status === 'pending' && t.setup_path ? `<button class="btn btn-sm btn-subtle" onclick="copySetup('${escapeHtml(t.setup_path)}')"><i class="fas fa-link"></i> Copy setup</button>` : ''}
+              <button class="icon-btn" title="Notify" onclick="notify(${t.id})"><i class="fas fa-bell"></i></button>
+              <button class="icon-btn" title="Delete" onclick="removeTenant(${t.id})"><i class="fas fa-trash"></i></button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function openCreate() {
+      document.getElementById('storeName').value = '';
+      document.getElementById('storeType').value = 'pharmacy';
+      document.getElementById('storePhone').value = '';
+      document.getElementById('storeAddress').value = '';
+      document.getElementById('createModal').classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    async function createStore() {
+      const name = document.getElementById('storeName').value.trim();
+      if (!name) return showToast('Business name is required', true);
+      const payload = {
+        name,
+        business_type: document.getElementById('storeType').value,
+        phone: document.getElementById('storePhone').value.trim(),
+        address: document.getElementById('storeAddress').value.trim()
+      };
+      try {
+        const res = await API.registerPharmacy(payload);
+        if (res.error) return showToast(res.error, true);
+        closeModal('createModal');
+        document.getElementById('setupUrl').value = location.origin + (res.setup_path || '');
+        document.getElementById('setupModal').classList.add('active');
+        loadTenants();
+      } catch (e) {
+        showToast('Failed to create store', true);
+      }
+    }
+
+    function copySetup(path) {
+      const url = path.startsWith('http') ? path : location.origin + path;
+      navigator.clipboard.writeText(url).then(() => showToast('Setup link copied'));
+    }
+
+    async function suspend(id) {
+      const token = API.platformToken();
+      await API.suspendAdminTenant(id, token);
+      showToast('Tenant suspended');
+      loadTenants();
+    }
+
+    async function reactivate(id) {
+      const token = API.platformToken();
+      await API.reactivateAdminTenant(id, token);
+      showToast('Tenant reactivated');
+      loadTenants();
+    }
+
+    async function notify(id) {
+      const token = API.platformToken();
+      const subject = prompt('Subject');
+      const body = prompt('Message');
+      if (!subject || !body) return;
+      await API.notifySubscription(id, { subject, body }, token);
+      showToast('Notification sent');
+    }
+
+    async function removeTenant(id) {
+      if (!confirm('Delete this tenant permanently?')) return;
+      const token = API.platformToken();
+      await API.deleteAdminTenant(id, token);
+      showToast('Tenant removed');
+      loadTenants();
+    }
+
+    async function autoSuspend() {
+      const token = API.platformToken();
+      const res = await API.autoSuspendExpired(token);
+      showToast(`Suspended ${res.suspended || 0} expired tenant(s)`);
+      loadTenants();
+    }
+
+    function exportCSV() {
+      let csv = 'ID,Name,Type,Plan,Status,Created\n';
+      tenants.forEach(t => {
+        csv += `${t.id},"${(t.name || '').replace(/"/g,'""')}","${t.business_type || ''}","${t.plan_name || ''}",${t.status},${t.created_at || ''}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'tenants.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    if (API.platformToken()) {
+      document.getElementById('authView').classList.add('hidden');
+      document.getElementById('appView').classList.add('active');
+      document.getElementById('sessionPill').innerHTML = '<span class="status-dot online"></span><span>' + escapeHtml(API.platformUser()) + '</span>';
+      document.getElementById('logoutBtn').style.display = 'inline-flex';
+      loadTenants();
+    }
+  </script>
 </body>
+
 </html>
