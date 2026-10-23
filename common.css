@@ -136,3 +136,15 @@ tr:hover{background:#f8fafc}
 .cp-btn-update:hover{background:#059669}
 .cp-btn-detach{background:#fff;color:#ef4444;border:1px solid #fecaca}
 .cp-btn-detach:hover{background:#fef2f2}
+
+/* Subscription warning banner */
+.sub-warning{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;padding:12px 22px;font-size:13px;font-weight:700;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.sub-warning.warn{background:linear-gradient(90deg,#92400e,#b45309);color:#fff}
+.sub-warning.expired{background:linear-gradient(90deg,#991b1b,#b91c1c);color:#fff}
+.sub-warning.ok{background:linear-gradient(90deg,#047857,#059669);color:#fff}
+.sub-warning .sw-icon{font-size:18px;flex-shrink:0}
+.sub-warning .sw-text{flex:1;min-width:200px;line-height:1.4}
+.sub-warning .sw-text small{display:block;font-weight:500;opacity:.92;margin-top:2px}
+.sub-warning .sw-actions{display:flex;gap:8px;flex-wrap:wrap}
+.sub-warning .sw-actions .btn{background:#fff;color:#111827;border:0;font-weight:800;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px}
+.sub-warning .sw-actions .btn:hover{opacity:.9;transform:translateY(-1px)}

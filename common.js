@@ -361,33 +361,88 @@ var POS = (function() {
             t = setTimeout(function() { fn.apply(null, args); }, delay || 250);
         };
     }
-function startClock() {
-    var el = $('topClock');
-    if (!el) return;
-    function update() {
-        var now = new Date();
-        el.innerHTML = '<i class="fas fa-clock"></i> ' + now.toLocaleString('en-NG', {
-            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
-        });
+function renderSubWarning(sub) {
+        var banner = $('subWarningBanner');
+        if (!banner) return;
+        if (!sub || !sub.sub_status || sub.sub_status === 'none') {
+            banner.style.display = 'none';
+            return;
+        }
+        var status = String(sub.sub_status || '').toLowerCase();
+        var planName = sub.plan_name || 'your plan';
+        var price = sub.plan_price_yearly ? ' (₦' + parseFloat(sub.plan_price_yearly).toLocaleString('en-NG') + '/yr)' : '';
+        var endsAt = sub.current_period_end || sub.trial_ends_at;
+        var daysLeft = '';
+        if (endsAt) {
+            var diffMs = new Date(endsAt) - new Date();
+            var days = Math.ceil(diffMs / 86400000);
+            if (days > 0) daysLeft = ' - ' + days + ' day(s) left';
+            else if (days === 0) daysLeft = ' - expires today';
+            else daysLeft = ' - expired ' + Math.abs(days) + ' day(s) ago';
+        }
+        var cls = 'ok', icon = 'fas fa-circle-check', text = '';
+        if (status === 'active') {
+            cls = 'ok'; icon = 'fas fa-circle-check';
+            text = 'Your subscription to <strong>' + planName + '</strong> is active' + price + daysLeft + '. Enjoy full access.';
+        } else if (status === 'trial') {
+            cls = 'warn'; icon = 'fas fa-hourglass-half';
+            text = 'You are on a <strong>free trial</strong> for ' + planName + daysLeft + '. Upgrade to keep all features after the trial ends.';
+        } else if (status === 'expired' || status === 'cancelled') {
+            cls = 'expired'; icon = 'fas fa-exclamation-triangle';
+            text = 'Your ' + planName + ' subscription has expired or been cancelled. Some features are limited until you renew.';
+        } else {
+            cls = 'warn'; icon = 'fas fa-exclamation-triangle';
+            text = 'Your subscription status is "<strong>' + status + '</strong>". Please renew to avoid service interruption.';
+        }
+        var renewHref = 'payments.html';
+        banner.className = 'sub-warning ' + cls;
+        banner.style.display = 'flex';
+        banner.innerHTML = '<span class="sw-icon"><i class="' + icon + '"></i></span>' +
+            '<span class="sw-text">' + text + '</span>' +
+            '<span class="sw-actions">' +
+                '<button class="btn" onclick="POS.navigateTo(\'' + renewHref + '\')"><i class="fas fa-credit-card"></i> Renew / Subscribe</button>' +
+            '</span>';
     }
-    update();
-    setInterval(update, 1000);
-}
+
+    async function loadSubWarning() {
+        try {
+            if (!API || !API isLoggedIn || !API isLoggedIn()) return;
+            var res = await API.get('/me/access');
+            if (res && res.subscription !== undefined) {
+                renderSubWarning(res.subscription);
+            }
+        } catch (e) {
+            console.warn('Sub warning load failed', e);
+        }
+    }
+
+    function startClock() {
+        var el = $('topClock');
+        if (!el) return;
+        function update() {
+            var now = new Date();
+            el.innerHTML = '<i class="fas fa-clock"></i> ' + now.toLocaleString('en-NG', {
+                weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+        }
+        update();
+        setInterval(update, 1000);
+    }
 function initCommon() {
-    renderSidebar();
-    renderUserMenu();
-    setupMobileSidebar();
-    startClock();
-    var name = $('pharmacyName') || $('pharmacyNameDisplay');
-    if (name && API.getPharmacyName) name.innerHTML = '<i class="fas fa-clinic-medical"></i> ' + esc(API.getPharmacyName() || 'Shanks Shop Management');
-    if (API.isLoggedIn && API.isLoggedIn()) {
-        Promise.all([loadPageConfig(), loadUserAccess()]).then(function() {
-            renderSidebar();
-            checkPageAccess();
-        });
-    }
+        renderSidebar();
+        renderUserMenu();
+        setupMobileSidebar();
+        startClock();
+        var name = $('pharmacyName') || $('pharmacyNameDisplay');
+        if (name && API.getPharmacyName) name.innerHTML = '<i class="fas fa-clinic-medical"></i> ' + esc(API.getPharmacyName() || 'Shanks Shop Management');
+        if (API.isLoggedIn && API.isLoggedIn()) {
+            Promise.all([loadPageConfig(), loadUserAccess(), loadSubWarning()]).then(function() {
+                renderSidebar();
+                checkPageAccess();
+            });
 }
+    }
     function requireAuth() {
         if (API.isLoggedIn && API.isLoggedIn()) return true;
         if (getQueryParameter('demo') === '1') return true;

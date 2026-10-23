@@ -115,7 +115,8 @@ tr:hover td{background:#f8fafc;}
 <div class="main-content">
 <div class="header"><h2><i class="fas fa-chart-line"></i> Dashboard</h2><div style="display:flex;align-items:center;gap:12px;"><span class="last-updated" id="lastUpdated">Live</span><span class="live-indicator"><span class="live-dot"></span> LIVE</span></div><div id="userMenu"></div><div class="header-clock" id="topClock"></div></div>
 <div class="content">
-<div class="date-filter">
+    <div id="subWarningBanner" class="sub-warning" style="display:none;"></div>
+    <div class="date-filter">
 <label><i class="fas fa-calendar-alt"></i> Period:</label>
 <input type="date" id="startDate">
 <span style="color:#64748b;">to</span>

@@ -4389,6 +4389,10 @@ def my_access():
         pages = _parse_page_access(user['page_access'])
     modules = _business_modules_for(db, g.pharmacy_id)
     business = _business_payload(db, g.pharmacy_id, g.pharmacy)
+    sub = db.execute(
+        'SELECT s.status as sub_status, s.plan_id, s.current_period_end, s.trial_ends_at, sp.name as plan_name, sp.price_yearly as plan_price_yearly FROM subscriptions s LEFT JOIN subscription_plans sp ON sp.id = s.plan_id WHERE s.pharmacy_id = ? ORDER BY s.created_at DESC LIMIT 1',
+        (g.pharmacy_id,)
+    ).fetchone()
     return jsonify({
         'username': user['username'],
         'name': user['name'],
@@ -4398,7 +4402,8 @@ def my_access():
         'modules': modules,
         'business': business,
         'business_type': business['business_type'],
-        'presets': ROLE_PAGE_PRESETS.get(role)
+        'presets': ROLE_PAGE_PRESETS.get(role),
+        'subscription': dict(sub) if sub else None
     })
 
 
