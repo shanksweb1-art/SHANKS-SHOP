@@ -460,11 +460,29 @@ var API = (function() {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {})
             }).then(function(res) { return res.json(); });
         },
-        platformDeletePlan: function(id, platformToken) {
-            var token = platformToken || API.platformToken();
-            return fetch('/api/platform/admin/plans/' + id + '?platform_token=' + encodeURIComponent(token), {
-                method: 'DELETE', headers: { 'Content-Type': 'application/json' }
-            }).then(function(res) { return res.json(); });
+        getTenantNotes: function(id, token) {
+            return fetch('/api/admin/tenants/' + id + '/notes?platform_token=' + encodeURIComponent(token || API.platformToken()), { headers: {'Content-Type': 'application/json'} }).then(r => r.json());
+        },
+        addTenantNote: function(id, note, token) {
+            return fetch('/api/admin/tenants/' + id + '/notes?platform_token=' + encodeURIComponent(token || API.platformToken()), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({note}) }).then(r => r.json());
+        },
+        getSubscriptionHistory: function(id, token) {
+            return fetch('/api/admin/tenants/' + id + '/subscriptions/history?platform_token=' + encodeURIComponent(token || API.platformToken()), { headers: {'Content-Type': 'application/json'} }).then(r => r.json());
+        },
+        updateTenantPlan: function(id, planId, token) {
+            return fetch('/api/admin/tenants/' + id + '/plan?platform_token=' + encodeURIComponent(token || API.platformToken()), { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({plan_id: planId}) }).then(r => r.json());
+        },
+        impersonateTenant: function(id, token) {
+            return fetch('/api/admin/tenants/' + id + '/impersonate?platform_token=' + encodeURIComponent(token || API.platformToken()), { method: 'POST', headers: {'Content-Type': 'application/json'} }).then(r => r.json());
+        },
+        getActivityLog: function(token) {
+            return fetch('/api/admin/activity?platform_token=' + encodeURIComponent(token || API.platformToken()), { headers: {'Content-Type': 'application/json'} }).then(r => r.json());
+        },
+        generateInvoice: function(id, amount, dueDate, token) {
+            return fetch('/api/admin/tenants/' + id + '/invoice?platform_token=' + encodeURIComponent(token || API.platformToken()), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({amount, due_date: dueDate}) }).then(r => r.json());
+        },
+        getTenantUsage: function(id, token) {
+            return fetch('/api/admin/tenants/' + id + '/usage?platform_token=' + encodeURIComponent(token || API.platformToken()), { headers: {'Content-Type': 'application/json'} }).then(r => r.json());
         },
         getAdminPlans: function(platformToken) {
             var token = platformToken || API.platformToken();

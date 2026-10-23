@@ -1810,9 +1810,125 @@ def auto_suspend_expired():
         db.execute('UPDATE subscriptions SET status = ?, cancelled_at = ? WHERE pharmacy_id = ? AND status = ?',
             ('cancelled', now, tid, 'active'))
     db.commit()
-    return jsonify({'suspended': count})
+# ---------- Tenant Notes ----------
+@app.route('/api/admin/tenants/<int:tid>/notes', methods=['GET'])
+@require_super_admin
+def get_tenant_notes(tid):
+    db = get_db()
+    notes = db.execute('SELECT * FROM tenant_notes WHERE pharmacy_id = ? ORDER BY created_at DESC', (tid,)).fetchall()
+    return jsonify([dict(n) for n in notes])
 
-# ---------- Platform-admin plan management ----------
+@app.route('/api/admin/tenants/<int:tid>/notes', methods=['POST'])
+@require_super_admin
+def add_tenant_note(tid):
+    data = request.get_json(silent=True) or {}
+    note = data.get('note', '').strip()
+    if not note:
+        return jsonify({'error': 'Note is required'}), 400
+    db = get_db()
+    now = datetime.now().isoformat()
+    db.execute('INSERT INTO tenant_notes (pharmacy_id, note, created_by, created_at) VALUES (?, ?, ?, ?)',
+               (tid, note, (g.platform_admin or {}).get('username', 'platform'), now))
+    db.commit()
+    return jsonify({'success': True}), 201
+
+# ---------- Subscription History ----------
+@app.route('/api/admin/tenants/<int:tid>/subscriptions/history', methods=['GET'])
+@require_super_admin
+def get_subscription_history(tid):
+    db = get_db()
+    history = db.execute('''
+        SELECT sh.*, sp.name as plan_name
+        FROM subscription_history sh
+        LEFT JOIN subscription_plans sp ON sp.id = sh.plan_id
+        WHERE sh.pharmacy_id = ?
+        ORDER BY sh.changed_at DESC
+    ''', (tid,)).fetchall()
+    return jsonify([dict(h) for h in history])
+
+# ---------- Plan Assignment ----------
+@app.route('/api/admin/tenants/<int:tid>/plan', methods=['PUT'])
+@require_super_admin
+def update_tenant_plan(tid):
+    data = request.get_json(silent=True) or {}
+    plan_id = data.get('plan_id')
+    if not plan_id:
+        return jsonify({'error': 'plan_id is required'}), 400
+    db = get_db()
+    pharmacy = db.execute('SELECT * FROM pharmacies WHERE id = ?', (tid,)).fetchone()
+    plan = db.execute('SELECT * FROM subscription_plans WHERE id = ?', (plan_id,)).fetchone()
+    if not pharmacy or not plan:
+        return jsonify({'error': 'Not found'}), 404
+    now = datetime.now().isoformat()
+    db.execute('UPDATE subscriptions SET plan_id = ?, updated_at = ? WHERE pharmacy_id = ?', (plan_id, now, tid))
+    db.execute('INSERT INTO subscription_history (pharmacy_id, plan_id, action, changed_by, changed_at) VALUES (?, ?, ?, ?, ?)',
+               (tid, plan_id, 'plan_changed', (g.platform_admin or {}).get('username', 'platform'), now))
+    db.commit()
+    return jsonify({'success': True})
+
+# ---------- Impersonate Tenant ----------
+@app.route('/api/admin/tenants/<int:tid>/impersonate', methods=['POST'])
+@require_super_admin
+def impersonate_tenant(tid):
+    db = get_db()
+    pharmacy = db.execute('SELECT * FROM pharmacies WHERE id = ?', (tid,)).fetchone()
+    if not pharmacy:
+        return jsonify({'error': 'Tenant not found'}), 404
+    user = db.execute('SELECT * FROM users WHERE pharmacy_id = ? AND role IN ("admin","owner") ORDER BY id LIMIT 1', (tid,)).fetchone()
+    if not user:
+        return jsonify({'error': 'No admin user found for this tenant'}), 404
+    return jsonify({
+        'success': True,
+        'api_key': pharmacy['api_key'],
+        'username': user['username'],
+        'pharmacy': dict(pharmacy)
+    })
+
+# ---------- Activity Log ----------
+@app.route('/api/admin/activity', methods=['GET'])
+@require_super_admin
+def get_activity_log():
+    db = get_db()
+    log = db.execute('SELECT * FROM admin_activity ORDER BY created_at DESC LIMIT 100').fetchall()
+    return jsonify([dict(l) for l in log])
+
+# ---------- Invoice Generation ----------
+@app.route('/api/admin/tenants/<int:tid>/invoice', methods=['POST'])
+@require_super_admin
+def generate_invoice(tid):
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    pharmacy = db.execute('SELECT * FROM pharmacies WHERE id = ?', (tid,)).fetchone()
+    if not pharmacy:
+        return jsonify({'error': 'Tenant not found'}), 404
+    now = datetime.now().isoformat()
+    amount = data.get('amount', 0)
+    invoice_number = f'INV-{tid}-{datetime.now().strftime("%Y%m%d%H%M%S")}'
+    db.execute('INSERT INTO invoices (pharmacy_id, invoice_number, amount, status, due_date, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+               (tid, invoice_number, amount, 'pending', data.get('due_date'), now))
+    db.commit()
+    return jsonify({'success': True, 'invoice_number': invoice_number}), 201
+
+# ---------- Tenant Usage vs Limits ----------
+@app.route('/api/admin/tenants/<int:tid>/usage', methods=['GET'])
+@require_super_admin
+def get_tenant_usage(tid):
+    db = get_db()
+    users = db.execute('SELECT COUNT(*) as c FROM users WHERE pharmacy_id = ?', (tid,)).fetchone()['c']
+    products = db.execute('SELECT COUNT(*) as c FROM products WHERE pharmacy_id = ?', (tid,)).fetchone()['c']
+    branches = db.execute('SELECT COUNT(*) as c FROM branches WHERE pharmacy_id = ?', (tid,)).fetchone()['c']
+    sales = db.execute('SELECT COUNT(*) as c, COALESCE(SUM(total),0) as total FROM sales WHERE pharmacy_id = ?', (tid,)).fetchone()
+    sub = db.execute('''SELECT sp.max_users, sp.max_products, sp.max_branches 
+                        FROM subscriptions s LEFT JOIN subscription_plans sp ON sp.id = s.plan_id 
+                        WHERE s.pharmacy_id = ?''', (tid,)).fetchone()
+    return jsonify({
+        'users': {'current': users, 'limit': sub['max_users'] if sub else None},
+        'products': {'current': products, 'limit': sub['max_products'] if sub else None},
+        'branches': {'current': branches, 'limit': sub['max_branches'] if sub else None},
+        'sales_count': sales['c'],
+        'revenue': float(sales['total'])
+    })
+
 
 @app.route('/api/platform/admin/plans', methods=['GET'])
 @require_super_admin
