@@ -858,27 +858,109 @@
     </div>
   </div>
 
-  <div class="modal" id="setupModal">
+  <div class="modal" id="changePlanModal">
     <div class="modal-card">
       <header class="modal-header">
         <div>
-          <h3>Setup link ready</h3>
-          <p>Share this link with the store administrator to complete setup</p>
+          <h3>Change Subscription Plan</h3>
+          <p id="changePlanTenant">Assign a plan to this tenant</p>
         </div>
-        <button class="icon-btn" onclick="closeModal('setupModal')"><i class="fas fa-xmark"></i></button>
+        <button class="icon-btn" onclick="closeModal('changePlanModal')"><i class="fas fa-xmark"></i></button>
       </header>
       <div class="modal-body">
         <div class="field">
-          <label class="field-label">Setup URL</label>
-          <input class="field-input" id="setupUrl" readonly>
+          <label class="field-label">Select Plan</label>
+          <select class="field-input" id="planSelect"></select>
+        </div>
+        <div id="planDetails" style="background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:0.8rem;font-size:0.9rem;color:var(--text-secondary);display:none"></div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-subtle" onclick="closeModal('changePlanModal')">Cancel</button>
+        <button class="btn btn-primary" style="background:var(--primary);color:#fff" onclick="confirmChangePlan()">
+          <i class="fas fa-check"></i>
+          Apply Plan
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal" id="detailsModal">
+    <div class="modal-card" style="width:min(720px,100%)">
+      <header class="modal-header">
+        <div>
+          <h3>Tenant Details</h3>
+          <p id="detailsSubtitle">Full tenant information</p>
+        </div>
+        <button class="icon-btn" onclick="closeModal('detailsModal')"><i class="fas fa-xmark"></i></button>
+      </header>
+      <div class="modal-body">
+        <div class="grid">
+          <div class="field"><label class="field-label">Business Name</label><input class="field-input" id="detName" readonly></div>
+          <div class="field"><label class="field-label">Status</label><input class="field-input" id="detStatus" readonly></div>
+          <div class="field"><label class="field-label">Business Type</label><input class="field-input" id="detType" readonly></div>
+          <div class="field"><label class="field-label">Plan</label><input class="field-input" id="detPlan" readonly></div>
+          <div class="field"><label class="field-label">Subscription Status</label><input class="field-input" id="detSub" readonly></div>
+          <div class="field"><label class="field-label">Users</label><input class="field-input" id="detUsers" readonly></div>
+          <div class="field"><label class="field-label">Phone</label><input class="field-input" id="detPhone" readonly></div>
+          <div class="field"><label class="field-label">Email</label><input class="field-input" id="detEmail" readonly></div>
+        </div>
+        <div class="field"><label class="field-label">Address</label><input class="field-input" id="detAddress" readonly></div>
+        <div class="grid">
+          <div class="field"><label class="field-label">Created</label><input class="field-input" id="detCreated" readonly></div>
+          <div class="field"><label class="field-label">Expiry/Trial End</label><input class="field-input" id="detExpiry" readonly></div>
         </div>
       </div>
       <footer class="modal-footer">
-        <button class="btn btn-subtle" onclick="closeModal('setupModal')">Done</button>
-        <button class="btn btn-primary" style="background:var(--primary);color:#fff" onclick="copySetup()">
-          <i class="fas fa-copy"></i>
-          Copy link
-        </button>
+        <button class="btn btn-subtle" onclick="closeModal('detailsModal')">Close</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal" id="notesModal">
+    <div class="modal-card" style="width:min(640px,100%)">
+      <header class="modal-header">
+        <div>
+          <h3>Internal Notes</h3>
+          <p id="notesSubtitle">Support notes for this tenant</p>
+        </div>
+        <button class="icon-btn" onclick="closeModal('notesModal')"><i class="fas fa-xmark"></i></button>
+      </header>
+      <div class="modal-body">
+        <div class="field"><label class="field-label">Add New Note</label><textarea class="field-input" id="newNote" rows="3" placeholder="Enter note..."></textarea></div>
+        <div style="max-height:280px;overflow:auto;border:1px solid var(--border);border-radius:9px">
+          <table style="min-width:100%">
+            <thead><tr><th>Date</th><th>By</th><th>Note</th></tr></thead>
+            <tbody id="notesBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-subtle" onclick="closeModal('notesModal')">Close</button>
+        <button class="btn btn-primary" style="background:var(--primary);color:#fff" onclick="saveNote()"><i class="fas fa-plus"></i> Add Note</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal" id="paymentModal">
+    <div class="modal-card">
+      <header class="modal-header">
+        <div>
+          <h3>Record Payment</h3>
+          <p id="paymentSubtitle">Record subscription/payment for tenant</p>
+        </div>
+        <button class="icon-btn" onclick="closeModal('paymentModal')"><i class="fas fa-xmark"></i></button>
+      </header>
+      <div class="modal-body">
+        <div class="grid">
+          <div class="field"><label class="field-label">Amount</label><input class="field-input" id="payAmount" type="number" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label class="field-label">Method</label><select class="field-input" id="payMethod"><option value="bank">Bank Transfer</option><option value="cash">Cash</option><option value="card">Card</option><option value="other">Other</option></select></div>
+        </div>
+        <div class="field"><label class="field-label">Reference</label><input class="field-input" id="payRef" placeholder="Transaction reference"></div>
+        <div class="field"><label class="field-label">Description</label><input class="field-input" id="payDesc" placeholder="e.g. Subscription renewal"></div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-subtle" onclick="closeModal('paymentModal')">Cancel</button>
+        <button class="btn btn-success" onclick="savePayment()"><i class="fas fa-check"></i> Record Payment</button>
       </footer>
     </div>
   </div>
@@ -886,11 +968,16 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    let tenants = [];
-    let plans = [];
-    let selectedIds = new Set();
+    let changePlanId = null;
+    let currentNoteTenant = null;
+    let currentPaymentTenant = null;
 
     function showToast(msg, error = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast show' + (error ? ' error' : '');
+      setTimeout(() => toast.classList.remove('show'), 2600);
+    }
       const toast = document.getElementById('toast');
       toast.textContent = msg;
       toast.className = 'toast show' + (error ? ' error' : '');
@@ -1174,24 +1261,35 @@
       if (!Array.isArray(plans) || plans.length === 0) {
         await loadPlans();
       }
-      const choices = (plans || []).map(p => `${p.id}: ${p.name} (${p.slug})`).join('\n');
-      const input = prompt('Enter plan ID to assign (or cancel):\n' + choices);
-      if (!input) return;
-      const planId = parseInt(input.split(':')[0]);
-      if (isNaN(planId)) return showToast('Invalid plan ID', true);
+      changePlanId = id;
+      const t = tenants.find(x => x.id == id);
+      document.getElementById('changePlanTenant').textContent = t ? `Assign plan for ${t.name}` : 'Assign plan to tenant';
+      const sel = document.getElementById('planSelect');
+      sel.innerHTML = (plans || []).map(p => `<option value="${p.id}" data-details="${escapeHtml(p.description||'')}, Max users: ${p.max_users||'-'}, Max products: ${p.max_products||'-'}, Monthly: ${p.price_monthly||0}, Yearly: ${p.price_yearly||0}">${escapeHtml(p.name)} (${p.slug})</option>`).join('');
+      sel.onchange = function() {
+        const opt = sel.options[sel.selectedIndex];
+        const det = document.getElementById('planDetails');
+        if (opt && opt.getAttribute('data-details')) {
+          det.style.display = 'block';
+          det.textContent = opt.getAttribute('data-details').replace(/,/g, ' | ');
+        } else det.style.display = 'none';
+      };
+      sel.onchange();
+      document.getElementById('changePlanModal').classList.add('active');
+    }
+
+    async function confirmChangePlan() {
+      const planId = parseInt(document.getElementById('planSelect').value);
+      if (isNaN(planId) || !changePlanId) return showToast('Invalid selection', true);
       const token = API.platformToken();
       try {
         if (typeof API.assignPlanToTenant === 'function') {
-          await API.assignPlanToTenant(id, { plan_id: planId }, token);
-        } else if (typeof API.updateAdminPlan === 'function' || typeof API.platformUpdatePlan === 'function') {
-          // fallback to PUT
-          if (typeof API.updateTenantPlan === 'function') {
-            await API.updateTenantPlan ? API.updateTenantPlan(id, { plan_id: planId }, token) : fetch('/api/admin/tenants/' + id + '/plan?platform_token=' + encodeURIComponent(token), { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ plan_id: planId }) }).then(r=>r.json());
-          } else {
-            await fetch('/api/admin/tenants/' + id + '/plan?platform_token=' + encodeURIComponent(token), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ plan_id: planId }) }).then(r=>r.json());
-          }
+          await API.assignPlanToTenant(changePlanId, { plan_id: planId }, token);
+        } else {
+          await fetch('/api/admin/tenants/' + changePlanId + '/plan?platform_token=' + encodeURIComponent(token), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ plan_id: planId }) }).then(r=>r.json());
         }
         showToast('Plan updated');
+        closeModal('changePlanModal');
         loadTenants();
       } catch (e) {
         showToast('Failed to update plan', true);
@@ -1201,22 +1299,54 @@
     async function viewDetails(id) {
       const t = tenants.find(x => x.id == id);
       if (!t) return;
-      alert('Tenant: ' + t.name + '\nID: ' + t.id + '\nStatus: ' + t.status + '\nBusiness: ' + (t.business_label||t.business_type) + '\nPlan: ' + t.plan_name + '\nSub: ' + t.sub_status + '\nUsers: ' + t.user_count + '\nEmail: ' + (t.email||'-') + '\nPhone: ' + (t.phone||'-') + '\nCreated: ' + (t.created_at||'-'));
+      document.getElementById('detailsSubtitle').textContent = t.name + ' (ID: ' + t.id + ')';
+      document.getElementById('detName').value = t.name || '-';
+      document.getElementById('detStatus').value = t.status || '-';
+      document.getElementById('detType').value = t.business_label || t.business_type || '-';
+      document.getElementById('detPlan').value = t.plan_name || '-';
+      document.getElementById('detSub').value = t.sub_status || '-';
+      document.getElementById('detUsers').value = t.user_count || 0;
+      document.getElementById('detPhone').value = t.phone || '-';
+      document.getElementById('detEmail').value = t.email || '-';
+      document.getElementById('detAddress').value = t.address || '-';
+      document.getElementById('detCreated').value = t.created_at ? new Date(t.created_at).toLocaleString() : '-';
+      const expiry = t.current_period_end || t.trial_ends_at;
+      document.getElementById('detExpiry').value = expiry ? new Date(expiry).toLocaleString() : '-';
+      document.getElementById('detailsModal').classList.add('active');
     }
 
     async function openNotes(id) {
+      currentNoteTenant = id;
+      const t = tenants.find(x => x.id == id);
+      document.getElementById('notesSubtitle').textContent = t ? t.name : ('Tenant #' + id);
+      document.getElementById('newNote').value = '';
       const token = API.platformToken();
       try {
         const res = await fetch('/api/admin/tenants/' + id + '/notes?platform_token=' + encodeURIComponent(token));
         const notes = await res.json();
-        let txt = notes.length ? notes.map(n => '[' + (n.created_at||'') + '] ' + (n.created_by||'') + ': ' + n.note).join('\n\n') : '(no notes)';
-        const note = prompt('Add note (leave empty to just view):\n\n' + txt);
-        if (note && note.trim()) {
-          await fetch('/api/admin/tenants/' + id + '/notes?platform_token=' + encodeURIComponent(token), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ note: note.trim() }) });
-          showToast('Note added');
+        const body = document.getElementById('notesBody');
+        if (!Array.isArray(notes) || notes.length === 0) {
+          body.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-tertiary)">No notes yet</td></tr>';
+        } else {
+          body.innerHTML = notes.map(n => `<tr><td style="white-space:nowrap">${n.created_at ? new Date(n.created_at).toLocaleString() : '-'}</td><td>${escapeHtml(n.created_by||'-')}</td><td>${escapeHtml(n.note||'')}</td></tr>`).join('');
         }
+        document.getElementById('notesModal').classList.add('active');
       } catch (e) {
         showToast('Failed to load notes', true);
+      }
+    }
+
+    async function saveNote() {
+      if (!currentNoteTenant) return;
+      const note = document.getElementById('newNote').value.trim();
+      if (!note) return showToast('Note cannot be empty', true);
+      const token = API.platformToken();
+      try {
+        await fetch('/api/admin/tenants/' + currentNoteTenant + '/notes?platform_token=' + encodeURIComponent(token), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ note }) });
+        showToast('Note added');
+        openNotes(currentNoteTenant);
+      } catch (e) {
+        showToast('Failed to add note', true);
       }
     }
 
@@ -1244,14 +1374,25 @@
     }
 
     async function recordPayment(id) {
+      currentPaymentTenant = id;
+      const t = tenants.find(x => x.id == id);
+      document.getElementById('paymentSubtitle').textContent = t ? t.name : ('Tenant #' + id);
+      document.getElementById('payAmount').value = '';
+      document.getElementById('payRef').value = '';
+      document.getElementById('payDesc').value = '';
+      document.getElementById('payMethod').value = 'bank';
+      document.getElementById('paymentModal').classList.add('active');
+    }
+
+    async function savePayment() {
+      if (!currentPaymentTenant) return;
+      const amount = parseFloat(document.getElementById('payAmount').value);
+      if (isNaN(amount) || amount <= 0) return showToast('Enter valid amount', true);
       const token = API.platformToken();
-      const amount = prompt('Amount');
-      if (!amount) return;
-      const method = prompt('Method (cash/bank/transfer/other)', 'bank');
-      const reference = prompt('Reference', '');
       try {
-        await API.recordAdminPayment({ pharmacy_id: id, amount: parseFloat(amount), method, reference }, token);
+        await API.recordAdminPayment({ pharmacy_id: currentPaymentTenant, amount, method: document.getElementById('payMethod').value, reference: document.getElementById('payRef').value.trim(), description: document.getElementById('payDesc').value.trim() }, token);
         showToast('Payment recorded');
+        closeModal('paymentModal');
       } catch (e) {
         showToast('Failed to record payment', true);
       }
