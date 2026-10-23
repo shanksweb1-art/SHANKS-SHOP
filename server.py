@@ -1328,6 +1328,8 @@ def login():
         pharmacy = db.execute('SELECT * FROM pharmacies WHERE api_key = ?', (api_key,)).fetchone()
         if not pharmacy:
             return jsonify({'error': 'Invalid API key'}), 401
+        if (pharmacy['status'] or 'active') == 'suspended':
+            return jsonify({'error': 'This store has been suspended by the platform administrator.'}), 403
         user = db.execute(
             'SELECT * FROM users WHERE pharmacy_id = ? AND username = ? AND password = ?',
             (pharmacy['id'], username, password)
@@ -1349,7 +1351,7 @@ def login():
         }), 200
     else:
         users = db.execute(
-            'SELECT u.*, p.api_key, p.name as pharmacy_name, p.address, p.phone, p.email, p.business_type, p.business_modules FROM users u JOIN pharmacies p ON u.pharmacy_id = p.id WHERE u.username = ? AND u.password = ?',
+            'SELECT u.*, p.api_key, p.name as pharmacy_name, p.status as pharmacy_status, p.address, p.phone, p.email, p.business_type, p.business_modules FROM users u JOIN pharmacies p ON u.pharmacy_id = p.id WHERE u.username = ? AND u.password = ?',
             (username, password)
         ).fetchall()
     if not users:
@@ -1389,7 +1391,7 @@ def staff_login():
 
     db = get_db()
     users = db.execute(
-        'SELECT u.*, p.api_key, p.name as pharmacy_name, p.address, p.phone, p.email, p.business_type, p.business_modules FROM users u JOIN pharmacies p ON u.pharmacy_id = p.id WHERE u.username = ? AND u.password = ?',
+        'SELECT u.*, p.api_key, p.name as pharmacy_name, p.status as pharmacy_status, p.address, p.phone, p.email, p.business_type, p.business_modules FROM users u JOIN pharmacies p ON u.pharmacy_id = p.id WHERE u.username = ? AND u.password = ?',
         (username, password)
     ).fetchall()
     if not users:
@@ -1398,6 +1400,8 @@ def staff_login():
     user = users[0]
     if not _is_user_active(user):
         return jsonify({'error': 'This account has been disabled. Contact your administrator.'}), 403
+    if (user['pharmacy_status'] or 'active') == 'suspended':
+        return jsonify({'error': 'This store has been suspended by the platform administrator.'}), 403
     _touch_last_login(user['id'])
     return jsonify({
         'user': {
@@ -1437,6 +1441,8 @@ def admin_setup_login():
     pharmacy = db.execute('SELECT * FROM pharmacies WHERE api_key = ?', (api_key,)).fetchone()
     if not pharmacy:
         return jsonify({'error': 'Invalid business'}), 404
+    if (pharmacy['status'] or 'active') == 'suspended':
+        return jsonify({'error': 'This store has been suspended by the platform administrator.'}), 403
 
     user = db.execute(
         'SELECT * FROM users WHERE pharmacy_id = ? AND username = ?',
