@@ -770,19 +770,35 @@
               <option value="pending">Pending</option>
               <option value="suspended">Suspended</option>
             </select>
+            <select class="toolbar-select" id="planFilter" onchange="applyFilters()">
+              <option value="all">All plans</option>
+            </select>
+            <select class="toolbar-select" id="businessFilter" onchange="applyFilters()">
+              <option value="all">All business types</option>
+            </select>
             <button class="btn btn-subtle btn-sm" onclick="autoSuspend()"><i class="fas fa-shield-halved"></i> Auto-suspend expired</button>
             <button class="btn btn-subtle btn-sm" onclick="exportCSV()"><i class="fas fa-file-export"></i> Export</button>
+            <a class="btn btn-subtle btn-sm" href="/api/admin/tenants/export?platform_token=' + encodeURIComponent(API.platformToken()) + '" target="_blank" rel="noopener"><i class="fas fa-file-csv"></i> Export CSV (server)</a>
           </div>
         </header>
+        <div style="padding:0.6rem 1.6rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-tertiary);font-size:0.85rem">Bulk:</span>
+          <button class="btn btn-subtle btn-sm" onclick="bulkAction('suspend')"><i class="fas fa-pause"></i> Suspend selected</button>
+          <button class="btn btn-subtle btn-sm" onclick="bulkAction('reactivate')"><i class="fas fa-play"></i> Reactivate selected</button>
+          <button class="btn btn-subtle btn-sm" onclick="bulkAction('delete')"><i class="fas fa-trash"></i> Delete selected</button>
+          <button class="btn btn-subtle btn-sm" onclick="toggleSelectAll()"><i class="fas fa-check-square"></i> Select all / none</button>
+        </div>
         <div class="table-wrapper">
           <table>
             <thead>
               <tr>
+                <th style="width:40px"></th>
                 <th>ID</th>
                 <th>Store</th>
                 <th>Business type</th>
                 <th>Plan</th>
                 <th>Subscription</th>
+                <th>Expiry</th>
                 <th>Status</th>
                 <th>Users</th>
                 <th>Created</th>
@@ -871,6 +887,8 @@
 
   <script>
     let tenants = [];
+    let plans = [];
+    let selectedIds = new Set();
 
     function showToast(msg, error = false) {
       const toast = document.getElementById('toast');
@@ -901,11 +919,36 @@
       document.getElementById('sessionPill').innerHTML = '<span class="status-dot online"></span><span id="sessionLabel">' + escapeHtml(user) + '</span>';
       document.getElementById('logoutBtn').style.display = 'inline-flex';
       loadTenants();
+      loadPlans();
     }
 
     function logout() {
       API.clearPlatformSession();
       location.reload();
+    }
+
+    async function loadPlans() {
+      try {
+        const token = API.platformToken();
+        if (typeof API.platformListPlans === 'function') {
+          plans = await API.platformListPlans(token);
+        } else if (typeof API.getAdminPlans === 'function') {
+          plans = await API.getAdminPlans(token);
+        } else {
+          plans = [];
+        }
+        if (!Array.isArray(plans)) plans = [];
+        populatePlanFilters();
+      } catch (e) {
+        plans = [];
+      }
+    }
+
+    function populatePlanFilters() {
+      const planFilter = document.getElementById('planFilter');
+      if (!planFilter) return;
+      // keep first option
+      planFilter.innerHTML = '<option value="all">All plans</option>' + plans.map(p => `<option value="${escapeHtml(p.name||'')}">${escapeHtml(p.name||p.slug||'-')}</option>`).join('');
     }
 
     async function loadTenants() {
@@ -914,6 +957,13 @@
       try {
         tenants = await API.getAdminTenants(token);
         if (!Array.isArray(tenants)) tenants = [];
+        // populate business filter
+        const bizSet = new Set();
+        tenants.forEach(t => { if (t.business_type || t.business_label) bizSet.add(t.business_label || t.business_type); });
+        const bizFilter = document.getElementById('businessFilter');
+        if (bizFilter) {
+          bizFilter.innerHTML = '<option value="all">All business types</option>' + Array.from(bizSet).filter(Boolean).sort().map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
+        }
         renderStats();
         applyFilters();
       } catch (e) {
@@ -935,14 +985,18 @@
     function applyFilters() {
       const term = document.getElementById('searchInput').value.toLowerCase();
       const status = document.getElementById('statusFilter').value;
+      const plan = document.getElementById('planFilter').value;
+      const biz = document.getElementById('businessFilter').value;
       const body = document.getElementById('tenantsBody');
       let list = tenants.filter(t => {
         const matchTerm = !term || (t.name && t.name.toLowerCase().includes(term));
         const matchStatus = status === 'all' || t.status === status;
-        return matchTerm && matchStatus;
+        const matchPlan = plan === 'all' || (t.plan_name === plan);
+        const matchBiz = biz === 'all' || ((t.business_label || t.business_type) === biz);
+        return matchTerm && matchStatus && matchPlan && matchBiz;
       });
       if (list.length === 0) {
-        body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-tertiary)">No tenants match the current filters</td></tr>';
+        body.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--text-tertiary)">No tenants match the current filters</td></tr>';
         return;
       }
       body.innerHTML = list.map(t => {
@@ -956,25 +1010,74 @@
         if (t.sub_status === 'active') subBadge = '<span class="badge badge-success"><span class="badge-dot"></span>Active</span>';
         else if (t.sub_status === 'trial') subBadge = '<span class="badge badge-warning"><span class="badge-dot"></span>Trial</span>';
 
+        const expiry = t.current_period_end || t.trial_ends_at || '-';
+        const checked = selectedIds.has(t.id) ? 'checked' : '';
+
         return `<tr>
+          <td><input type="checkbox" data-id="${t.id}" ${checked} onchange="toggleSelect(${t.id}, this.checked)"></td>
           <td>${t.id}</td>
           <td><div class="tenant-name"><strong>${escapeHtml(t.name || '-')}</strong><span>${escapeHtml(t.email || '')}</span></div></td>
           <td>${escapeHtml(t.business_label || t.business_type || '-')}</td>
           <td>${escapeHtml(t.plan_name || '-')}</td>
           <td>${subBadge}</td>
+          <td>${expiry === '-' ? '-' : new Date(expiry).toLocaleDateString()}</td>
           <td>${statusBadge}</td>
           <td>${t.user_count || 0}</td>
           <td>${t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}</td>
           <td style="text-align:right">
             <div class="row-actions" style="justify-content:flex-end">
               ${t.status === 'suspended' ? `<button class="btn btn-sm btn-success" onclick="reactivate(${t.id})"><i class="fas fa-play"></i> Reactivate</button>` : t.status === 'active' ? `<button class="btn btn-sm btn-warning" onclick="suspend(${t.id})"><i class="fas fa-pause"></i> Suspend</button>` : ''}
+              <button class="btn btn-sm btn-subtle" onclick="openChangePlan(${t.id})"><i class="fas fa-rotate"></i> Change Plan</button>
               ${t.status === 'pending' && t.setup_path ? `<button class="btn btn-sm btn-subtle" onclick="copySetup('${escapeHtml(t.setup_path)}')"><i class="fas fa-link"></i> Copy setup</button>` : ''}
+              <button class="btn btn-sm btn-subtle" onclick="viewDetails(${t.id})"><i class="fas fa-eye"></i> Details</button>
+              <button class="btn btn-sm btn-subtle" onclick="openNotes(${t.id})"><i class="fas fa-note-sticky"></i> Notes</button>
+              <button class="btn btn-sm btn-subtle" onclick="viewUsage(${t.id})"><i class="fas fa-chart-simple"></i> Usage</button>
+              <button class="btn btn-sm btn-subtle" onclick="viewHistory(${t.id})"><i class="fas fa-clock-rotate-left"></i> History</button>
+              <button class="btn btn-sm btn-subtle" onclick="recordPayment(${t.id})"><i class="fas fa-money-bill"></i> Payment</button>
+              <button class="btn btn-sm btn-subtle" onclick="impersonate(${t.id})"><i class="fas fa-user-secret"></i> Impersonate</button>
               <button class="icon-btn" title="Notify" onclick="notify(${t.id})"><i class="fas fa-bell"></i></button>
               <button class="icon-btn" title="Delete" onclick="removeTenant(${t.id})"><i class="fas fa-trash"></i></button>
             </div>
           </td>
         </tr>`;
       }).join('');
+    }
+
+    function toggleSelect(id, checked) {
+      if (checked) selectedIds.add(id); else selectedIds.delete(id);
+    }
+
+    function toggleSelectAll() {
+      const boxes = document.querySelectorAll('#tenantsBody input[type=checkbox]');
+      if (selectedIds.size === 0) {
+        boxes.forEach(b => { b.checked = true; selectedIds.add(parseInt(b.getAttribute('data-id'))); });
+      } else {
+        boxes.forEach(b => { b.checked = false; });
+        selectedIds.clear();
+      }
+    }
+
+    async function bulkAction(action) {
+      if (selectedIds.size === 0) return showToast('No tenants selected', true);
+      if (action === 'delete' && !confirm('Delete selected tenants permanently?')) return;
+      const token = API.platformToken();
+      try {
+        if (typeof API.bulkTenantAction === 'function') {
+          await API.bulkTenantAction({ ids: Array.from(selectedIds), action }, token);
+        } else {
+          // fallback
+          for (let id of Array.from(selectedIds)) {
+            if (action === 'suspend') await API.suspendAdminTenant(id, token);
+            else if (action === 'reactivate') await API.reactivateAdminTenant(id, token);
+            else if (action === 'delete') await API.deleteAdminTenant(id, token);
+          }
+        }
+        showToast('Bulk action completed');
+        selectedIds.clear();
+        loadTenants();
+      } catch (e) {
+        showToast('Bulk action failed', true);
+      }
     }
 
     function openCreate() {
@@ -1067,11 +1170,119 @@
       URL.revokeObjectURL(url);
     }
 
+    async function openChangePlan(id) {
+      if (!Array.isArray(plans) || plans.length === 0) {
+        await loadPlans();
+      }
+      const choices = (plans || []).map(p => `${p.id}: ${p.name} (${p.slug})`).join('\n');
+      const input = prompt('Enter plan ID to assign (or cancel):\n' + choices);
+      if (!input) return;
+      const planId = parseInt(input.split(':')[0]);
+      if (isNaN(planId)) return showToast('Invalid plan ID', true);
+      const token = API.platformToken();
+      try {
+        if (typeof API.assignPlanToTenant === 'function') {
+          await API.assignPlanToTenant(id, { plan_id: planId }, token);
+        } else if (typeof API.updateAdminPlan === 'function' || typeof API.platformUpdatePlan === 'function') {
+          // fallback to PUT
+          if (typeof API.updateTenantPlan === 'function') {
+            await API.updateTenantPlan ? API.updateTenantPlan(id, { plan_id: planId }, token) : fetch('/api/admin/tenants/' + id + '/plan?platform_token=' + encodeURIComponent(token), { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ plan_id: planId }) }).then(r=>r.json());
+          } else {
+            await fetch('/api/admin/tenants/' + id + '/plan?platform_token=' + encodeURIComponent(token), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ plan_id: planId }) }).then(r=>r.json());
+          }
+        }
+        showToast('Plan updated');
+        loadTenants();
+      } catch (e) {
+        showToast('Failed to update plan', true);
+      }
+    }
+
+    async function viewDetails(id) {
+      const t = tenants.find(x => x.id == id);
+      if (!t) return;
+      alert('Tenant: ' + t.name + '\nID: ' + t.id + '\nStatus: ' + t.status + '\nBusiness: ' + (t.business_label||t.business_type) + '\nPlan: ' + t.plan_name + '\nSub: ' + t.sub_status + '\nUsers: ' + t.user_count + '\nEmail: ' + (t.email||'-') + '\nPhone: ' + (t.phone||'-') + '\nCreated: ' + (t.created_at||'-'));
+    }
+
+    async function openNotes(id) {
+      const token = API.platformToken();
+      try {
+        const res = await fetch('/api/admin/tenants/' + id + '/notes?platform_token=' + encodeURIComponent(token));
+        const notes = await res.json();
+        let txt = notes.length ? notes.map(n => '[' + (n.created_at||'') + '] ' + (n.created_by||'') + ': ' + n.note).join('\n\n') : '(no notes)';
+        const note = prompt('Add note (leave empty to just view):\n\n' + txt);
+        if (note && note.trim()) {
+          await fetch('/api/admin/tenants/' + id + '/notes?platform_token=' + encodeURIComponent(token), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ note: note.trim() }) });
+          showToast('Note added');
+        }
+      } catch (e) {
+        showToast('Failed to load notes', true);
+      }
+    }
+
+    async function viewUsage(id) {
+      const token = API.platformToken();
+      try {
+        const res = await fetch('/api/admin/tenants/' + id + '/usage?platform_token=' + encodeURIComponent(token));
+        const u = await res.json();
+        alert('Usage:\nUsers: ' + u.users.current + (u.users.limit!=null?'/'+u.users.limit:'') + '\nProducts: ' + u.products.current + (u.products.limit!=null?'/'+u.products.limit:'') + '\nBranches: ' + u.branches.current + (u.branches.limit!=null?'/'+u.branches.limit:'') + '\nSales: ' + u.sales_count + '\nRevenue: ' + u.revenue);
+      } catch (e) {
+        showToast('Failed to load usage', true);
+      }
+    }
+
+    async function viewHistory(id) {
+      const token = API.platformToken();
+      try {
+        const res = await fetch('/api/admin/tenants/' + id + '/subscriptions/history?platform_token=' + encodeURIComponent(token));
+        const h = await res.json();
+        let txt = h.length ? h.map(x => '[' + (x.changed_at||'') + '] ' + (x.action||'') + ' -> ' + (x.plan_name||x.plan_id)).join('\n') : '(no history)';
+        alert(txt);
+      } catch (e) {
+        showToast('Failed to load history', true);
+      }
+    }
+
+    async function recordPayment(id) {
+      const token = API.platformToken();
+      const amount = prompt('Amount');
+      if (!amount) return;
+      const method = prompt('Method (cash/bank/transfer/other)', 'bank');
+      const reference = prompt('Reference', '');
+      try {
+        await API.recordAdminPayment({ pharmacy_id: id, amount: parseFloat(amount), method, reference }, token);
+        showToast('Payment recorded');
+      } catch (e) {
+        showToast('Failed to record payment', true);
+      }
+    }
+
+    async function impersonate(id) {
+      const token = API.platformToken();
+      try {
+        const res = await fetch('/api/admin/tenants/' + id + '/impersonate?platform_token=' + encodeURIComponent(token), { method: 'POST', headers: {'Content-Type':'application/json'} });
+        const data = await res.json();
+        if (data.error) return showToast(data.error, true);
+        // save and open
+        localStorage.setItem('danzona_api_key', data.api_key);
+        localStorage.setItem('danzona_username', data.username);
+        if (data.pharmacy) {
+          localStorage.setItem('danzona_pharmacy_name', data.pharmacy.name || '');
+          localStorage.setItem('danzona_business_type', data.pharmacy.business_type || '');
+        }
+        showToast('Impersonating ' + data.username + ' - opening app');
+        setTimeout(() => { window.location.href = 'index.html'; }, 800);
+      } catch (e) {
+        showToast('Failed to impersonate', true);
+      }
+    }
+
     if (API.platformToken()) {
       document.getElementById('authView').classList.add('hidden');
       document.getElementById('appView').classList.add('active');
       document.getElementById('sessionPill').innerHTML = '<span class="status-dot online"></span><span>' + escapeHtml(API.platformUser()) + '</span>';
       document.getElementById('logoutBtn').style.display = 'inline-flex';
+      loadPlans();
       loadTenants();
     }
   </script>
