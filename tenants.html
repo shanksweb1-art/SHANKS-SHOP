@@ -914,7 +914,9 @@
 
   <div class="toast" id="toast"></div>
 
-    function showToast(msg, error = false) {
+  <script>
+  let tenants = [];
+  function showToast(msg, error = false) {
       const toast = document.getElementById('toast');
       toast.textContent = msg;
       toast.className = 'toast is-visible' + (error ? ' is-error' : '');
