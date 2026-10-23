@@ -11,12 +11,12 @@
   <script src="api.js"></script>
   <style>
     :root {
-      --bg: #f7f9fc;
+      --bg: #f8fafc;
       --surface: #ffffff;
       --surface-subtle: #f9fafb;
       --border: #e5e7eb;
       --border-strong: #d1d5db;
-      --text-primary: #101828;
+      --text-primary: #111827;
       --text-secondary: #344054;
       --text-tertiary: #475467;
       --text-quaternary: #667085;
@@ -37,6 +37,7 @@
       --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.02);
       --shadow: 0 1px 3px rgba(16, 24, 40, 0.05), 0 1px 2px rgba(16, 24, 40, 0.02);
       --shadow-md: 0 4px 6px -1px rgba(16, 24, 40, 0.06), 0 2px 4px -2px rgba(16, 24, 40, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(16, 24, 40, 0.08), 0 4px 6px -4px rgba(16, 24, 40, 0.05);
     }
 
     * {
@@ -681,8 +682,8 @@
           Sign out
         </button>
         <a class="btn btn-primary" href="platform.html">
-          <i class="fas fa-grid-2"></i>
-          Platform Overview
+          <i class="fas fa-arrow-left"></i>
+          Back to Platform
         </a>
       </div>
     </div>
@@ -718,17 +719,17 @@
     <div class="app-view" id="appView">
       <div class="page-header">
         <div class="page-title">
-          <h1>Tenants</h1>
-          <p>Monitor, provision and manage all registered stores from one place</p>
+          <h1>Tenant Management</h1>
+          <p>Monitor, provision, and manage all registered stores and subscriptions</p>
         </div>
         <div class="page-actions">
           <button class="btn btn-subtle" onclick="loadTenants()">
             <i class="fas fa-rotate"></i>
             Refresh
           </button>
-          <button class="btn btn-primary" style="background:var(--primary);color:#fff" onclick="openCreate()">
+          <button class="btn btn-success" onclick="openCreate()">
             <i class="fas fa-plus"></i>
-            Create store
+            Create Store
           </button>
         </div>
       </div>
@@ -811,7 +812,7 @@
     <div class="modal-card">
       <header class="modal-header">
         <div>
-          <h3>Create store</h3>
+          <h3>Create Store</h3>
           <p>Provision a new tenant. The owner will complete setup via the shared link.</p>
         </div>
         <button class="icon-button" onclick="closeModal('createModal')"><i class="fas fa-xmark"></i></button>
@@ -845,7 +846,7 @@
       </div>
       <footer class="modal-footer">
         <button class="btn btn-subtle" onclick="closeModal('createModal')">Cancel</button>
-        <button class="btn btn-success" onclick="createStore()"><i class="fas fa-check"></i> Create store</button>
+        <button class="btn btn-success" onclick="createStore()"><i class="fas fa-check"></i> Create Store</button>
       </footer>
     </div>
   </div>
@@ -996,7 +997,7 @@
         document.getElementById('setupModal').classList.add('is-open');
         loadTenants();
       } catch (e) {
-        showToast('Failed to create store', true);
+        showToast('Failed to Create Store', true);
       }
     }
 
