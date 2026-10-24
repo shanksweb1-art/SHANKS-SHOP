@@ -1360,7 +1360,7 @@ def login():
     user = users[0]
     if not _is_user_active(user):
         return jsonify({'error': 'This account has been disabled. Contact your administrator.'}), 403
-    if (user.get('pharmacy_status') or 'active') == 'suspended':
+    if (user['pharmacy_status'] or 'active') == 'suspended':
         return jsonify({'error': 'This store has been suspended by the platform administrator.'}), 403
     _touch_last_login(user['id'])
     return jsonify({
