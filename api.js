@@ -263,6 +263,7 @@ var API = (function() {
         getMessages: function() { return this.get('/messages'); },
         saveMessage: function(data) { return this.post('/messages', data); },
         deleteMessage: function(id) { return this.delete('/messages/' + id); },
+        updateMessage: function(id, data) { return this.put('/messages/' + id, data); },
 
         // Deliveries
         getDeliveries: function() { return this.get('/deliveries'); },

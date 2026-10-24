@@ -3050,6 +3050,12 @@ def create_message():
 def delete_message(mid):
     return table_delete('messages', mid)
 
+@app.route('/api/messages/<int:mid>', methods=['PUT'])
+@require_auth
+def update_message(mid):
+    data = request.get_json(silent=True) or {}
+    return table_update('messages', mid, data)
+
 # --- Deliveries ---
 @app.route('/api/deliveries', methods=['GET'])
 @require_auth

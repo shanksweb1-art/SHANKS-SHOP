@@ -48,6 +48,92 @@ var StoreConfig = (function() {
     return { getAll: getAll, get: get, set: set, save: save, formatCurrency: formatCurrency, formatDate: formatDate, getStoreName: getStoreName, getCurrency: getCurrency, getLowStockThreshold: getLowStockThreshold, getPharmacyName: getPharmacyName, syncFromServer: syncFromServer, syncToServer: syncToServer, defaults: defaults, KEY: KEY };
 })();
 
+var Notifications = (function() {
+    var list = [];
+    var panelEl = null;
+    var bellEl = null;
+    var badgeEl = null;
+    function getPanel() {
+        if (!panelEl) panelEl = document.createElement('div');
+        return panelEl;
+    }
+    function render() {
+        var unread = list.filter(function(m) { return String(m.status || '').toLowerCase() === 'unread'; }).length;
+        if (badgeEl) badgeEl.textContent = unread > 0 ? unread : '';
+        if (badgeEl) badgeEl.className = 'notif-badge' + (unread > 0 ? '' : ' hidden');
+        var html = '';
+        if (!list.length) {
+            html = '<div class="notif-empty"><i class="fas fa-bell-slash"></i><div style="margin-top:6px">No notifications</div></div>';
+        } else {
+            html = list.map(function(m) {
+                var unreadCls = String(m.status || '').toLowerCase() === 'unread' ? 'unread' : '';
+                var icon = String(m.status || '').toLowerCase() === 'unread' ? 'fas fa-bell' : 'fas fa-bell';
+                var subject = esc(m.subject || 'Notification');
+                var body = esc(m.body || '');
+                var time = m.created_at ? new Date(m.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                var mid = m.id || 0;
+                return '<div class="notif-item ' + unreadCls + '" onclick="Notifications.markRead(' + mid + ')">' +
+                    '<div class="ni-icon"><i class="' + icon + '"></i></div>' +
+                    '<div class="ni-content">' +
+                    '<span class="ni-subject">' + subject + '</span>' +
+                    '<span class="ni-body">' + body + '</span>' +
+                    (time ? '<span class="ni-time">' + time + '</span>' : '') +
+                    '</div>' +
+                    '</div>';
+            }).join('');
+        }
+        var panel = getPanel();
+        panel.innerHTML = '<div class="notif-header"><strong>Notifications</strong><span class="notif-mark" onclick="Notifications.markAllRead(event)">Mark all as read</span></div>' +
+            '<div class="notif-body">' + html + '</div>' +
+            '<div class="notif-footer"><button class="btn btn-secondary" onclick="Notifications.toggle()">Close</button></div>';
+    }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+    function load() {
+        if (!API || !API.isLoggedIn || !API.isLoggedIn()) return;
+        API.getMessages ? API.getMessages().then(function(data) {
+            list = Array.isArray(data) ? data : [];
+            render();
+        }).catch(function() { list = []; render(); }) : (list = [], render());
+    }
+    function toggle() {
+        if (!panelEl) return;
+        var open = panelEl.classList.contains('open');
+        if (open) { panelEl.classList.remove('open'); return; }
+        panelEl.classList.add('open');
+        render();
+        // close on outside click
+        document.addEventListener('click', function closeOutside(e) {
+            if (!panelEl.contains(e.target) && !bellEl.contains(e.target)) {
+                panelEl.classList.remove('open');
+                document.removeEventListener('click', closeOutside);
+            }
+        });
+    }
+    function markRead(mid, e) {
+        if (e) e.stopPropagation();
+        if (!API || !API.updateMessage) return;
+        API.updateMessage(mid, { status: 'read' }).then(function() {
+            var m = list.find(function(x) { return String(x.id) === String(mid); });
+            if (m) m.status = 'read';
+            render();
+        }).catch(function() {});
+    }
+    function markAllRead(e) {
+        if (e) e.stopPropagation();
+        if (!API || !API.updateMessage) return;
+        var unread = list.filter(function(m) { return String(m.status || '').toLowerCase() === 'unread'; });
+        var pending = unread.length;
+        if (!pending) return;
+        unread.forEach(function(m) {
+            API.updateMessage(m.id, { status: 'read' }).then(function() {
+                pending--;
+                if (pending === 0) { list.forEach(function(x) { x.status = 'read'; }); render(); }
+            }).catch(function() { pending--; if (pending === 0) render(); });
+        });
+    }
+    return { load: load, toggle: toggle, markRead: markRead, markAllRead: markAllRead, render: render, getPanel: getPanel, setBell: function(el) { bellEl = el; }, setBadge: function(el) { badgeEl = el; } };
+})();
+
 var POS = (function() {
     var pages = {
         'index.html': { label: 'Home', icon: 'fa-home' },
@@ -332,7 +418,19 @@ var POS = (function() {
         var name = API.getUserName ? API.getUserName() : 'Admin User';
         var role = API.getRole ? API.getRole() : 'admin';
         var pharm = API.getPharmacyName ? API.getPharmacyName() : 'Shanks Shop Management';
-        el.innerHTML = '<span class="user-avatar"><i class="fas fa-user"></i></span><div class="user-text"><strong>' + esc(name || 'Admin User') + '</strong><small>' + esc(role || 'Role') + '</small></div><i class="fas fa-chevron-down"></i><div class="user-dropdown"><div class="user-info"><strong>' + esc(name || 'Admin User') + '</strong><small>' + esc(pharm || 'Shanks Shop Management') + '</small></div><hr><a href="#" onclick="POS.navigateTo(\'config.html\');return false;"><i class="fas fa-cog"></i> Settings</a><a href="#" onclick="POS.navigateTo(\'payments.html\');return false;"><i class="fas fa-credit-card"></i> Store Payments</a><a href="#" onclick="POS.switchToAdmin();return false;"><i class="fas fa-user-shield"></i> Switch to Admin</a><hr><a href="#" onclick="POS.logout();return false;"><i class="fas fa-sign-out-alt"></i> Logout</a></div>';
+        // notification bell
+        var bellHtml = '<div class="notif-wrap"><button class="notif-bell" id="notifBell" aria-label="Notifications"><i class="fas fa-bell"></i></button><span class="notif-badge hidden" id="notifBadge">0</span></div>';
+        el.innerHTML = '<span class="user-avatar"><i class="fas fa-user"></i></span><div class="user-text"><strong>' + esc(name || 'Admin User') + '</strong><small>' + esc(role || 'Role') + '</small></div><i class="fas fa-chevron-down"></i><div class="user-dropdown"><div class="user-info"><strong>' + esc(name || 'Admin User') + '</strong><small>' + esc(pharm || 'Shanks Shop Management') + '</small></div><hr><a href="#" onclick="POS.navigateTo(\'config.html\');return false;"><i class="fas fa-cog"></i> Settings</a><a href="#" onclick="POS.navigateTo(\'payments.html\');return false;"><i class="fas fa-credit-card"></i> Store Payments</a><a href="#" onclick="POS.switchToAdmin();return false;"><i class="fas fa-user-shield"></i> Switch to Admin</a><hr><a href="#" onclick="POS.logout();return false;"><i class="fas fa-sign-out-alt"></i> Logout</a></div>' + bellHtml;
+        // attach notification panel once
+        if (!$('notifPanel')) {
+            var panel = document.createElement('div');
+            panel.id = 'notifPanel';
+            panel.className = 'notif-panel';
+            document.body.appendChild(panel);
+        }
+        Notifications.setBell($('notifBell'));
+        Notifications.setBadge($('notifBadge'));
+        $('notifBell').onclick = function(e) { e.stopPropagation(); Notifications.toggle(); };
     }
     function switchToAdmin() {
         if (API.init) API.init('', '', '', { name: 'Admin User', role: 'admin' }, '');
@@ -432,6 +530,7 @@ function renderSubWarning(sub) {
 function initCommon() {
         renderSidebar();
         renderUserMenu();
+        Notifications.load();
         setupMobileSidebar();
         startClock();
         var name = $('pharmacyName') || $('pharmacyNameDisplay');
