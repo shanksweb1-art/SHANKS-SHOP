@@ -4938,9 +4938,11 @@ def serve_static(filename):
 def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-API-Key, X-Username'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-API-Key, X-Username, X-Platform-Token'
     return response
 
+@app.route('/api/auth/register', methods=['OPTIONS'])
+@app.route('/api/auth/platform-login', methods=['OPTIONS'])
 @app.route('/api/admin/tenants', methods=['OPTIONS'])
 @app.route('/api/admin/tenants/<path:path>', methods=['OPTIONS'])
 @app.route('/api/admin/payments', methods=['OPTIONS'])
