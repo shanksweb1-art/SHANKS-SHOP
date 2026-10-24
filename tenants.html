@@ -217,34 +217,34 @@
       </div>
       <nav class="sidebar-nav">
         <div class="nav-group-label">Platform</div>
-        <a class="nav-item active" href="#" onclick="return false;">
+        <a class="nav-item active" href="tenants.html" onclick="return false;">
           <span class="nav-icon"><i class="fas fa-building"></i></span>
           <span class="nav-label">Tenant Management</span>
         </a>
         <div class="nav-group-label">Actions</div>
-        <a class="nav-item" href="#" onclick="return false;">
+        <a class="nav-item" href="#" onclick="openCreateModal();return false;">
           <span class="nav-icon"><i class="fas fa-plus-circle"></i></span>
           <span class="nav-label">Create Store</span>
         </a>
-        <a class="nav-item" href="#" onclick="return false;">
+        <a class="nav-item" href="#" onclick="openPlansModal();return false;">
           <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
           <span class="nav-label">Subscription Plans</span>
         </a>
-        <a class="nav-item" href="#" onclick="return false;">
+        <a class="nav-item" href="payments.html" target="_blank">
           <span class="nav-icon"><i class="fas fa-file-invoice-dollar"></i></span>
           <span class="nav-label">Payments &amp; Invoices</span>
         </a>
         <div class="nav-group-label">System</div>
-        <a class="nav-item" href="#" onclick="return false;">
+        <a class="nav-item" href="audit-log.html" target="_blank">
           <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>
           <span class="nav-label">Activity Log</span>
         </a>
-        <a class="nav-item" href="#" onclick="return false;">
+        <a class="nav-item" href="user-roles.html" target="_blank">
           <span class="nav-icon"><i class="fas fa-users-gear"></i></span>
           <span class="nav-label">Platform Users</span>
         </a>
         <div class="nav-group-label">Support</div>
-        <button class="nav-item" id="signoutBtn" style="justify-content:space-between">
+        <button class="nav-item" onclick="signout()" style="justify-content:space-between">
           <span class="nav-label">Sign Out</span>
           <i class="fas fa-sign-out-alt" style="opacity:0.7"></i>
         </button>
@@ -503,6 +503,68 @@
     </div>
   </div>
 
+  <!-- Plans Management Modal -->
+  <div class="modal-backdrop" id="plansModalBackdrop">
+    <div class="modal-card" style="width:min(700px,95vw)">
+      <div class="modal-header">
+        <div>
+          <h3>Subscription Plans</h3>
+          <p>Create, edit, and manage the subscription plans available to stores.</p>
+        </div>
+        <button class="modal-close" onclick="closePlansModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-field full">
+            <label class="form-label">Plan name</label>
+            <input class="form-input" id="planName" placeholder="e.g. Starter, Professional, Enterprise">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Price / month (₦)</label>
+            <input class="form-input" id="planPriceMonthly" type="number" step="0.01" placeholder="0">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Price / year (₦)</label>
+            <input class="form-input" id="planPriceYearly" type="number" step="0.01" placeholder="0">
+          </div>
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Slug</label>
+          <input class="form-input" id="planSlug" placeholder="e.g. starter">
+          <div class="form-hint">URL-friendly identifier used internally.</div>
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Description</label>
+          <textarea class="form-input" id="planDescription" rows="2" placeholder="What this plan includes"></textarea>
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Features (comma-separated)</label>
+          <input class="form-input" id="planFeatures" placeholder="e.g. Unlimited products, Multi-branch, Priority support">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Max users</label>
+          <input class="form-input" id="planMaxUsers" type="number" value="5">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Max products</label>
+          <input class="form-input" id="planMaxProducts" type="number" value="100">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Max branches</label>
+          <input class="form-input" id="planMaxBranches" type="number" value="1">
+        </div>
+        <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
+          <button class="btn btn-outline" onclick="closePlansModal()">Cancel</button>
+          <button class="btn btn-success" id="planSaveBtn" onclick="savePlan()"><i class="fas fa-save"></i> Save Plan</button>
+        </div>
+        <div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:0.75rem">
+          <h4 style="font-size:0.9rem;color:var(--text-tertiary);margin-bottom:0.5rem">Existing Plans</h4>
+          <div id="plansList" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Confirm Dialog -->
   <div class="confirm-overlay" id="confirmOverlay">
     <div class="confirm-card">
@@ -520,10 +582,11 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
-  let tenants = [];
-  let allPlans = [];
-  let selectedIds = new Set();
-  let pendingAction = { type: null, ids: [] };
+let tenants = [];
+let allPlans = [];
+let selectedIds = new Set();
+let editingPlanId = null;
+let pendingAction = { type: null, ids: [] };
 
   // ---------- Toast ----------
   function showToast(msg, type = 'info') {
@@ -922,6 +985,120 @@
     a.href = url; a.download = 'tenants.csv'; a.click();
     URL.revokeObjectURL(url);
     showToast('Exported tenants.csv', 'success');
+  }
+
+  // ---------- Plans Management ----------
+  async function openPlansModal() {
+    const token = API.platformToken();
+    if (!token) {
+      await platformLogin();
+      if (!API.platformToken()) return;
+    }
+    try {
+      const data = await API.getAdminPlans(token);
+      allPlans = Array.isArray(data) ? data : [];
+    } catch (e) {
+      allPlans = [];
+    }
+    editingPlanId = null;
+    document.getElementById('planName').value = '';
+    document.getElementById('planSlug').value = '';
+    document.getElementById('planDescription').value = '';
+    document.getElementById('planFeatures').value = '';
+    document.getElementById('planPriceMonthly').value = '';
+    document.getElementById('planPriceYearly').value = '';
+    document.getElementById('planMaxUsers').value = '5';
+    document.getElementById('planMaxProducts').value = '100';
+    document.getElementById('planMaxBranches').value = '1';
+    document.getElementById('planSaveBtn').textContent = 'Save Plan';
+    renderPlansList();
+    document.getElementById('plansModalBackdrop').classList.add('is-open');
+  }
+
+  function closePlansModal() {
+    document.getElementById('plansModalBackdrop').classList.remove('is-open');
+    editingPlanId = null;
+  }
+
+  function renderPlansList() {
+    const container = document.getElementById('plansList');
+    if (!allPlans.length) {
+      container.innerHTML = '<div class="empty-state" style="padding:1rem"><i class="fas fa-inbox" style="font-size:1.5rem;margin-bottom:0.4rem"></i><div style="font-size:0.85rem">No plans yet. Create one above.</div></div>';
+      return;
+    }
+    container.innerHTML = allPlans.map(p => {
+      const features = Array.isArray(p.features) ? p.features.join(', ') : (p.features || '');
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.8rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface)">
+        <div>
+          <div style="font-weight:600">${escapeHtml(p.name)}</div>
+          <div style="font-size:0.8rem;color:var(--text-tertiary)">slug: ${escapeHtml(p.slug)} · ₦${Number(p.price_monthly||0).toLocaleString()}/mo · ₦${Number(p.price_yearly||0).toLocaleString()}/yr</div>
+          <div style="font-size:0.78rem;color:var(--text-tertiary);margin-top:0.15rem">${escapeHtml(features)}</div>
+        </div>
+        <div style="display:flex;gap:0.4rem">
+          <button class="btn btn-outline btn-sm" onclick="editPlan(${p.id})" title="Edit"><i class="fas fa-pen"></i></button>
+          <button class="btn btn-outline btn-sm" onclick="deletePlan(${p.id}, '${escapeHtml(p.name)}')" title="Delete" style="color:var(--danger)"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function editPlan(id) {
+    const p = allPlans.find(x => x.id === id);
+    if (!p) return;
+    editingPlanId = id;
+    document.getElementById('planName').value = p.name || '';
+    document.getElementById('planSlug').value = p.slug || '';
+    document.getElementById('planDescription').value = p.description || '';
+    document.getElementById('planFeatures').value = Array.isArray(p.features) ? p.features.join(', ') : (p.features || '');
+    document.getElementById('planPriceMonthly').value = p.price_monthly || '';
+    document.getElementById('planPriceYearly').value = p.price_yearly || '';
+    document.getElementById('planMaxUsers').value = p.max_users || 5;
+    document.getElementById('planMaxProducts').value = p.max_products || 100;
+    document.getElementById('planMaxBranches').value = p.max_branches || 1;
+    document.getElementById('planSaveBtn').textContent = 'Update Plan';
+  }
+
+  async function deletePlan(id, name) {
+    if (!confirm('Delete plan "' + name + '"? Stores using it will keep their current plan.')) return;
+    const token = API.platformToken();
+    try {
+      await API.deleteAdminPlan(id, token);
+      showToast('Plan deleted', 'success');
+      await openPlansModal();
+    } catch (e) { showToast(e.message || 'Failed to delete plan', 'error'); }
+  }
+
+  async function savePlan() {
+    const token = API.platformToken();
+    if (!token) return showToast('Not authenticated', 'error');
+    const name = document.getElementById('planName').value.trim();
+    const slug = document.getElementById('planSlug').value.trim();
+    if (!name || !slug) return showToast('Name and slug are required', 'error');
+    const features = document.getElementById('planFeatures').value.split(',').map(s => s.trim()).filter(Boolean);
+    const payload = {
+      name,
+      slug,
+      description: document.getElementById('planDescription').value.trim(),
+      price_monthly: parseFloat(document.getElementById('planPriceMonthly').value || 0),
+      price_yearly: parseFloat(document.getElementById('planPriceYearly').value || 0),
+      max_users: parseInt(document.getElementById('planMaxUsers').value || 5),
+      max_products: parseInt(document.getElementById('planMaxProducts').value || 100),
+      max_branches: parseInt(document.getElementById('planMaxBranches').value || 1),
+      features,
+      is_active: 1
+    };
+    setLoading('planSaveBtn', true);
+    try {
+      if (editingPlanId) {
+        await API.platformUpdatePlan(editingPlanId, payload, token);
+        showToast('Plan updated', 'success');
+      } else {
+        await API.platformCreatePlan(payload, token);
+        showToast('Plan created', 'success');
+      }
+      await openPlansModal();
+    } catch (e) { showToast(e.message || 'Failed to save plan', 'error'); }
+    finally { setLoading('planSaveBtn', false); }
   }
 
   // ---------- Init ----------
