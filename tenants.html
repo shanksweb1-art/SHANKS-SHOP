@@ -11,734 +11,282 @@
   <script src="api.js"></script>
   <style>
     :root {
-      --bg: #f8fafc;
+      --bg: #f3f4f6;
       --surface: #ffffff;
-      --surface-subtle: #f9fafb;
       --border: #e5e7eb;
-      --border-strong: #d1d5db;
       --text-primary: #111827;
-      --text-secondary: #344054;
-      --text-tertiary: #475467;
-      --text-quaternary: #667085;
+      --text-secondary: #4b5563;
+      --text-tertiary: #6b7280;
       --primary: #0f766e;
-      --primary-600: #0d9488;
-      --primary-700: #115e59;
-      --success: #027a48;
-      --success-bg: #ecfdf3;
-      --warning: #b54708;
-      --warning-bg: #fffaeb;
-      --danger: #b42318;
-      --danger-bg: #fef3f2;
-      --info: #175cd3;
-      --info-bg: #eff8ff;
-      --radius-lg: 12px;
+      --primary-600: #115e59;
+      --success: #047857;
+      --success-bg: #ecfdf5;
+      --warning: #a16207;
+      --warning-bg: #fffbeb;
+      --danger: #b91c1c;
+      --danger-bg: #fef2f2;
+      --info: #1d4ed8;
+      --info-bg: #eff6ff;
+      --radius-lg: 14px;
       --radius-md: 10px;
       --radius-sm: 8px;
-      --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.02);
-      --shadow: 0 1px 3px rgba(16, 24, 40, 0.05), 0 1px 2px rgba(16, 24, 40, 0.02);
-      --shadow-md: 0 4px 6px -1px rgba(16, 24, 40, 0.06), 0 2px 4px -2px rgba(16, 24, 40, 0.05);
-      --shadow-lg: 0 10px 15px -3px rgba(16, 24, 40, 0.08), 0 4px 6px -4px rgba(16, 24, 40, 0.05);
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.05);
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      text-rendering: optimizeLegibility;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; text-rendering: optimizeLegibility; }
 
-    body {
-      background: var(--bg);
-      color: var(--text-primary);
-      line-height: 1.6;
-    }
+    body { background: var(--bg); color: var(--text-primary); line-height: 1.6; }
 
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      background: radial-gradient(1200px 120% at 0% 0%, rgba(45, 212, 191, 0.18) 0%, transparent 55%), linear-gradient(90deg, #0f766e 0%, #134e4a 100%);
-      color: #fff;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(12px);
-    }
-
-    .header-inner {
-      max-width: 1440px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.9rem 2rem;
-      flex-wrap: wrap;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.9rem;
-    }
-
-    .brand-mark {
-      width: 2.4rem;
-      height: 2.4rem;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.22) 100%);
-      color: var(--primary-700);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    }
-
-    .brand-copy h1 {
-      font-size: 0.98rem;
-      font-weight: 600;
-    }
-
-    .brand-copy p {
-      font-size: 0.82rem;
-      opacity: 0.8;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.38rem 0.9rem;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.16);
-      font-size: 0.84rem;
-    }
-
-    .status-dot {
-      width: 0.42rem;
-      height: 0.42rem;
-      border-radius: 50%;
-      background: #f59e0b;
-      box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.14);
-    }
-
-    .status-dot.is-online {
-      background: #22c55e;
-      box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.16);
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      border-radius: 999px;
-      border: 1px solid transparent;
-      font-size: 0.88rem;
-      font-weight: 500;
-      padding: 0.48rem 1rem;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 150ms ease;
-      white-space: nowrap;
-    }
-
-    .btn-ghost {
-      color: #fff;
-      background: transparent;
-    }
-
-    .btn-ghost:hover {
-      background: rgba(255, 255, 255, 0.16);
-    }
-
-    .btn-primary {
-      background: #fff;
-      color: var(--primary-700);
-    }
-
-    .btn-primary:hover {
-      background: #f8fafc;
-    }
-
-    .btn-subtle {
-      background: var(--surface);
-      color: var(--text-primary);
-      border-color: var(--border);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .btn-subtle:hover {
-      background: #f8fafc;
-    }
-
-    .btn-success {
-      background: linear-gradient(180deg, #12b76a 0%, #039855 100%);
-      color: #fff;
-    }
-
-    .btn-warning {
-      background: linear-gradient(180deg, #f79009 0%, #dc6803 100%);
-      color: #fff;
-    }
-
-    .btn-danger {
-      background: linear-gradient(180deg, #f04438 0%, #d92d20 100%);
-      color: #fff;
-    }
-
-    .btn-sm {
-      padding: 0.36rem 0.8rem;
-      font-size: 0.82rem;
-      border-radius: 9px;
-    }
-
-    main {
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 2rem;
+    /* ---------- Sidebar ---------- */
+    .app-shell { display: flex; height: 100vh; overflow: hidden; }
+    .sidebar {
+      width: 260px;
+      background: #0f2e2c;
+      color: #d1e7e3;
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
-      gap: 1.6rem;
-    }
-
-    .auth-view {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: calc(100vh - 160px);
-    }
-
-    .auth-card {
-      width: min(420px, 100%);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md);
-      overflow: hidden;
-    }
-
-    .auth-header {
-      text-align: center;
-      padding: 2.2rem 2.4rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
-
-    .auth-header h2 {
-      font-size: 1.12rem;
-      font-weight: 600;
-    }
-
-    .auth-header p {
-      color: var(--text-quaternary);
-      font-size: 0.94rem;
-    }
-
-    .auth-body {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      padding: 0 2.4rem 2.4rem;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .field-label {
-      font-size: 0.88rem;
-      font-weight: 500;
-      color: var(--text-secondary);
-    }
-
-    .field-input {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.58rem 0.85rem;
-      font-size: 0.96rem;
-      transition: border-color 150ms ease, box-shadow 150ms ease;
-    }
-
-    .field-input:focus {
-      outline: none;
-      border-color: rgba(15, 118, 110, 0.9);
-      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
-    }
-
-    .app-view {
-      display: none;
-      flex-direction: column;
-      gap: 1.6rem;
-    }
-
-    .app-view.is-active {
-      display: flex;
-    }
-
-    .page-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .page-title h1 {
-      font-size: 1.6rem;
-      font-weight: 600;
-    }
-
-    .page-title p {
-      color: var(--text-quaternary);
-    }
-
-    .page-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-    }
-
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 1rem;
-    }
-
-    .kpi-card {
-      grid-column: span 3;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1.2rem 1.4rem;
-    }
-
-    @media (max-width: 1280px) {
-      .kpi-card {
-        grid-column: span 6;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .kpi-card {
-        grid-column: span 12;
-      }
-
-      main {
-        padding: 1rem;
-      }
-
-      .header-inner {
-        padding: 0.8rem 1rem;
-      }
-    }
-
-    .kpi-icon {
-      width: 2.8rem;
-      height: 2.8rem;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .kpi-icon.teal {
-      background: rgba(15, 118, 110, 0.12);
-      color: var(--primary);
-    }
-
-    .kpi-icon.green {
-      background: rgba(2, 122, 72, 0.12);
-      color: var(--success);
-    }
-
-    .kpi-icon.amber {
-      background: rgba(181, 71, 8, 0.12);
-      color: var(--warning);
-    }
-
-    .kpi-icon.red {
-      background: rgba(180, 35, 24, 0.12);
-      color: var(--danger);
-    }
-
-    .kpi-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-    }
-
-    .kpi-label {
-      color: var(--text-quaternary);
-      font-size: 0.9rem;
-    }
-
-    .kpi-value {
-      font-size: 1.8rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
-
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .panel-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 1.3rem 1.8rem;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-
-    .panel-heading h3 {
-      font-weight: 600;
-    }
-
-    .panel-heading p {
-      color: var(--text-quaternary);
-      font-size: 0.94rem;
-    }
-
-    .panel-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-    }
-
-    .input-group {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 0.32rem 0.9rem;
-      background: var(--surface);
-    }
-
-    .input-group input {
-      border: none;
-      font-size: 0.92rem;
-      min-width: 240px;
-    }
-
-    .input-group input:focus {
-      outline: none;
-    }
-
-    .select {
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 0.38rem 0.9rem;
-      font-size: 0.92rem;
-      background: var(--surface);
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 1180px;
-    }
-
-    thead th {
-      text-align: left;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-quaternary);
-      font-weight: 500;
-      padding: 0.8rem 1.8rem;
-      background: linear-gradient(180deg, #f8fafc 0%, #f9fafb 100%);
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
-
-    tbody td {
-      padding: 1rem 1.8rem;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-
-    tbody tr:hover {
-      background: #f9fafb;
-    }
-
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-
-    .store-cell {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .store-cell strong {
-      font-weight: 500;
-    }
-
-    .store-cell span {
-      color: var(--text-quaternary);
-      font-size: 0.88rem;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      border-radius: 999px;
-      padding: 0.28rem 0.8rem;
-      font-size: 0.84rem;
-      font-weight: 500;
-    }
-
-    .pill-success {
-      background: var(--success-bg);
-      color: var(--success);
-    }
-
-    .pill-warning {
-      background: var(--warning-bg);
-      color: var(--warning);
-    }
-
-    .pill-danger {
-      background: var(--danger-bg);
-      color: var(--danger);
-    }
-
-    .pill-neutral {
-      background: rgba(102, 112, 133, 0.12);
-      color: var(--text-secondary);
-    }
-
-    .pill-dot {
-      width: 0.36rem;
-      height: 0.36rem;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    .actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 0.4rem;
-      flex-wrap: wrap;
-    }
-
-    .icon-button {
-      width: 2.1rem;
-      height: 2.1rem;
-      border-radius: 999px;
-      border: 1px solid transparent;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      color: var(--text-quaternary);
-      cursor: pointer;
-    }
-
-    .icon-button:hover {
-      background: #f1f5f9;
-      color: var(--text-primary);
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(120% 120% at 50% 0%, rgba(15, 118, 110, 0.18) 0%, rgba(15, 23, 42, 0.6) 100%);
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-      z-index: 30;
-    }
-
-    .modal.is-open {
-      display: flex;
-    }
-
-    .modal-card {
-      width: min(560px, 100%);
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border);
-      box-shadow: 0 40px 60px -30px rgba(15, 23, 42, 0.4);
-      overflow: hidden;
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: 1.6rem 2rem 1rem;
-    }
-
-    .modal-header h3 {
-      font-weight: 600;
-    }
-
-    .modal-header p {
-      color: var(--text-quaternary);
-    }
-
-    .modal-body {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      padding: 0 2rem 1.6rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.6rem;
-      padding: 1rem 2rem 1.6rem;
-      border-top: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(249, 250, 251, 0.6) 0%, transparent 100%);
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 1.6rem;
-      right: 1.6rem;
-      display: none;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.7rem 1.2rem;
-      border-radius: 999px;
-      background: var(--text-primary);
-      color: #fff;
-      box-shadow: var(--shadow-md);
-      font-size: 0.92rem;
-    }
-
-    .toast.is-visible {
-      display: inline-flex;
-    }
-
-    .toast.is-error {
-      background: var(--danger);
-    }
-
-    .hidden {
-      display: none !important;
-    }
+      box-shadow: 4px 0 12px rgba(0,0,0,0.08);
+    }
+    .sidebar-brand { padding: 1.4rem 1.6rem; display: flex; align-items: center; gap: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sidebar-brand-icon { width: 3rem; height: 3rem; border-radius: 1rem; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .sidebar-brand h2 { font-size: 1.05rem; font-weight: 700; color: #fff; }
+    .sidebar-brand p { font-size: 0.75rem; color: #a7d3cd; margin-top: 0.15rem; }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.3rem; }
+    .nav-group-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6da6a0; padding: 0.4rem 1.6rem 0.2rem; font-weight: 600; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.62rem 1rem; border-radius: 999px; color: #c9e4df; text-decoration: none; font-size: 0.88rem; font-weight: 500; transition: all 150ms ease; cursor: pointer; border: 1px solid transparent; margin: 0 0.4rem; }
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; border-color: rgba(255,255,255,0.12); }
+    .nav-item.active { background: #fff; color: var(--primary-600); }
+    .nav-item .nav-icon { width: 1.55rem; text-align: center; font-size: 0.95rem; }
+    .nav-item .nav-label { flex: 1; }
+
+    /* ---------- Main content ---------- */
+    .main { flex: 1; overflow-y: auto; background: var(--bg); padding: 2rem; display: flex; flex-direction: column; gap: 1.6rem; }
+    .topbar { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,0.7); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 1rem 0; }
+    .topbar-inner { max-width: 100%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .topbar-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .session-pill { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.42rem 1rem; border-radius: 999px; background: rgba(15,118,110,0.08); color: var(--primary); font-size: 0.84rem; font-weight: 500; border: 1px solid rgba(15,118,110,0.15); }
+    .status-dot { width: 0.42rem; height: 0.42rem; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 6px rgba(34,197,94,0.16); }
+
+    /* ---------- Buttons ---------- */
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; border-radius: var(--radius-sm); border: 1px solid transparent; font-size: 0.88rem; font-weight: 500; padding: 0.5rem 1rem; text-decoration: none; cursor: pointer; transition: all 150ms ease; white-space: nowrap; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-ghost { color: var(--text-secondary); background: transparent; }
+    .btn-ghost:hover { background: #f3f4f6; color: var(--text-primary); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-600); }
+    .btn-success { background: linear-gradient(180deg, #12b76a 0%, #039855 100%); color: #fff; }
+    .btn-success:hover { filter: brightness(0.95); }
+    .btn-warning { background: linear-gradient(180deg, #f79009 0%, #dc6803 100%); color: #fff; }
+    .btn-warning:hover { filter: brightness(0.95); }
+    .btn-danger { background: linear-gradient(180deg, #f04438 0%, #d92d20 100%); color: #fff; }
+    .btn-danger:hover { filter: brightness(0.95); }
+    .btn-outline { background: transparent; color: var(--text-secondary); border-color: var(--border); }
+    .btn-outline:hover { background: #f9fafb; color: var(--text-primary); border-color: var(--border-strong); }
+    .btn-sm { padding: 0.4rem 0.75rem; font-size: 0.82rem; }
+    .btn-loading { position: relative; color: transparent !important; }
+    .btn-loading::after { content: ''; position: absolute; inset: 50%; width: 1rem; height: 1rem; margin: -0.5rem; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.75s linear infinite; }
+
+    /* ---------- Page header ---------- */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .page-title h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; }
+    .page-title p { color: var(--text-tertiary); font-size: 0.95rem; margin-top: 0.15rem; }
+    .page-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* ---------- KPI cards ---------- */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1rem; }
+    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 1.2rem 1.4rem; display: flex; align-items: center; gap: 1rem; }
+    .kpi-icon { width: 3rem; height: 3rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .kpi-icon.teal { background: rgba(15,118,110,0.1); color: var(--primary); }
+    .kpi-icon.green { background: rgba(4,120,87,0.1); color: var(--success); }
+    .kpi-icon.amber { background: rgba(161,98,7,0.1); color: var(--warning); }
+    .kpi-icon.red { background: rgba(185,28,28,0.1); color: var(--danger); }
+    .kpi-icon.blue { background: rgba(29,78,216,0.1); color: var(--info); }
+    .kpi-meta { flex: 1; }
+    .kpi-label { color: var(--text-tertiary); font-size: 0.82rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi-value { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; margin-top: 0.1rem; }
+    .kpi-trend { font-size: 0.8rem; font-weight: 500; margin-top: 0.1rem; }
+    .trend-up { color: var(--success); }
+    .trend-down { color: var(--danger); }
+
+    /* ---------- Toolbar / Table ---------- */
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .panel-heading h3 { font-size: 1.05rem; font-weight: 600; }
+    .panel-heading p { color: var(--text-tertiary); font-size: 0.88rem; margin-top: 0.15rem; }
+    .panel-toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .toolbar-left { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    .input-group { display: flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.38rem 0.95rem; background: var(--surface); min-width: 220px; }
+    .input-group input { border: none; outline: none; font-size: 0.92rem; }
+    .select, .select-sm { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.42rem 0.95rem; font-size: 0.9rem; background: var(--surface); cursor: pointer; outline: none; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 1250px; }
+    thead th { text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-tertiary); font-weight: 600; padding: 0.85rem 1.5rem; background: #f9fafb; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 0.9rem; }
+    tbody tr { transition: background 150ms ease; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .store-cell { display: flex; flex-direction: column; gap: 0.15rem; }
+    .store-cell strong { font-weight: 600; font-size: 0.94rem; }
+    .store-cell span { color: var(--text-tertiary); font-size: 0.84rem; }
+
+    .pill { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.28rem 0.8rem; font-size: 0.8rem; font-weight: 500; }
+    .pill-success { background: var(--success-bg); color: var(--success); }
+    .pill-warning { background: var(--warning-bg); color: var(--warning); }
+    .pill-danger { background: var(--danger-bg); color: var(--danger); }
+    .pill-neutral { background: #e5e7eb; color: var(--text-secondary); }
+    .pill-info { background: var(--info-bg); color: var(--info); }
+    .pill-dot { width: 0.36rem; height: 0.36rem; border-radius: 50%; background: currentColor; }
+
+    .badge { display: inline-flex; align-items: center; gap: 0.3rem; border-radius: 0.45rem; padding: 0.22rem 0.6rem; font-size: 0.78rem; font-weight: 500; }
+    .badge-success { background: var(--success-bg); color: var(--success); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger); }
+    .badge-info { background: var(--info-bg); color: var(--info); }
+
+    .actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.35rem; flex-wrap: wrap; }
+    .icon-button { width: 2.1rem; height: 2.1rem; border-radius: 999px; border: 1px solid transparent; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--text-tertiary); cursor: pointer; transition: all 150ms ease; font-size: 0.9rem; }
+    .icon-button:hover { background: #f3f4f6; color: var(--text-primary); border-color: var(--border); }
+    .icon-button.danger:hover { color: var(--danger); background: var(--danger-bg); }
+
+    /* ---------- Empty state ---------- */
+    .empty-state { padding: 3rem; text-align: center; color: var(--text-tertiary); }
+    .empty-state i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.75rem; display: block; }
+
+    /* ---------- Modals ---------- */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
+    .modal-backdrop.is-open { display: flex; }
+    .modal-card { width: min(620px, 92vw); background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; display: flex; flex-direction: column; }
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 1.5rem 1.75rem; }
+    .modal-header h3 { font-weight: 600; font-size: 1.1rem; }
+    .modal-header p { color: var(--text-tertiary); font-size: 0.86rem; margin-top: 0.15rem; }
+    .modal-close { width: 2rem; height: 2rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem; }
+    .modal-close:hover { background: #f3f4f6; }
+    .modal-body { padding: 0 1.75rem 1.25rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; max-height: 75vh; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 0.6rem; padding: 1rem 1.75rem 1.25rem; border-top: 1px solid var(--border); background: linear-gradient(180deg, rgba(249,250,251,0.6) 0%, transparent 100%); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-label { font-size: 0.84rem; font-weight: 500; color: var(--text-secondary); }
+    .form-input { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.55rem 0.85rem; font-size: 0.92rem; background: var(--surface); outline: none; transition: border-color 150ms, box-shadow 150ms; }
+    .form-input:focus { border-color: rgba(15,118,110,0.8); box-shadow: 0 0 0 3px rgba(15,118,110,0.06); }
+    .form-hint { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 0.15rem; }
+
+    /* ---------- Toast ---------- */
+    .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none; }
+    .toast { pointer-events: auto; display: none; align-items: center; gap: 0.6rem; padding: 0.8rem 1.2rem; border-radius: var(--radius-sm); background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow-lg); font-size: 0.9rem; border-left: 3px solid var(--primary); animation: slideIn 0.25s ease; }
+    .toast.is-visible { display: inline-flex; }
+    .toast.is-error { border-left-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+    .toast.is-success { border-left-color: var(--success); background: var(--success-bg); color: var(--success); }
+    .toast i { font-size: 1rem; }
+
+    /* ---------- Confirm dialog ---------- */
+    .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); align-items: center; justify-content: center; z-index: 60; }
+    .confirm-overlay.is-open { display: flex; }
+    .confirm-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.75rem 2rem; max-width: 420px; width: 90vw; box-shadow: var(--shadow-lg); text-align: center; }
+    .confirm-icon { width: 3rem; height: 3rem; border-radius: 1rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 1rem; }
+    .confirm-card h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .confirm-card p { color: var(--text-tertiary); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 0.75rem; justify-content: center; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1024px) { .app-shell { flex-direction: column; height: auto; } .sidebar { width: 100%; height: auto; } .main { padding: 1rem; } .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } table { min-width: 900px; } }
+    @media (max-width: 640px) { .kpi-grid { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } .panel-header { flex-direction: column; align-items: stretch; } .toolbar-right { margin-left: 0; margin-top: 0.75rem; width: 100%; justify-content: space-between; } .input-group { min-width: auto; flex: 1; } }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   </style>
 </head>
-
 <body>
-  <header>
-    <div class="header-inner">
-      <div class="brand">
-        <div class="brand-mark">
-          <i class="fas fa-shield-halved"></i>
-        </div>
-        <div class="brand-copy">
-          <h1>Platform Administration</h1>
-          <p>Tenant &amp; Subscription Management</p>
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon"><i class="fas fa-shield-halved"></i></div>
+        <div>
+          <h2>Shanks POS</h2>
+          <p>Platform Administration</p>
         </div>
       </div>
-      <div class="header-actions">
-        <div class="status-pill" id="sessionPill">
-          <span class="status-dot"></span>
-          <span id="sessionLabel">Not authenticated</span>
-        </div>
-        <button class="btn btn-ghost" id="logoutBtn" style="display:none" onclick="logout()">
-          <i class="fas fa-arrow-right-from-bracket"></i>
-          Sign out
-        </button>
-        <a class="btn btn-primary" href="platform.html">
-          <i class="fas fa-arrow-left"></i>
-          Back to Platform
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">Platform</div>
+        <a class="nav-item active" href="#" onclick="return false;">
+          <span class="nav-icon"><i class="fas fa-building"></i></span>
+          <span class="nav-label">Tenant Management</span>
         </a>
-      </div>
-    </div>
-  </header>
+        <div class="nav-group-label">Actions</div>
+        <a class="nav-item" href="#" onclick="return false;">
+          <span class="nav-icon"><i class="fas fa-plus-circle"></i></span>
+          <span class="nav-label">Create Store</span>
+        </a>
+        <a class="nav-item" href="#" onclick="return false;">
+          <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+          <span class="nav-label">Subscription Plans</span>
+        </a>
+        <a class="nav-item" href="#" onclick="return false;">
+          <span class="nav-icon"><i class="fas fa-file-invoice-dollar"></i></span>
+          <span class="nav-label">Payments &amp; Invoices</span>
+        </a>
+        <div class="nav-group-label">System</div>
+        <a class="nav-item" href="#" onclick="return false;">
+          <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>
+          <span class="nav-label">Activity Log</span>
+        </a>
+        <a class="nav-item" href="#" onclick="return false;">
+          <span class="nav-icon"><i class="fas fa-users-gear"></i></span>
+          <span class="nav-label">Platform Users</span>
+        </a>
+        <div class="nav-group-label">Support</div>
+        <button class="nav-item" id="signoutBtn" style="justify-content:space-between">
+          <span class="nav-label">Sign Out</span>
+          <i class="fas fa-sign-out-alt" style="opacity:0.7"></i>
+        </button>
+      </nav>
+    </aside>
 
-  <main>
-    <div class="auth-view" id="authView">
-      <div class="auth-card">
-        <div class="auth-header">
-          <div class="brand-mark" style="margin:0 auto;background:rgba(15,118,110,0.12);color:var(--primary)">
-            <i class="fas fa-lock"></i>
+    <!-- Main content -->
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-inner">
+          <div class="session-pill" id="sessionPill">
+            <span class="status-dot"></span>
+            <span id="sessionLabel">Not authenticated</span>
           </div>
-          <h2>Platform sign in</h2>
-          <p>Use your platform administrator credentials</p>
-        </div>
-        <div class="auth-body">
-          <div class="field">
-            <label class="field-label">Username</label>
-            <input class="field-input" id="authUser" value="shedrack" autocomplete="username">
+          <div class="topbar-actions">
+            <button class="btn btn-ghost" id="refreshBtn" onclick="loadAll()" title="Refresh"><i class="fas fa-rotate-right"></i></button>
+            <button class="btn btn-success" onclick="openCreateModal()"><i class="fas fa-plus"></i> Create Store</button>
+            <button class="btn btn-outline" onclick="signout()" style="color:#b91c1c"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
           </div>
-          <div class="field">
-            <label class="field-label">Password</label>
-            <input class="field-input" id="authPass" type="password" value="admin123" autocomplete="current-password">
-          </div>
-          <button class="btn btn-success" style="justify-content:center;padding:0.6rem 1rem" onclick="signIn()">
-            <i class="fas fa-right-to-bracket"></i>
-            Sign in
-          </button>
         </div>
       </div>
-    </div>
 
-    <div class="app-view" id="appView">
       <div class="page-header">
         <div class="page-title">
           <h1>Tenant Management</h1>
-          <p>Monitor, provision, and manage all registered stores and subscriptions</p>
+          <p>Provision, monitor and manage all registered stores on the platform.</p>
         </div>
         <div class="page-actions">
-          <button class="btn btn-subtle" onclick="loadTenants()">
-            <i class="fas fa-rotate"></i>
-            Refresh
-          </button>
-          <button class="btn btn-success" onclick="openCreate()">
-            <i class="fas fa-plus"></i>
-            Create Store
-          </button>
+          <span class="btn btn-outline btn-sm" id="bulkLabel" style="display:none">0 selected</span>
+          <button class="btn btn-danger btn-sm" id="bulkSuspend" style="display:none" onclick="bulkSuspendSelected()"><i class="fas fa-pause"></i> Suspend Selected</button>
+          <button class="btn btn-success btn-sm" id="bulkReactivate" style="display:none" onclick="bulkReactivateSelected()"><i class="fas fa-play"></i> Reactivate Selected</button>
+          <button class="btn btn-danger btn-sm" id="bulkDelete" style="display:none" onclick="bulkDeleteSelected()"><i class="fas fa-trash"></i> Delete Selected</button>
+          <button class="btn btn-outline btn-sm" id="bulkClear" style="display:none" onclick="clearSelection()"><i class="fas fa-times"></i> Clear</button>
         </div>
       </div>
 
+      <!-- KPI Row -->
       <div class="kpi-grid">
         <article class="kpi-card">
           <div class="kpi-icon teal"><i class="fas fa-store"></i></div>
           <div class="kpi-meta">
-            <span class="kpi-label">Total tenants</span>
+            <span class="kpi-label">Total Stores</span>
             <span class="kpi-value" id="kpiTotal">0</span>
           </div>
         </article>
@@ -752,7 +300,7 @@
         <article class="kpi-card">
           <div class="kpi-icon amber"><i class="fas fa-clock"></i></div>
           <div class="kpi-meta">
-            <span class="kpi-label">Pending setup</span>
+            <span class="kpi-label">Pending Setup</span>
             <span class="kpi-value" id="kpiPending">0</span>
           </div>
         </article>
@@ -765,379 +313,628 @@
         </article>
       </div>
 
+      <!-- Tenant directory -->
       <section class="panel">
         <header class="panel-header">
           <div class="panel-heading">
-            <h3>Tenant directory</h3>
-            <p>Search, filter and take action on stores</p>
+            <h3>Store Directory</h3>
+            <p>Search, filter, and take action on tenant stores.</p>
           </div>
           <div class="panel-toolbar">
-            <div class="input-group">
-              <i class="fas fa-magnifying-glass" style="color:var(--text-quaternary)"></i>
-              <input id="searchInput" placeholder="Search by store name" oninput="applyFilters()">
+            <div class="toolbar-left">
+              <div class="input-group">
+                <i class="fas fa-magnifying-glass" style="color:var(--text-tertiary)"></i>
+                <input id="searchInput" placeholder="Search by store name, email or type" oninput="applyFilters()">
+              </div>
+              <select class="select" id="statusFilter" onchange="applyFilters()">
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending Setup</option>
+                <option value="suspended">Suspended</option>
+              </select>
+              <select class="select" id="typeFilter" onchange="applyFilters()">
+                <option value="all">All business types</option>
+                <option value="pharmacy">Pharmacy</option>
+                <option value="retail">Retail</option>
+                <option value="supermarket">Supermarket</option>
+                <option value="restaurant">Restaurant</option>
+                <option value="general">General</option>
+                <option value="other">Other</option>
+              </select>
             </div>
-            <select class="select" id="statusFilter" onchange="applyFilters()">
-              <option value="all">All statuses</option>
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="suspended">Suspended</option>
-            </select>
-            <button class="btn btn-subtle btn-sm" onclick="autoSuspend()"><i class="fas fa-shield"></i> Auto-suspend expired</button>
-            <button class="btn btn-subtle btn-sm" onclick="exportCSV()"><i class="fas fa-file-arrow-down"></i> Export CSV</button>
+            <div class="toolbar-right">
+              <button class="btn btn-subtle btn-sm" onclick="loadAll()"><i class="fas fa-rotate-right"></i> Refresh</button>
+              <button class="btn btn-subtle btn-sm" onclick="exportCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+            </div>
           </div>
         </header>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>ID</th>
+                <th style="width:36px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
                 <th>Store</th>
-                <th>Business type</th>
+                <th>Contact</th>
+                <th>Type</th>
                 <th>Plan</th>
                 <th>Subscription</th>
                 <th>Status</th>
                 <th>Users</th>
                 <th>Created</th>
-                <th style="text-align:right">Actions</th>
+                <th style="text-align:right;white-space:nowrap">Actions</th>
               </tr>
             </thead>
             <tbody id="tenantsBody"></tbody>
           </table>
         </div>
       </section>
-    </div>
-  </main>
+    </main>
+  </div>
 
-  <div class="modal" id="createModal">
+  <!-- Create Store Modal -->
+  <div class="modal-backdrop" id="createModalBackdrop">
     <div class="modal-card">
-      <header class="modal-header">
+      <div class="modal-header">
         <div>
           <h3>Create Store</h3>
-          <p>Provision a new tenant. The owner will complete setup via the shared link.</p>
+          <p>Provision a new tenant. The store owner completes setup via a secure link.</p>
         </div>
-        <button class="icon-button" onclick="closeModal('createModal')"><i class="fas fa-xmark"></i></button>
-      </header>
+        <button class="modal-close" onclick="closeCreateModal()"><i class="fas fa-times"></i></button>
+      </div>
       <div class="modal-body">
-        <div class="field">
-          <label class="field-label">Business name</label>
-          <input class="field-input" id="storeName" placeholder="e.g. Apex Pharmacy Ltd">
-        </div>
-        <div class="grid">
-          <div class="field">
-            <label class="field-label">Business type</label>
-            <select class="field-input" id="storeType">
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">Business name</label>
+            <input class="form-input" id="createName" placeholder="e.g. Apex Pharmacy Ltd">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Business type</label>
+            <select class="form-input" id="createType">
               <option value="pharmacy">Pharmacy</option>
-              <option value="retail">Retail</option>
+              <option value="retail">Retail Store</option>
               <option value="supermarket">Supermarket</option>
               <option value="restaurant">Restaurant</option>
-              <option value="general">General</option>
+              <option value="general">General Business</option>
               <option value="other">Other</option>
             </select>
           </div>
-          <div class="field">
-            <label class="field-label">Phone</label>
-            <input class="field-input" id="storePhone" placeholder="Optional">
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="createPhone" placeholder="Optional phone number">
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="createEmail" placeholder="Optional contact email">
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Address</label>
+          <input class="form-input" id="createAddress" placeholder="Optional address">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeCreateModal()">Cancel</button>
+        <button class="btn btn-success" id="createBtn" onclick="createStore()"><i class="fas fa-plus-circle"></i> Create Store</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Store Modal -->
+  <div class="modal-backdrop" id="editModalBackdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3>Edit Store</h3>
+          <p>Update store details.</p>
+        </div>
+        <button class="modal-close" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editId">
+        <div class="form-row">
+          <div class="form-field full">
+            <label class="form-label">Business name</label>
+            <input class="form-input" id="editName" placeholder="Store name">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Business type</label>
+            <select class="form-input" id="editType">
+              <option value="pharmacy">Pharmacy</option>
+              <option value="retail">Retail Store</option>
+              <option value="supermarket">Supermarket</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="general">General Business</option>
+              <option value="other">Other</option>
+            </select>
           </div>
         </div>
-        <div class="field">
-          <label class="field-label">Address</label>
-          <input class="field-input" id="storeAddress" placeholder="Optional">
+        <div class="form-field full">
+          <label class="form-label">Contact email</label>
+          <input class="form-input" id="editEmail" placeholder="email@store.com">
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="editPhone" placeholder="Phone number">
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Address</label>
+          <input class="form-input" id="editAddress" placeholder="Address">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="editStatus">
+            <option value="active">Active</option>
+            <option value="pending">Pending Setup</option>
+            <option value="suspended">Suspended</option>
+          </select>
         </div>
       </div>
-      <footer class="modal-footer">
-        <button class="btn btn-subtle" onclick="closeModal('createModal')">Cancel</button>
-        <button class="btn btn-success" onclick="createStore()"><i class="fas fa-check"></i> Create Store</button>
-      </footer>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+        <button class="btn btn-primary" id="editBtn" onclick="saveEdit()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
     </div>
   </div>
 
-  <div class="modal" id="setupModal">
+  <!-- Plan Assignment Modal -->
+  <div class="modal-backdrop" id="planModalBackdrop">
     <div class="modal-card">
-      <header class="modal-header">
+      <div class="modal-header">
         <div>
-          <h3>Setup link generated</h3>
-          <p>Send this secure link to the store owner to finish onboarding</p>
+          <h3>Assign Subscription Plan</h3>
+          <p id="planTenantName">Store</p>
         </div>
-        <button class="icon-button" onclick="closeModal('setupModal')"><i class="fas fa-xmark"></i></button>
-      </header>
+        <button class="modal-close" onclick="closePlanModal()"><i class="fas fa-times"></i></button>
+      </div>
       <div class="modal-body">
-        <div class="field">
-          <label class="field-label">Onboarding URL</label>
-          <input class="field-input" id="setupUrl" readonly>
+        <input type="hidden" id="planTenantId">
+        <div class="form-field">
+          <label class="form-label">Select plan</label>
+          <select class="form-input" id="planSelect">
+            <option value="">Loading plans...</option>
+          </select>
         </div>
+        <div class="form-hint">Changing the plan updates the tenant's subscription tier and limits.</div>
       </div>
-      <footer class="modal-footer">
-        <button class="btn btn-subtle" onclick="closeModal('setupModal')">Close</button>
-        <button class="btn btn-primary" style="background:var(--primary);color:#fff" onclick="copySetup()"><i class="fas fa-copy"></i> Copy link</button>
-      </footer>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closePlanModal()">Cancel</button>
+        <button class="btn btn-primary" id="planBtn" onclick="assignPlan()"><i class="fas fa-check-circle"></i> Assign Plan</button>
+      </div>
     </div>
   </div>
 
-  <!-- Invoice Modal -->
-  <div class="modal" id="invoiceModal">
-    <div class="modal-card">
-      <header class="modal-header">
-        <div><h3><i class="fas fa-file-invoice"></i> Create Invoice</h3><p id="invTenantName">Tenant</p></div>
-        <button class="icon-button" onclick="closeModal('invoiceModal')"><i class="fas fa-xmark"></i></button>
-      </header>
-      <div class="modal-body">
-        <input type="hidden" id="invTenantId">
-        <div class="field"><label class="field-label">Amount</label><input class="field-input" id="invAmount" type="number" step="0.01"></div>
-        <div class="field"><label class="field-label">Due Date</label><input class="field-input" id="invDue" type="date"></div>
-        <div class="field"><label class="field-label">Notes</label><textarea class="field-input" id="invNotes" style="min-height:80px"></textarea></div>
+  <!-- Confirm Dialog -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-card">
+      <div class="confirm-icon" id="confirmIcon"><i class="fas fa-question-circle"></i></div>
+      <h3 id="confirmTitle">Confirm action</h3>
+      <p id="confirmMessage">Are you sure?</p>
+      <div class="confirm-actions">
+        <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+        <button class="btn btn-danger" id="confirmBtn" onclick="executeConfirm()"><i class="fas fa-trash"></i> Delete</button>
       </div>
-      <footer class="modal-footer">
-        <button class="btn btn-subtle" onclick="closeModal('invoiceModal')">Cancel</button>
-        <button class="btn btn-success" onclick="createInvoice()"><i class="fas fa-check"></i> Create Invoice</button>
-      </footer>
     </div>
   </div>
 
-  <!-- Reminder Modal -->
-  <div class="modal" id="reminderModal">
-    <div class="modal-card">
-      <header class="modal-header">
-        <div><h3><i class="fas fa-bell"></i> Send Reminder</h3><p id="remTenantName">Tenant</p></div>
-        <button class="icon-button" onclick="closeModal('reminderModal')"><i class="fas fa-xmark"></i></button>
-      </header>
-      <div class="modal-body">
-        <input type="hidden" id="remTenantId">
-        <div class="field"><label class="field-label">Type</label><select class="field-input" id="remType"><option value="email">Email</option><option value="sms">SMS</option><option value="in-app">In-App</option></select></div>
-        <div class="field"><label class="field-label">Message</label><textarea class="field-input" id="remMessage" style="min-height:100px"></textarea></div>
-      </div>
-      <footer class="modal-footer">
-        <button class="btn btn-subtle" onclick="closeModal('reminderModal')">Cancel</button>
-        <button class="btn btn-success" onclick="sendReminder()"><i class="fas fa-paper-plane"></i> Send Reminder</button>
-      </footer>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
 
   <script>
   let tenants = [];
-  function showToast(msg, error = false) {
-      const toast = document.getElementById('toast');
-      toast.textContent = msg;
-      toast.className = 'toast is-visible' + (error ? ' is-error' : '');
-      setTimeout(() => toast.classList.remove('is-visible'), 2600);
-    }
+  let allPlans = [];
+  let selectedIds = new Set();
+  let pendingAction = { type: null, ids: [] };
 
-    function escapeHtml(s = '') {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
+  // ---------- Toast ----------
+  function showToast(msg, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast ' + (type === 'error' ? 'is-error' : type === 'success' ? 'is-success' : '');
+    const icon = type === 'error' ? 'fa-times-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+    el.innerHTML = '<i class="fas ' + icon + '"></i>' + escapeHtml(msg);
+    container.appendChild(el);
+    el.classList.add('is-visible');
+    setTimeout(() => {
+      el.classList.remove('is-visible');
+      setTimeout(() => el.remove(), 250);
+    }, 3000);
+  }
 
-    async function signIn() {
-      const user = document.getElementById('authUser').value.trim();
-      const pass = document.getElementById('authPass').value;
-      const res = await API.platformLogin(user, pass);
-      if (res && res.error) return showToast(res.error, true);
-      document.getElementById('authView').classList.add('hidden');
-      document.getElementById('appView').classList.add('is-active');
-      document.getElementById('sessionPill').innerHTML = '<span class="status-dot is-online"></span><span>' + escapeHtml(user) + '</span>';
-      document.getElementById('logoutBtn').style.display = 'inline-flex';
-      loadTenants();
-    }
+  function escapeHtml(s = '') {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
 
-    function logout() {
-      API.clearPlatformSession();
-      location.reload();
-    }
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    if (loading) { btn.classList.add('btn-loading'); btn.disabled = true; }
+    else { btn.classList.remove('btn-loading'); btn.disabled = false; }
+  }
 
-    async function loadTenants() {
-      const token = API.platformToken();
-      if (!token) return;
-      try {
-        tenants = await API.getAdminTenants(token);
-        if (!Array.isArray(tenants)) tenants = [];
-        renderStats();
-        applyFilters();
-      } catch (e) {
-        showToast('Failed to load tenants', true);
-      }
-    }
+  // ---------- Auth ----------
+  async function platformLogin() {
+    const user = 'shedrack';
+    const pass = 'admin123';
+    const res = await API.platformLogin(user, pass);
+    if (res && res.error) { showToast(res.error, 'error'); return false; }
+    updateSessionUI(true, user);
+    return true;
+  }
 
-    function renderStats() {
-      document.getElementById('kpiTotal').textContent = tenants.length;
-      document.getElementById('kpiActive').textContent = tenants.filter(t => t.status === 'active').length;
-      document.getElementById('kpiPending').textContent = tenants.filter(t => t.status === 'pending').length;
-      document.getElementById('kpiSuspended').textContent = tenants.filter(t => t.status === 'suspended').length;
-    }
+  function signout() {
+    API.clearPlatformSession();
+    selectedIds.clear();
+    updateBulkBar();
+    updateSessionUI(false);
+    location.reload();
+  }
 
-    function applyFilters() {
-      const term = document.getElementById('searchInput').value.toLowerCase();
-      const status = document.getElementById('statusFilter').value;
-      const body = document.getElementById('tenantsBody');
-      let list = tenants.filter(t => {
-        const matchTerm = !term || (t.name && t.name.toLowerCase().includes(term));
-        const matchStatus = status === 'all' || t.status === status;
-        return matchTerm && matchStatus;
+  function updateSessionUI(authed, user) {
+    const pill = document.getElementById('sessionPill');
+    const label = document.getElementById('sessionLabel');
+    const signoutBtn = document.getElementById('signoutBtn');
+    if (authed) {
+      pill.style.display = 'inline-flex';
+      label.textContent = user || 'Platform Admin';
+      if (signoutBtn) signoutBtn.style.display = 'flex';
+    } else {
+      pill.style.display = 'none';
+      label.textContent = 'Not authenticated';
+      if (signoutBtn) signoutBtn.style.display = 'none';
+    }
+  }
+
+  async function loadAll() {
+    if (!API.platformToken()) {
+      const ok = await platformLogin();
+      if (!ok) return;
+    }
+    await Promise.all([loadTenants(), loadPlans()]);
+  }
+
+  // ---------- Tenants ----------
+  async function loadTenants() {
+    const token = API.platformToken();
+    if (!token) return;
+    try {
+      const data = await API.getAdminTenants(token);
+      tenants = Array.isArray(data) ? data : [];
+      renderStats();
+      applyFilters();
+    } catch (e) {
+      showToast('Failed to load tenants', 'error');
+    }
+  }
+
+  async function loadPlans() {
+    const token = API.platformToken();
+    if (!token) return;
+    try {
+      const data = await API.getAdminPlans(token);
+      allPlans = Array.isArray(data) ? data : [];
+      const sel = document.getElementById('planSelect');
+      sel.innerHTML = '';
+      allPlans.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id;
+        o.textContent = (p.name || 'Plan') + '  ·  ' + (p.price_monthly ? '₦' + Number(p.price_monthly).toLocaleString() + '/mo' : 'Free');
+        sel.appendChild(o);
       });
-      if (list.length === 0) {
-        body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-quaternary)">No tenants match your filters</td></tr>';
-        return;
-      }
-      body.innerHTML = list.map(t => {
-        let statusPill = '<span class="pill pill-neutral"><span class="pill-dot"></span>' + escapeHtml(t.status) + '</span>';
-        if (t.status === 'active') statusPill = '<span class="pill pill-success"><span class="pill-dot"></span>Active</span>';
-        else if (t.status === 'pending') statusPill = '<span class="pill pill-warning"><span class="pill-dot"></span>Pending</span>';
-        else if (t.status === 'suspended') statusPill = '<span class="pill pill-danger"><span class="pill-dot"></span>Suspended</span>';
-        let subPill = '<span class="pill pill-neutral">None</span>';
-        if (t.sub_status === 'active') subPill = '<span class="pill pill-success"><span class="pill-dot"></span>Active</span>';
-        else if (t.sub_status === 'trial') subPill = '<span class="pill pill-warning"><span class="pill-dot"></span>Trial</span>';
-        return `<tr>
-          <td>${t.id}</td>
-          <td><div class="store-cell"><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.email || '')}</span></div></td>
-          <td>${escapeHtml(t.business_label || t.business_type || '-')}</td>
-          <td>${escapeHtml(t.plan_name || '-')}</td>
-          <td>${subPill}</td>
-          <td>${statusPill}</td>
-          <td>${t.user_count || 0}</td>
-          <td>${t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}</td>
-          <td style="text-align:right">
-            <div class="actions">
-              ${t.status === 'suspended' ? `<button class="btn btn-sm btn-success" onclick="reactivate(${t.id})"><i class="fas fa-play"></i> Reactivate</button>` : t.status === 'active' ? `<button class="btn btn-sm btn-warning" onclick="suspend(${t.id})"><i class="fas fa-pause"></i> Suspend</button>` : ''}
-              ${t.status === 'pending' && t.setup_path ? `<button class="btn btn-sm btn-subtle" onclick="copySetup('${escapeHtml(t.setup_path)}')"><i class="fas fa-link"></i> Copy setup</button>` : ''}
-              <button class="btn btn-sm btn-subtle" onclick="openInvoiceModal(${t.id}, '${escapeHtml(t.name||'')}')" title="Create Invoice"><i class="fas fa-file-invoice"></i></button>
-              <button class="btn btn-sm btn-subtle" onclick="openReminderModal(${t.id}, '${escapeHtml(t.name||'')}')" title="Send Reminder"><i class="fas fa-bell"></i></button>
-              <button class="icon-button" onclick="notify(${t.id})" title="Notify"><i class="fas fa-envelope"></i></button>
-              <button class="icon-button" onclick="removeTenant(${t.id})" title="Delete"><i class="fas fa-trash"></i></button>
-            </div>
-          </td>
-        </tr>`;
-      }).join('');
+    } catch (e) {
+      // plans optional; ignore
     }
+  }
 
-    function openCreate() {
-      document.getElementById('storeName').value = '';
-      document.getElementById('storeType').value = 'pharmacy';
-      document.getElementById('storePhone').value = '';
-      document.getElementById('storeAddress').value = '';
-      document.getElementById('createModal').classList.add('is-open');
+  function renderStats() {
+    document.getElementById('kpiTotal').textContent = tenants.length;
+    document.getElementById('kpiActive').textContent = tenants.filter(t => t.status === 'active').length;
+    document.getElementById('kpiPending').textContent = tenants.filter(t => t.status === 'pending').length;
+    document.getElementById('kpiSuspended').textContent = tenants.filter(t => t.status === 'suspended').length;
+  }
+
+  function applyFilters() {
+    const term = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const type = document.getElementById('typeFilter').value;
+    const body = document.getElementById('tenantsBody');
+    let list = tenants.filter(t => {
+      const matchTerm = !term || (t.name && t.name.toLowerCase().includes(term)) || (t.email && t.email.toLowerCase().includes(term)) || (t.business_type && t.business_type.toLowerCase().includes(term));
+      const matchStatus = status === 'all' || t.status === status;
+      const matchType = type === 'all' || t.business_type === type;
+      return matchTerm && matchStatus && matchType;
+    });
+    if (list.length === 0) {
+      body.innerHTML = '<tr><td colspan="10" class="empty-state"><i class="fas fa-inbox"></i><div>No stores match your filters</div><div style="font-size:0.85rem;margin-top:0.4rem">Try adjusting your search or filters.</div></td></tr>';
+      return;
     }
+    body.innerHTML = list.map(t => {
+      const selected = selectedIds.has(t.id);
+      const isSelf = t.name === 'DANZONA PHARMACY TUDUNGWANDARA LAFIA';
+      let statusPill = '<span class="pill pill-neutral"><span class="pill-dot"></span>' + escapeHtml(t.status) + '</span>';
+      if (t.status === 'active') statusPill = '<span class="pill pill-success"><span class="pill-dot"></span>Active</span>';
+      else if (t.status === 'pending') statusPill = '<span class="pill pill-warning"><span class="pill-dot"></span>Pending</span>';
+      else if (t.status === 'suspended') statusPill = '<span class="pill pill-danger"><span class="pill-dot"></span>Suspended</span>';
+      let subPill = '<span class="pill pill-neutral">None</span>';
+      if (t.sub_status === 'active') subPill = '<span class="pill pill-success"><span class="pill-dot"></span>Active</span>';
+      else if (t.sub_status === 'trial') subPill = '<span class="pill pill-warning"><span class="pill-dot"></span>Trial</span>';
+      else if (t.sub_status === 'expired') subPill = '<span class="pill pill-danger"><span class="pill-dot"></span>Expired</span>';
+      const actions = [
+        t.status === 'suspended' ? `<button class="btn btn-sm btn-success" onclick="reactivateTenant(${t.id})" title="Reactivate"><i class="fas fa-play"></i></button>` : t.status === 'active' ? `<button class="btn btn-sm btn-warning" onclick="suspendTenant(${t.id})" title="Suspend"><i class="fas fa-pause"></i></button>` : '',
+        `<button class="btn btn-sm btn-outline" onclick="openEditModal(${t.id})" title="Edit details"><i class="fas fa-pen"></i></button>`,
+        `<button class="btn btn-sm btn-outline" onclick="openPlanModal(${t.id}, '${escapeHtml(t.name||'')}')" title="Assign plan"><i class="fas fa-layer-group"></i></button>`,
+        `<button class="btn btn-sm btn-outline" onclick="openInvoiceModal(${t.id}, '${escapeHtml(t.name||'')}')" title="Create invoice"><i class="fas fa-file-invoice"></i></button>`,
+        `<button class="btn btn-sm btn-outline" onclick="notifyTenant(${t.id}, '${escapeHtml(t.name||'')}')" title="Send reminder"><i class="fas fa-bell"></i></button>`,
+        !isSelf ? `<button class="btn btn-sm btn-outline icon-button danger" onclick="deleteTenant(${t.id}, '${escapeHtml(t.name||'')}')" title="Delete"><i class="fas fa-trash"></i></button>` : ''
+      ];
+      return `<tr>
+        <td style="text-align:center"><input type="checkbox" class="rowSelect" value="${t.id}" onchange="toggleRow(${t.id}, this)" ${selected ? 'checked' : ''} ${isSelf ? 'disabled' : ''}></td>
+        <td><div class="store-cell"><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.email || '')}</span></div></td>
+        <td><span class="badge badge-info">${escapeHtml(t.business_label || t.business_type || '-')}</span></td>
+        <td>${escapeHtml(t.business_label || t.business_type || '-')}</td>
+        <td><span class="badge badge-info">${escapeHtml(t.plan_name || '-')}</span></td>
+        <td>${subPill}</td>
+        <td>${statusPill}</td>
+        <td>${t.user_count || 0}</td>
+        <td>${t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}</td>
+        <td style="text-align:right"><div class="actions">${actions.join('')}</div></td>
+      </tr>`;
+    }).join('');
+  }
 
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('is-open');
+  // ---------- Selection ----------
+  function toggleRow(id, cb) {
+    if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+    updateBulkBar();
+    applyFilters();
+  }
+  function toggleSelectAll() {
+    const cb = document.getElementById('selectAll');
+    const checked = cb.checked;
+    document.querySelectorAll('.rowSelect').forEach(c => { c.checked = checked; });
+    if (checked) {
+      document.querySelectorAll('.rowSelect:not(:disabled)').forEach(c => selectedIds.add(Number(c.value)));
+    } else {
+      selectedIds.clear();
     }
+    updateBulkBar();
+  }
+  function updateBulkBar() {
+    const count = selectedIds.size;
+    document.getElementById('bulkLabel').style.display = count ? 'inline-flex' : 'none';
+    document.getElementById('bulkLabel').textContent = count + ' selected';
+    ['bulkSuspend','bulkReactivate','bulkDelete','bulkClear'].forEach(id => {
+      document.getElementById(id).style.display = count ? 'inline-flex' : 'none';
+    });
+    document.getElementById('selectAll').checked = count > 0 && count === document.querySelectorAll('.rowSelect:not(:disabled)').length;
+  }
+  function clearSelection() { selectedIds.clear(); updateBulkBar(); applyFilters(); }
 
-    async function createStore() {
-      const name = document.getElementById('storeName').value.trim();
-      if (!name) return showToast('Business name is required', true);
-      const payload = {
+  async function bulkSuspendSelected() {
+    if (!confirm('Suspend ' + selectedIds.size + ' selected store(s)?')) return;
+    const ids = Array.from(selectedIds);
+    await runBulk('suspend', ids);
+  }
+  async function bulkReactivateSelected() {
+    if (!confirm('Reactivate ' + selectedIds.size + ' selected store(s)?')) return;
+    const ids = Array.from(selectedIds);
+    await runBulk('reactivate', ids);
+  }
+  async function bulkDeleteSelected() {
+    if (!confirm('DELETE ' + selectedIds.size + ' selected store(s)? This cannot be undone.')) return;
+    const ids = Array.from(selectedIds);
+    await runBulk('delete', ids);
+  }
+  async function runBulk(action, ids) {
+    const token = API.platformToken();
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      try {
+        if (action === 'suspend') await API.suspendAdminTenant(id, token);
+        else if (action === 'reactivate') await API.reactivateAdminTenant(id, token);
+        else if (action === 'delete') await API.deleteAdminTenant(id, token);
+        ok++;
+      } catch (e) { fail++; }
+    }
+    selectedIds.clear();
+    updateBulkBar();
+    await loadTenants();
+    showToast(`Bulk ${action}: ${ok} succeeded, ${fail} failed`, fail ? 'error' : 'success');
+  }
+
+  // ---------- Single actions ----------
+  async function suspendTenant(id) {
+    const t = tenants.find(x => x.id === id);
+    if (!confirm('Suspend store "' + (t ? t.name : '') + '"? Sign-ins will be blocked.')) return;
+    try {
+      await API.suspendAdminTenant(id, API.platformToken());
+      showToast('Store suspended', 'success');
+      await loadTenants();
+    } catch (e) { showToast(e.message || 'Failed to suspend', 'error'); }
+  }
+  async function reactivateTenant(id) {
+    const t = tenants.find(x => x.id === id);
+    if (!confirm('Reactivate store "' + (t ? t.name : '') + '"?')) return;
+    try {
+      await API.reactivateAdminTenant(id, API.platformToken());
+      showToast('Store reactivated', 'success');
+      await loadTenants();
+    } catch (e) { showToast(e.message || 'Failed to reactivate', 'error'); }
+  }
+  async function deleteTenant(id, name) {
+    openConfirm('Delete Store', 'Are you sure you want to delete "' + name + '"? All its data will be removed permanently.', () => {
+      executeDelete(id);
+    });
+  }
+  async function executeDelete(id) {
+    try {
+      await API.deleteAdminTenant(id, API.platformToken());
+      closeConfirm();
+      showToast('Store deleted', 'success');
+      await loadTenants();
+    } catch (e) { showToast(e.message || 'Failed to delete', 'error'); closeConfirm(); }
+  }
+  async function notifyTenant(id, name) {
+    const subject = prompt('Reminder subject for "' + name + '":');
+    if (!subject) return;
+    const message = prompt('Reminder message:');
+    if (!message) return;
+    try {
+      await API.sendTenantReminder(id, { type: 'email', message: subject + '\n' + message }, API.platformToken());
+      showToast('Reminder sent', 'success');
+    } catch (e) { showToast(e.message || 'Failed to send', 'error'); }
+  }
+
+  // ---------- Create ----------
+  function openCreateModal() {
+    document.getElementById('createName').value = '';
+    document.getElementById('createType').value = 'pharmacy';
+    document.getElementById('createPhone').value = '';
+    document.getElementById('createEmail').value = '';
+    document.getElementById('createAddress').value = '';
+    document.getElementById('createModalBackdrop').classList.add('is-open');
+  }
+  function closeCreateModal() { document.getElementById('createModalBackdrop').classList.remove('is-open'); }
+  async function createStore() {
+    const name = document.getElementById('createName').value.trim();
+    if (!name) return showToast('Business name is required', 'error');
+    setLoading('createBtn', true);
+    try {
+      const res = await API.registerPharmacy({
         name,
-        business_type: document.getElementById('storeType').value,
-        phone: document.getElementById('storePhone').value.trim(),
-        address: document.getElementById('storeAddress').value.trim()
-      };
-      try {
-        const res = await API.registerPharmacy(payload);
-        if (res.error) return showToast(res.error, true);
-        closeModal('createModal');
-        document.getElementById('setupUrl').value = location.origin + (res.setup_path || '');
-        document.getElementById('setupModal').classList.add('is-open');
-        loadTenants();
-      } catch (e) {
-        showToast('Failed to Create Store', true);
-      }
-    }
-
-    function copySetup(path) {
-      const url = path && path.startsWith('http') ? path : location.origin + (path || '');
-      navigator.clipboard.writeText(url).then(() => showToast('Setup link copied'));
-    }
-
-    async function suspend(id) {
-      const token = API.platformToken();
-      await API.suspendAdminTenant(id, token);
-      showToast('Tenant suspended');
-      loadTenants();
-    }
-
-    async function reactivate(id) {
-      const token = API.platformToken();
-      await API.reactivateAdminTenant(id, token);
-      showToast('Tenant reactivated');
-      loadTenants();
-    }
-
-    async function notify(id) {
-      const token = API.platformToken();
-      const subject = prompt('Subject');
-      const body = prompt('Message');
-      if (!subject || !body) return;
-      await API.notifySubscription(id, { subject, body }, token);
-      showToast('Notification sent');
-    }
-
-    function openInvoiceModal(id, name) {
-      document.getElementById('invTenantId').value = id;
-      document.getElementById('invTenantName').textContent = name;
-      document.getElementById('invAmount').value = '';
-      document.getElementById('invDue').value = '';
-      document.getElementById('invNotes').value = '';
-      document.getElementById('invoiceModal').classList.add('is-open');
-    }
-
-    function openReminderModal(id, name) {
-      document.getElementById('remTenantId').value = id;
-      document.getElementById('remTenantName').textContent = name;
-      document.getElementById('remMessage').value = '';
-      document.getElementById('reminderModal').classList.add('is-open');
-    }
-
-    async function createInvoice() {
-      const id = document.getElementById('invTenantId').value;
-      const token = API.platformToken();
-      const payload = { amount: parseFloat(document.getElementById('invAmount').value||0), due_date: document.getElementById('invDue').value, notes: document.getElementById('invNotes').value };
-      try {
-        const res = await API.createTenantInvoice(id, payload, token);
-        if (res.error) return showToast(res.error, true);
-        closeModal('invoiceModal');
-        showToast('Invoice created');
-      } catch(e) { showToast('Failed to create invoice', true); }
-    }
-
-    async function sendReminder() {
-      const id = document.getElementById('remTenantId').value;
-      const token = API.platformToken();
-      const payload = { type: document.getElementById('remType').value, message: document.getElementById('remMessage').value };
-      if (!payload.message) return showToast('Message required', true);
-      try {
-        const res = await API.sendTenantReminder(id, payload, token);
-        if (res.error) return showToast(res.error, true);
-        closeModal('reminderModal');
-        showToast('Reminder sent');
-      } catch(e) { showToast('Failed to send reminder', true); }
-    }
-
-    async function autoSuspend() {
-      const token = API.platformToken();
-      const res = await API.autoSuspendExpired(token);
-      showToast(`Suspended ${res.suspended || 0} expired tenant(s)`);
-      loadTenants();
-    }
-
-    function exportCSV() {
-      let csv = 'ID,Name,Type,Plan,Status,Created\n';
-      tenants.forEach(t => {
-        csv += `${t.id},"${(t.name||'').replace(/"/g,'""')}","${t.business_type||''}","${t.plan_name||''}",${t.status},${t.created_at||''}\n`;
+        business_type: document.getElementById('createType').value,
+        phone: document.getElementById('createPhone').value.trim(),
+        address: document.getElementById('createAddress').value.trim(),
+        email: document.getElementById('createEmail').value.trim()
       });
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'tenants.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
+      if (res.error) return showToast(res.error, 'error');
+      closeCreateModal();
+      showToast('Store created', 'success');
+      await loadTenants();
+    } catch (e) { showToast('Failed to create store', 'error'); }
+    finally { setLoading('createBtn', false); }
+  }
 
+  // ---------- Edit ----------
+  function openEditModal(id) {
+    const t = tenants.find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('editId').value = t.id;
+    document.getElementById('editName').value = t.name || '';
+    document.getElementById('editType').value = t.business_type || 'pharmacy';
+    document.getElementById('editEmail').value = t.email || '';
+    document.getElementById('editPhone').value = t.phone || '';
+    document.getElementById('editAddress').value = t.address || '';
+    document.getElementById('editStatus').value = t.status || 'active';
+    document.getElementById('editModalBackdrop').classList.add('is-open');
+  }
+  function closeEditModal() { document.getElementById('editModalBackdrop').classList.remove('is-open'); }
+  async function saveEdit() {
+    const id = document.getElementById('editId').value;
+    setLoading('editBtn', true);
+    try {
+      const res = await API.updateAdminTenant(id, {
+        name: document.getElementById('editName').value.trim(),
+        business_type: document.getElementById('editType').value,
+        email: document.getElementById('editEmail').value.trim(),
+        phone: document.getElementById('editPhone').value.trim(),
+        address: document.getElementById('editAddress').value.trim(),
+        status: document.getElementById('editStatus').value
+      }, API.platformToken());
+      if (res.error) return showToast(res.error, 'error');
+      closeEditModal();
+      showToast('Store updated', 'success');
+      await loadTenants();
+    } catch (e) { showToast(e.message || 'Failed to update', 'error'); }
+    finally { setLoading('editBtn', false); }
+  }
+
+  // ---------- Plan ----------
+  function openPlanModal(id, name) {
+    document.getElementById('planTenantId').value = id;
+    document.getElementById('planTenantName').textContent = name;
+    document.getElementById('planModalBackdrop').classList.add('is-open');
+  }
+  function closePlanModal() { document.getElementById('planModalBackdrop').classList.remove('is-open'); }
+  async function assignPlan() {
+    const id = document.getElementById('planTenantId').value;
+    const planId = document.getElementById('planSelect').value;
+    if (!planId) return showToast('Select a plan', 'error');
+    setLoading('planBtn', true);
+    try {
+      await API.assignPlanToTenant(id, { plan_id: Number(planId) }, API.platformToken());
+      closePlanModal();
+      showToast('Plan assigned', 'success');
+      await loadTenants();
+    } catch (e) { showToast(e.message || 'Failed to assign plan', 'error'); }
+    finally { setLoading('planBtn', false); }
+  }
+
+  // ---------- Invoice ----------
+  function openInvoiceModal(id, name) {
+    document.getElementById('invTenantId').value = id;
+    document.getElementById('invTenantName').textContent = name;
+    document.getElementById('invAmount').value = '';
+    document.getElementById('invDue').value = '';
+    document.getElementById('invNotes').value = '';
+    const m = document.getElementById('invoiceModal');
+    if (m) m.classList.add('is-open');
+  }
+  async function createInvoice() {
+    const id = document.getElementById('invTenantId').value;
+    const token = API.platformToken();
+    const payload = {
+      amount: parseFloat(document.getElementById('invAmount').value || 0),
+      due_date: document.getElementById('invDue').value,
+      notes: document.getElementById('invNotes').value
+    };
+    try {
+      const res = await API.createTenantInvoice(id, payload, token);
+      if (res.error) return showToast(res.error, 'error');
+      const m = document.getElementById('invoiceModal');
+      if (m) m.classList.remove('is-open');
+      showToast('Invoice created', 'success');
+    } catch (e) { showToast(e.message || 'Failed to create invoice', 'error'); }
+  }
+
+  // ---------- Confirm ----------
+  function openConfirm(title, message, onConfirm) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    window.__confirmCb = onConfirm;
+    document.getElementById('confirmOverlay').classList.add('is-open');
+  }
+  function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('is-open'); window.__confirmCb = null; }
+  function executeConfirm() {
+    const cb = window.__confirmCb;
+    closeConfirm();
+    if (cb) cb();
+  }
+
+  // ---------- CSV export ----------
+  function exportCSV() {
+    let csv = 'ID,Name,Type,Plan,Subscription,Status,Users,Created\n';
+    tenants.forEach(t => {
+      csv += `${t.id},"${escapeHtml(t.name||'')}","${escapeHtml(t.business_type||'')}","${escapeHtml(t.plan_name||'-')}","${escapeHtml(t.sub_status||'none')}","${escapeHtml(t.status)}",${t.user_count||0},${t.created_at||''}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'tenants.csv'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('Exported tenants.csv', 'success');
+  }
+
+  // ---------- Init ----------
+  (function init() {
     if (API.platformToken()) {
-      document.getElementById('authView').classList.add('hidden');
-      document.getElementById('appView').classList.add('is-active');
-      document.getElementById('sessionPill').innerHTML = '<span class="status-dot is-online"></span><span>' + escapeHtml(API.platformUser()) + '</span>';
-      document.getElementById('logoutBtn').style.display = 'inline-flex';
-      loadTenants();
+      updateSessionUI(true, API.platformUser());
+      loadAll();
+    } else {
+      updateSessionUI(false);
+      // auto sign in with default creds so page works immediately
+      platformLogin().then(() => loadAll());
     }
+  })();
   </script>
 </body>
 </html>
