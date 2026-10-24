@@ -3241,6 +3241,50 @@ def profit_report():
         'transactions': count
     })
 
+@app.route('/api/reports/forecast', methods=['GET'])
+@require_auth
+def sales_forecast():
+    """Simple moving-average sales forecast for the next N days."""
+    db = get_db()
+    pid = g.pharmacy_id
+    days = int(request.args.get('days', 7))
+    history_days = int(request.args.get('history', 30))
+    from datetime import timedelta
+    today = datetime.now().date()
+    start = today - timedelta(days=history_days)
+    rows = db.execute(
+        'SELECT substr(date,1,10) as d, SUM(total) as t FROM sales WHERE pharmacy_id=? AND substr(date,1,10) >= ? GROUP BY d ORDER BY d ASC',
+        (pid, start.isoformat())).fetchall()
+    series = {r['d']: float(r['t'] or 0) for r in rows}
+    vals = [series.get((start + timedelta(days=i)).isoformat(), 0.0) for i in range(history_days)]
+    window = min(7, len(vals))
+    avg = (sum(vals[-window:]) / window) if window else 0.0
+    forecast = [{'date': (today + timedelta(days=i+1)).isoformat(), 'predicted': round(avg, 2)} for i in range(days)]
+    return jsonify({'history': [{'date': (start + timedelta(days=i)).isoformat(), 'total': round(vals[i], 2)} for i in range(history_days)], 'forecast': forecast, 'method': 'moving_average_7d'})
+
+@app.route('/api/reports/anomalies', methods=['GET'])
+@require_auth
+def sales_anomalies():
+    """Flag days whose sales total deviates >2 std from the mean (z-score)."""
+    import statistics
+    db = get_db()
+    pid = g.pharmacy_id
+    days = int(request.args.get('days', 60))
+    from datetime import timedelta
+    today = datetime.now().date()
+    start = today - timedelta(days=days)
+    rows = db.execute(
+        'SELECT substr(date,1,10) as d, SUM(total) as t FROM sales WHERE pharmacy_id=? AND substr(date,1,10) >= ? GROUP BY d ORDER BY d ASC',
+        (pid, start.isoformat())).fetchall()
+    series = [(r['d'], float(r['t'] or 0)) for r in rows]
+    totals = [v for _, v in series]
+    if len(totals) < 5:
+        return jsonify({'anomalies': [], 'note': 'insufficient data'})
+    mean = statistics.mean(totals)
+    stdev = statistics.pstdev(totals) or 1.0
+    anomalies = [{'date': d, 'total': round(v, 2), 'z': round((v - mean) / stdev, 2)} for d, v in series if abs((v - mean) / stdev) > 2]
+    return jsonify({'mean': round(mean, 2), 'stdev': round(stdev, 2), 'anomalies': anomalies})
+
 # --- Register endpoint for staff (users within pharmacy) ---
 @app.route('/api/users/register', methods=['POST'])
 @require_auth
