@@ -842,8 +842,8 @@ let pendingAction = { type: null, ids: [] };
     const message = prompt('Reminder message:');
     if (!message) return;
     try {
-      await API.sendTenantReminder(id, { type: 'email', message: subject + '\n' + message }, API.platformToken());
-      showToast('Reminder sent', 'success');
+      await API.notifySubscription(id, { subject: subject, body: message }, API.platformToken());
+      showToast('Notification sent', 'success');
     } catch (e) { showToast(e.message || 'Failed to send', 'error'); }
   }
 
