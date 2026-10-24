@@ -54,13 +54,13 @@ var Notifications = (function() {
     var bellEl = null;
     var badgeEl = null;
     function getPanel() {
-        if (!panelEl) panelEl = document.createElement('div');
+        if (!panelEl) panelEl = document.getElementById('notifPanel') || document.createElement('div');
+        if (panelEl && !panelEl.parentNode) document.body.appendChild(panelEl);
         return panelEl;
     }
     function render() {
         var unread = list.filter(function(m) { return String(m.status || '').toLowerCase() === 'unread'; }).length;
-        if (badgeEl) badgeEl.textContent = unread > 0 ? unread : '';
-        if (badgeEl) badgeEl.className = 'notif-badge' + (unread > 0 ? '' : ' hidden');
+        if (badgeEl) { badgeEl.textContent = unread > 0 ? unread : ''; badgeEl.className = 'notif-badge' + (unread > 0 ? '' : ' hidden'); }
         var html = '';
         if (!list.length) {
             html = '<div class="notif-empty"><i class="fas fa-bell-slash"></i><div style="margin-top:6px">No notifications</div></div>';
@@ -96,14 +96,14 @@ var Notifications = (function() {
         }).catch(function() { list = []; render(); }) : (list = [], render());
     }
     function toggle() {
+        if (!panelEl) { getPanel(); }
         if (!panelEl) return;
         var open = panelEl.classList.contains('open');
         if (open) { panelEl.classList.remove('open'); return; }
         panelEl.classList.add('open');
         render();
-        // close on outside click
         document.addEventListener('click', function closeOutside(e) {
-            if (!panelEl.contains(e.target) && !bellEl.contains(e.target)) {
+            if (!panelEl.contains(e.target) && (!bellEl || !bellEl.contains(e.target))) {
                 panelEl.classList.remove('open');
                 document.removeEventListener('click', closeOutside);
             }
