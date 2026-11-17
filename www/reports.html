@@ -1,0 +1,424 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-chart-bar"></i> Reports</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <div class="toolbar">
+                <input type="date" id="reportDateFrom" class="form-control" style="width:auto;">
+                <input type="date" id="reportDateTo" class="form-control" style="width:auto;">
+                <button class="btn btn-primary" onclick="applyDateFilter()"><i class="fas fa-filter"></i> Apply Filter</button>
+                <button class="btn btn-info" onclick="exportCSV()"><i class="fas fa-file-export"></i> Export</button>
+            </div>
+        </div>
+        <div class="tabs" id="reportTabs"></div>
+        <div id="reportContent"></div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var currentSales = [];
+var currentProducts = [];
+var currentCustomers = [];
+var currentExpenses = [];
+var currentGiftCards = [];
+var currentPurchaseOrders = [];
+var currentPrescriptions = [];
+var currentEmployees = [];
+var currentInventory = [];
+var currentExpiryBatches = [];
+var currentPayments = [];
+var dataReady = null;
+var currentTab = 'favorites';
+
+function toLocalDateStr(d) {
+    var dd = String(d.getDate()).padStart(2, '0');
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    return d.getFullYear() + '-' + mm + '-' + dd;
+}
+function $id(id) { return document.getElementById(id); }
+function fmt(n) { try { return POS.formatCurrency(n); } catch(e) { return '₦' + (parseFloat(n) || 0).toLocaleString('en-NG', {minimumFractionDigits:2}); } }
+function fmtNum(n) { try { return POS.formatNumber(n || 0); } catch(e) { return (parseFloat(n) || 0).toLocaleString(); } }
+function esc(s) { return String(s||'').replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+function safeGet(key, fallback) { try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch(e) { return fallback; } }
+
+var TABS = [
+    {id:'favorites', label:'Overview', icon:'fa-star', render:renderFavorites},
+    {id:'margins', label:'Profit & Margins', icon:'fa-chart-pie', render:renderMargins},
+    {id:'closeout', label:'Closeout', icon:'fa-calculator', render:generateCloseout},
+    {id:'employees', label:'Employees', icon:'fa-user-tie', render:renderEmployees}
+];
+function renderReportTabs(){
+    var tabWrap=$id('reportTabs');
+    var contentWrap=$id('reportContent');
+    if(!tabWrap||!contentWrap)return;
+    tabWrap.innerHTML=TABS.map(function(t,i){
+        return '<button class="tab-btn'+(i===0?' active':'')+'" onclick="switchTab(\''+t.id+'\',this)"><i class="fas '+t.icon+'"></i> '+esc(t.label)+'</button>';
+    }).join('');
+    contentWrap.innerHTML=TABS.map(function(t,i){
+        return '<div class="tab-content'+(i===0?' active':'')+'" id="'+t.id+'"></div>';
+    }).join('');
+}
+function kpiCard(label,value,sub,color){
+    return '<div class="kpi-card"><div class="kpi-label">'+esc(label)+'</div>'+
+           '<div class="kpi-value"'+(color?' style="color:'+color+'"':'')+'>'+value+'</div>'+
+           (sub?'<div class="kpi-sub">'+sub+'</div>':'')+'</div>';
+}
+function panel(title,body,icon){
+    return '<div class="table-panel" style="margin-bottom:18px;"><div class="table-top"><strong>'+
+           (icon?'<i class="fas '+icon+'"></i> ':'')+esc(title)+'</strong></div><div class="table-wrap">'+body+'</div></div>';
+}
+async function loadData(){
+    dataReady = (async function() {
+        try {
+            var data = await API.getSales();
+            var prods = await API.getProducts();
+            currentSales = Array.isArray(data) ? data : safeGet('SHEDS_completed_sales', safeGet('danzona_sales', []));
+            currentProducts = Array.isArray(prods) ? prods : safeGet('danzona_products', []);
+        } catch (err) {
+            currentSales = safeGet('SHEDS_completed_sales', safeGet('danzona_sales', []));
+            currentProducts = safeGet('danzona_products', []);
+            var errMsg = (err && err.message) ? err.message : 'Unknown error';
+            POS.showToast('API unreachable, using cached data: ' + errMsg, true);
+            console.error('Reports load error:', err);
+        }
+    })();
+    await dataReady;
+}
+async function waitForData() {
+    if (dataReady) {
+        try { await dataReady; } catch (e) { /* handled in loadData */ }
+    }
+}
+function getFilteredSales() {
+    var from = $id('reportDateFrom').value;
+    var to = $id('reportDateTo').value;
+    var sales = currentSales;
+    if (from && to) {
+        var start = new Date(from);
+        var end = new Date(to);
+        end.setHours(23, 59, 59, 999);
+        sales = sales.filter(function(s) {
+            var d = s.date ? new Date(s.date.replace(' ', 'T')) : new Date(s.createdAt || 0);
+            if (isNaN(d)) d = new Date(s.createdAt || 0);
+            return d >= start && d <= end;
+        });
+    }
+    return { sales: sales, products: currentProducts };
+}
+function getCloseoutSales(date) {
+    var targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+    var nextDate = new Date(targetDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    var sales = currentSales.filter(function(s) {
+        var d = s.date ? new Date(s.date.replace(' ', 'T')) : new Date(s.createdAt || 0);
+        if (isNaN(d)) d = new Date(s.createdAt || 0);
+        return d >= targetDate && d < nextDate;
+    });
+    return { sales: sales, products: currentProducts };
+}
+async function loadFilteredSales() {
+    await waitForData();
+    return getFilteredSales();
+}
+async function loadCloseoutSales(date) {
+    await waitForData();
+    return getCloseoutSales(date);
+}
+async function renderFavorites() {
+    try {
+        var data = await loadFilteredSales();
+        var sales = data.sales;
+        var products = data.products;
+        var summary = POS.profitSummary(sales, products);
+        var avgOrder = summary.count > 0 ? summary.revenue / summary.count : 0;
+        var lowStock = (products || []).filter(function(p) {
+            return (parseFloat(p.stock) || 0) > 0 && (parseFloat(p.stock) || 0) <= (parseFloat(p.reorder_level) || 10);
+        }).length;
+        var host = $id('favorites');
+        if (!host) return;
+        host.innerHTML =
+            '<div class="kpi-grid">' +
+            kpiCard('Sales', fmt(summary.revenue), summary.count + ' transaction' + (summary.count === 1 ? '' : 's')) +
+            kpiCard('Gross Profit', fmt(summary.profit), 'Margin ' + summary.margin.toFixed(1) + '%', summary.profit >= 0 ? '#10b981' : '#ef4444') +
+            kpiCard('Cost of Goods', fmt(summary.cogs), 'Cost price of the packages sold') +
+            kpiCard('Avg Order', fmt(avgOrder), 'Per transaction') +
+            kpiCard('Low Stock', fmtNum(lowStock), 'At or below reorder level') +
+            '</div>' +
+            panel('Sales Trend', '<div id="salesTrendChart" style="display:flex;gap:8px;align-items:flex-end;padding:16px 18px;min-height:220px;"></div>', 'fa-chart-line') +
+            panel('Top Products', '<table><thead><tr><th>#</th><th>Product</th><th>Units</th><th>Revenue</th></tr></thead><tbody id="topProducts"></tbody></table>', 'fa-boxes');
+        renderSalesTrend(sales);
+        renderTopProducts(sales, products);
+    } catch (e) {
+        console.error('renderFavorites error:', e);
+    }
+}
+async function renderMargins() {
+    try {
+        var data = await loadFilteredSales();
+        var sales = data.sales;
+        var products = data.products;
+        var rows = {};
+        (sales || []).forEach(function(s) {
+            if (String(s.status || 'completed') === 'void') return;
+            (s.items || []).forEach(function(item) {
+                var product = POS.findProduct(products, item.product_id != null ? item.product_id : item.id);
+                var pkgId = item.pkg_type || item.pkgType || 'pkt';
+                var pkg = POS.pkgTypeOf(product, pkgId);
+                var pkgName = pkg ? (pkg.name || pkg.id) : pkgId;
+                var key = (item.name || 'Product') + '|' + pkgName;
+                if (!rows[key]) {
+                    rows[key] = {
+                        name: item.name || 'Product',
+                        pkg: pkgName,
+                        qty: 0,
+                        revenue: 0,
+                        cost: 0
+                    };
+                }
+                var qty = parseFloat(item.qty) || 0;
+                rows[key].qty += qty;
+                rows[key].revenue += POS.lineRevenue(item);
+                rows[key].cost += POS.lineCost(item, products);
+            });
+        });
+        var list = Object.keys(rows).map(function(k) { return rows[k]; });
+        list.forEach(function(r) { r.profit = r.revenue - r.cost; r.margin = r.revenue > 0 ? (r.profit / r.revenue) * 100 : 0; });
+        list.sort(function(a, b) { return b.profit - a.profit; });
+        var totals = list.reduce(function(acc, r) {
+            acc.revenue += r.revenue; acc.cost += r.cost; acc.profit += r.profit; return acc;
+        }, { revenue: 0, cost: 0, profit: 0 });
+        var host = $id('margins');
+        if (!host) return;
+        host.innerHTML =
+            '<div class="kpi-grid">' +
+            kpiCard('Total Profit', fmt(totals.profit), 'On the cost price of each package type', totals.profit >= 0 ? '#10b981' : '#ef4444') +
+            kpiCard('Revenue', fmt(totals.revenue), 'From the lines below') +
+            kpiCard('Cost of Goods', fmt(totals.cost), 'Package cost x units sold') +
+            kpiCard('Margin', (totals.revenue > 0 ? ((totals.profit / totals.revenue) * 100).toFixed(1) : '0.0') + '%', 'Profit over sales') +
+            '</div>' +
+            panel('Profit by Product and Package',
+                '<table><thead><tr><th>Product</th><th>Package</th><th>Units Sold</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Margin</th></tr></thead><tbody>' +
+                (list.length ? list.map(function(r) {
+                    return '<tr><td>' + esc(r.name) + '</td><td>' + esc(r.pkg) + '</td><td>' + fmtNum(r.qty) + '</td><td>' + fmt(r.revenue) + '</td><td>' + fmt(r.cost) + '</td><td style="font-weight:800;color:' + (r.profit >= 0 ? '#059669' : '#dc2626') + ';">' + fmt(r.profit) + '</td><td>' + r.margin.toFixed(1) + '%</td></tr>';
+                }).join('') : '<tr><td colspan="7" class="empty-state">No sales in this period</td></tr>') +
+                '</tbody></table>', 'fa-chart-pie');
+    } catch (e) {
+        console.error('renderMargins error:', e);
+    }
+}
+function renderSalesTrend(sales) {
+    var dailySales = {};
+    var today = new Date();
+    for (var i = 6; i >= 0; i--) {
+        var d = new Date(today);
+        d.setDate(d.getDate() - i);
+        var dateStr = toLocalDateStr(d);
+        dailySales[dateStr] = 0;
+    }
+    (sales || []).forEach(function(s) {
+        var dateStr = s.date ? POS.getDatePart(s.date) : '';
+        if (dateStr && dailySales.hasOwnProperty(dateStr)) dailySales[dateStr] += (parseFloat(s.total) || 0);
+    });
+    var container = $id('salesTrendChart');
+    var maxVal = Math.max.apply(null, Object.keys(dailySales).map(function(k){return dailySales[k];}).concat([1]));
+    var html = '';
+    Object.keys(dailySales).forEach(function(dateStr) {
+        var parts = dateStr.split('-');
+        var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        var day = d.toLocaleDateString('en-US', { weekday: 'short' });
+        var val = dailySales[dateStr];
+        var height = (val / maxVal) * 180;
+        html += '<div style="flex:1;text-align:center;"><div class="chart-bar" style="height:' + height + 'px;min-height:30px;">' + day + '<br>' + fmt(val) + '</div></div>';
+    });
+    container.innerHTML = html;
+}
+function renderTopProducts(sales, products) {
+    var productSales = {};
+    (sales || []).forEach(function(s) {
+        (s.items || []).forEach(function(item) {
+            var key = (item.id || item.product_id) + '|' + item.name;
+            if (!productSales[key]) productSales[key] = { qty: 0, revenue: 0, name: item.name };
+            productSales[key].qty += parseFloat(item.qty) || 0;
+            productSales[key].revenue += POS.lineRevenue(item);
+        });
+    });
+    var sorted = Object.entries(productSales).sort(function(a, b) { return b[1].revenue - a[1].revenue; }).slice(0, 10);
+    var tbody = $id('topProducts');
+    if (!tbody) return;
+    tbody.innerHTML = sorted.map(function(entry, idx) {
+        return '<tr><td>' + (idx + 1) + '</td><td>' + esc(entry[1].name) + '</td><td>' + fmtNum(entry[1].qty) + '</td><td>' + fmt(entry[1].revenue) + '</td></tr>';
+    }).join('') || '<tr><td colspan="4" class="empty-state">No sales data</td></tr>';
+}
+async function generateCloseout() {
+    try {
+        var dateInput = $id('closeoutDate');
+        var date = dateInput ? dateInput.value : toLocalDateStr(new Date());
+        var data = await loadCloseoutSales(date);
+        var sales = data.sales;
+        var summary = POS.profitSummary(sales, data.products);
+        var avgOrder = summary.count > 0 ? summary.revenue / summary.count : 0;
+        var paymentBreakdown = {};
+        sales.forEach(function(s) {
+            var method = s.payment_method || s.payment || 'Unknown';
+            if (!paymentBreakdown[method]) paymentBreakdown[method] = { amount: 0, count: 0 };
+            paymentBreakdown[method].amount += parseFloat(s.total) || 0;
+            paymentBreakdown[method].count += 1;
+        });
+        var host = $id('closeout');
+        if (!host) return;
+        host.innerHTML =
+            '<div style="margin-bottom:14px;"><input type="date" id="closeoutDate" class="form-control" style="width:auto;" value="' + esc(date) + '"></div>' +
+            '<div class="kpi-grid">' +
+            kpiCard('Sales', fmt(summary.revenue), summary.count + ' transaction' + (summary.count === 1 ? '' : 's')) +
+            kpiCard('Gross Profit', fmt(summary.profit), 'Margin ' + summary.margin.toFixed(1) + '%', summary.profit >= 0 ? '#10b981' : '#ef4444') +
+            kpiCard('Cost of Goods', fmt(summary.cogs), 'Package cost x units sold') +
+            kpiCard('Tax', fmt(summary.tax), 'Collected in the period') +
+            kpiCard('Avg Order', fmt(avgOrder), 'Per transaction') +
+            '</div>' +
+            panel('Payments', '<table><thead><tr><th>Method</th><th>Amount</th><th>Count</th></tr></thead><tbody>' +
+                (Object.entries(paymentBreakdown).map(function(entry) {
+                    return '<tr><td>' + esc(entry[0]) + '</td><td>' + fmt(entry[1].amount) + '</td><td>' + entry[1].count + '</td></tr>';
+                }).join('') || '<tr><td colspan="3" class="empty-state">No transactions</td></tr>') +
+                '</tbody></table>', 'fa-credit-card');
+    } catch (e) {
+        console.error('generateCloseout error:', e);
+    }
+}
+async function renderEmployees() {
+    try {
+        var data = await loadFilteredSales();
+        var sales = data.sales;
+        var employeeSales = {};
+        sales.forEach(function(s) {
+            var emp = s.employee || s.cashier || 'Admin';
+            if (!employeeSales[emp]) employeeSales[emp] = { amount: 0, count: 0, profit: 0, cogs: 0 };
+            employeeSales[emp].amount += parseFloat(s.total) || 0;
+            employeeSales[emp].count += 1;
+            (s.items || []).forEach(function(it) {
+                var c = POS.lineCost(it, data.products);
+                employeeSales[emp].cogs += c;
+            });
+            employeeSales[emp].profit = employeeSales[emp].amount - employeeSales[emp].cogs;
+        });
+        var host = $id('employees');
+        if (!host) return;
+        host.innerHTML = panel('Sales by Employee',
+            '<table><thead><tr><th>Employee</th><th>Role</th><th>Sales</th><th>Profit</th><th>Transactions</th></tr></thead><tbody>' +
+            (Object.entries(employeeSales).map(function(entry) {
+                return '<tr><td><strong>' + esc(entry[0]) + '</strong></td><td>Cashier</td><td>' + fmt(entry[1].amount) + '</td><td style="font-weight:800;color:' + (entry[1].profit >= 0 ? '#059669' : '#dc2626') + ';">' + fmt(entry[1].profit) + '</td><td>' + entry[1].count + '</td></tr>';
+            }).join('') || '<tr><td colspan="5" class="empty-state">No sales data</td></tr>') +
+            '</tbody></table>', 'fa-user-tie');
+    } catch (e) {
+        console.error('renderEmployees error:', e);
+    }
+}
+async function exportCSV() {
+    try {
+        var data = await loadFilteredSales();
+        var sales = data.sales;
+        var products = data.products;
+        POS.exportCSV('sales-report-' + POS.today() + '.csv',
+            ['Date', 'Transaction ID', 'Items', 'Subtotal', 'Tax', 'Total', 'Cost', 'Profit', 'Payment Method'],
+            sales.map(function(s) {
+                var items = (s.items || []).map(function(i) { return (i.name || '') + ' x' + (i.qty || 0); }).join('; ');
+                var cogs = 0;
+                (s.items || []).forEach(function(i) { cogs += POS.lineCost(i, products); });
+                var total = parseFloat(s.total) || 0;
+                return {
+                    Date: s.date || '',
+                    'Transaction ID': s.id || '',
+                    Items: items,
+                    Subtotal: parseFloat(s.subtotal) || 0,
+                    Tax: parseFloat(s.tax) || 0,
+                    Total: total,
+                    Cost: cogs.toFixed(2),
+                    Profit: (total - cogs).toFixed(2),
+                    'Payment Method': s.payment_method || s.payment || ''
+                };
+            })
+        );
+    } catch (e) {
+        console.error('exportCSV error:', e);
+    }
+}
+async function exportCloseout() {
+    try {
+        var dateInput = $id('closeoutDate');
+        var date = dateInput ? dateInput.value : toLocalDateStr(new Date());
+        var data = await loadCloseoutSales(date);
+        var sales = data.sales;
+        POS.exportCSV('closeout-' + date + '.csv',
+            ['Date', 'Transaction ID', 'Items', 'Total'],
+            sales.map(function(s) {
+                var items = (s.items || []).map(function(i) { return (i.name || '') + ' x' + (i.qty || 0); }).join('; ');
+                return {
+                    Date: s.date || '',
+                    'Transaction ID': s.id || '',
+                    Items: items,
+                    Total: parseFloat(s.total) || 0
+                };
+            })
+        );
+    } catch (e) {
+        console.error('exportCloseout error:', e);
+    }
+}
+function applyDateFilter() {
+    var tab = TABS.filter(function(t) { return t.id === currentTab; })[0];
+    if (tab && tab.render) tab.render();
+    else { renderFavorites(); renderMargins(); generateCloseout(); renderEmployees(); }
+    POS.showToast('Date filter applied');
+}
+function switchTab(tabId, el) {
+    currentTab = tabId;
+    document.querySelectorAll('.tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+    document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    var panel = $id(tabId);
+    if (panel) panel.classList.add('active');
+    var tab = TABS.filter(function(t) { return t.id === tabId; })[0];
+    if (tab && tab.render) tab.render();
+}
+document.addEventListener('DOMContentLoaded', async function() {
+    if (!POS.requireAuth()) return;
+    POS.renderSidebar();
+    POS.renderUserMenu();
+    var end = new Date();
+    var start = new Date();
+    start.setDate(start.getDate() - 30);
+    $id('reportDateFrom').value = toLocalDateStr(start);
+    $id('reportDateTo').value = toLocalDateStr(end);
+    renderReportTabs();
+    await loadData();
+    renderFavorites();
+    renderMargins();
+    generateCloseout();
+    renderEmployees();
+});
+</script>
+</body>
+</html>
+
+
+

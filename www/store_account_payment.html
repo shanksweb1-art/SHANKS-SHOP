@@ -1,0 +1,452 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Account Payment - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-wallet"></i> Store Account Payment</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-users"></i> Total Customers</div>
+                <div class="kpi-value" id="kpiTotal">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-exclamation-triangle"></i> With Balance</div>
+                <div class="kpi-value" style="color:#ef4444;" id="kpiWithBalance">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-coins"></i> Total Outstanding</div>
+                <div class="kpi-value" id="kpiOutstanding">₦0.00</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-chart-line"></i> Total Sales</div>
+                <div class="kpi-value" id="kpiSales">₦0.00</div>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('collect', this)"><i class="fas fa-money-bill-wave"></i> Collect Payment</button>
+            <button class="tab-btn" onclick="switchTab('statements', this)"><i class="fas fa-file-invoice-dollar"></i> Statements</button>
+            <button class="tab-btn" onclick="switchTab('history', this)"><i class="fas fa-history"></i> Payment History</button>
+        </div>
+        <div id="tab-collect" class="tab-content active">
+            <div class="page-head">
+                <div>
+                    <h3>Collect Store Account Payment</h3>
+                    <p>Record payment against customer store account balances.</p>
+                </div>
+                <button class="btn btn-primary" onclick="showCollectModal()"><i class="fas fa-plus"></i> Collect Payment</button>
+            </div>
+            <div class="table-panel">
+                <div class="table-top"><strong><i class="fas fa-list"></i> Customers with Store Accounts</strong></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Phone</th>
+                                <th>Current Balance</th>
+                                <th>Total Sales</th>
+                                <th>Total Payments</th>
+                                <th>Last Payment</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+<tbody id="customersTableBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+                     </table>
+                 </div>
+             </div>
+         </div>
+         <div class="modal-overlay" id="accountDetailModal">
+             <div class="modal" style="max-width:700px;">
+                 <div class="modal-header">
+                     <h3 id="accountDetailTitle">Account Details</h3>
+                     <button class="modal-close" onclick="POS.closeModal('accountDetailModal')">&times;</button>
+                 </div>
+                 <div id="accountDetailContent">
+<div class="kpi-grid" style="margin-bottom:16px;">
+        <div class="kpi-card" style="flex:2;">
+            <div class="kpi-label">Customer</div>
+            <div class="kpi-value" id="detailCustomerName" style="font-size:16px;">Customer Name</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Current Balance</div>
+            <input type="number" id="detailBalanceInput" class="form-control" step="0.01" style="margin-top:4px;font-size:14px;padding:6px;width:100px;">
+        </div>
+        <div class="kpi-card"><div class="kpi-label">Total Sales</div><div class="kpi-value" id="detailTotalSales">₦0.00</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Payments</div><div class="kpi-value" id="detailTotalPayments">₦0.00</div></div>
+    </div>
+                     <div class="table-wrap" style="max-height:300px;overflow-y:auto;">
+                         <table>
+                             <thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Debit (₦)</th><th>Credit (₦)</th></tr></thead>
+                             <tbody id="accountTransactionsBody"></tbody>
+                         </table>
+                     </div>
+<div class="modal-actions" style="margin-top:16px;">
+        <button class="btn btn-secondary" onclick="POS.closeModal('accountDetailModal')"><i class="fas fa-times"></i> Close</button>
+        <button class="btn btn-info" onclick="saveBalanceOnly()"><i class="fas fa-save"></i> Save Balance</button>
+        <button class="btn btn-success" onclick="payFromAccountDetail()"><i class="fas fa-money-bill"></i> Make Payment</button>
+    </div>
+                 </div>
+             </div>
+         </div>
+         <div id="tab-statements" class="tab-content">
+            <div class="page-head">
+                <div>
+                    <h3>Account Statements</h3>
+                    <p>View customer account statements and balances.</p>
+                </div>
+                <button class="btn btn-secondary" onclick="showStatementFilter()"><i class="fas fa-filter"></i> Filter</button>
+            </div>
+            <div id="statementFilter" class="modal-overlay">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>Filter Statement</h3>
+                        <button class="modal-close" onclick="POS.closeModal('statementFilter')">&times;</button>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full">
+                            <label>Customer</label>
+                            <select id="statementCustomer" class="form-select"><option value="">All Customers</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>From Date</label>
+                            <input type="date" id="stmtFromDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>To Date</label>
+                            <input type="date" id="stmtToDate" class="form-control">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" onclick="POS.closeModal('statementFilter')">Cancel</button>
+                        <button class="btn btn-success" onclick="applyStatementFilter()"><i class="fas fa-check"></i> Apply</button>
+                    </div>
+                </div>
+            </div>
+            <div class="table-panel">
+                <div class="table-top"><strong><i class="fas fa-file-invoice-dollar"></i> Account Statements</strong></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Type</th>
+                                <th>Reference</th>
+                                <th>Debit (₦)</th>
+                                <th>Credit (₦)</th>
+                                <th>Balance (₦)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statementsTableBody"><tr><td colspan="7" class="empty-state">Select a customer to view statement</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="tab-history" class="tab-content">
+            <div class="table-panel">
+                <div class="table-top"><strong><i class="fas fa-history"></i> Store Account Payment History</strong></div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Amount (₦)</th>
+                                <th>Method</th>
+                                <th>Reference</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="collectModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="collectModalTitle">Collect Store Account Payment</h3>
+            <button class="modal-close" onclick="POS.closeModal('collectModal')">&times;</button>
+        </div>
+        <div class="form-row">
+            <div class="form-group full" style="position:relative;">
+                <label class="required">Customer Search</label>
+                <input type="text" id="collectCustomerSearch" class="form-control" placeholder="Start typing customer name..." autocomplete="off">
+                <div id="collectCustomerDropdown" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:0 0 6px 6px;max-height:200px;overflow-y:auto;z-index:10;display:none;margin-top:-1px;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
+                <input type="hidden" id="collectCustomerId">
+            </div>
+<div class="form-group">
+                <label>Current Balance</label>
+                <input type="number" id="currentBalance" class="form-control" step="0.01" placeholder="Enter balance" onchange="updateCustomerBalanceValue()">
+            </div>
+            <div class="form-group">
+                <label class="required">Amount (₦)</label>
+                <input type="number" id="collectAmount" class="form-control" min="0" step="0.01" placeholder="Enter amount">
+            </div>
+            <div class="form-group">
+                <label>Payment Method</label>
+                <select id="collectMethod" class="form-select">
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="card">Card</option>
+                    <option value="pos">POS</option>
+                </select>
+            </div>
+            <div class="form-group full">
+                <label>Reference/Invoice #</label>
+                <input type="text" id="collectReference" class="form-control" placeholder="Reference number">
+            </div>
+            <div class="form-group full">
+                <label>Notes</label>
+                <textarea id="collectNotes" class="form-control" placeholder="Add notes..."></textarea>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="POS.closeModal('collectModal')">Cancel</button>
+            <button class="btn btn-success" onclick="saveCollectPayment()"><i class="fas fa-save"></i> Save Payment</button>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var customers = [];
+var sales = [];
+var payments = [];
+function $id(id){return document.getElementById(id);}
+function updateKPIs(){
+    $id('kpiTotal').textContent = customers.length;
+    var withBal = customers.filter(function(c){return (c.balance||0) > 0;});
+    $id('kpiWithBalance').textContent = withBal.length;
+    var totalBal = customers.reduce(function(s,c){return s + (parseFloat(c.balance)||0);},0);
+    $id('kpiOutstanding').textContent = POS.formatCurrency(totalBal);
+    $id('kpiSales').textContent = POS.formatCurrency(sales.reduce(function(s,sal){return s + (parseFloat(sal.total)||0);},0));
+}
+function renderCustomersTable(){
+     var tbody = $id('customersTableBody');
+     tbody.innerHTML = customers.map(function(c){
+         var bal = parseFloat(c.balance)||0;
+         var totalSales = sales.filter(function(s){return String(s.customer_id)===String(c.id);}).reduce(function(s,sal){return s + (parseFloat(sal.total)||0);},0);
+         var totalPaid = payments.filter(function(p){return String(p.customer)===String(c.id);}).reduce(function(s,p){return s + (parseFloat(p.amount)||0);},0);
+         var lastPay = payments.filter(function(p){return String(p.customer)===String(c.id);}).sort(function(a,b){return new Date(b.date||0) - new Date(a.date||0);});
+         var lastDate = lastPay.length? POS.formatDate(lastPay[0].date): 'Never';
+         return '<tr style="cursor:pointer;" onclick="viewAccountDetails(\'' + c.id + '\')"><td><strong>' + POS.esc((c.firstName||'') + ' ' + (c.lastName||'')) + '</strong></td><td>' + POS.esc(c.phone||'') + '</td><td onclick="event.stopPropagation();openCollectForCustomer(\'' + c.id + '\')" style="color:' + (bal>0?'#ef4444':'#10b981') + ';cursor:pointer;text-decoration:underline;">' + POS.formatCurrency(bal) + '</td><td>' + POS.formatCurrency(totalSales) + '</td><td>' + POS.formatCurrency(totalPaid) + '</td><td>' + POS.esc(lastDate) + '</td><td onclick="event.stopPropagation()"><button class="btn btn-warning btn-sm" onclick="openCollectForCustomer(\'' + c.id + '\')"><i class="fas fa-money-bill"></i> Collect</button></td></tr>';
+     }).join('');
+ }
+async function loadCustomers(){try{customers = await API.getCustomers()||[];}catch(e){try{customers=JSON.parse(localStorage.getItem('danzona_customers')||'[]');}catch(err){customers=[];}POS.showToast('Loaded customers from storage',true);}}
+async function loadSales(){try{sales = await API.getSales()||[];}catch(e){try{sales=JSON.parse(localStorage.getItem('SHEDS_completed_sales')||localStorage.getItem('SHEDS_sales')||'[]');}catch(err){sales=[];}}}
+async function loadPayments(){try{payments = await API.getPayments()||[];}catch(e){try{payments=JSON.parse(localStorage.getItem('SHEDS_payments')||'[]');}catch(err){payments=[];}}}
+function showCollectModal(){
+    $id('collectCustomerSearch').value = '';
+    $id('collectCustomerId').value = '';
+    $id('collectCustomerDropdown').style.display='none';
+    $id('collectAmount').value = '';
+    $id('collectMethod').value = 'cash';
+    $id('collectReference').value = '';
+    $id('collectNotes').value = '';
+    $id('currentBalance').value = '';
+    $id('collectModal').classList.add('open');
+    setTimeout(function(){$id('collectCustomerSearch').focus();},0);
+}
+function openCollectForCustomer(custId){
+    showCollectModal();
+    var cust = customers.find(function(c){return String(c.id)===String(custId);});
+    if(cust){
+        $id('collectCustomerSearch').value = (cust.firstName||'') + ' ' + (cust.lastName||'') + (cust.phone?' - ' + cust.phone:'');
+        $id('collectCustomerId').value = custId;
+    }
+    updateCustomerBalance();
+}
+function searchCollectCustomer(q){
+    var dd = $id('collectCustomerDropdown');
+    if(q.length < 2){dd.style.display='none';return;}
+    var filtered = customers.filter(function(c){return(c.firstName||'').toLowerCase().indexOf(q.toLowerCase())>-1||(c.lastName||'').toLowerCase().indexOf(q.toLowerCase())>-1||(c.phone||'').toLowerCase().indexOf(q.toLowerCase())>-1;});
+    if(!filtered.length){dd.innerHTML='<div style="padding:12px;color:#6b7280;">No customers found</div>';dd.style.display='block';return;}
+    dd.innerHTML = filtered.slice(0,20).map(function(c){return '<div onclick="selectCollectCustomer(' + c.id + ')" style="padding:12px;cursor:pointer;border-bottom:1px solid #f1f5f9;"><strong>' + POS.esc((c.firstName||'') + ' ' + (c.lastName||'')) + '</strong><br><small>' + POS.esc(c.phone||'') + ' - Balance: ' + POS.formatCurrency(c.balance||0) + '</small></div>';}).join('');
+    dd.style.display='block';
+}
+function selectCollectCustomer(custId){
+    var cust = customers.find(function(c){return c.id==custId;});
+    if(!cust) return;
+    $id('collectCustomerSearch').value = (cust.firstName||'') + ' ' + (cust.lastName||'') + (cust.phone?' - ' + cust.phone:'');
+    $id('collectCustomerId').value = custId;
+    $id('collectCustomerDropdown').style.display='none';
+    updateCustomerBalance();
+}
+function updateCustomerBalance(){
+    var custId = $id('collectCustomerId').value;
+    var cust = customers.find(function(c){return String(c.id)===String(custId);});
+    $id('currentBalance').value = cust? (cust.balance||0) : '';
+}
+function updateCustomerBalanceValue(){
+    var custId = $id('collectCustomerId').value;
+    var newBal = parseFloat($id('currentBalance').value)||0;
+    var cust = customers.find(function(c){return String(c.id)===String(custId);});
+    if(cust){cust.balance = newBal;}
+}
+async function saveCollectPayment(){
+    var custId = $id('collectCustomerId').value;
+    var amount = parseFloat($id('collectAmount').value)||0;
+    var method = $id('collectMethod').value;
+    var ref = $id('collectReference').value;
+    var notes = $id('collectNotes').value;
+    if(!custId || amount<=0){POS.showToast('Select customer and enter amount',true);return;}
+    var newId = payments.length>0? Math.max.apply(null,payments.map(function(p){return p.id;}))+1:1;
+    var paymentId = 'SAP-' + String(newId).padStart(3,'0');
+    var paymentData = {id:newId,paymentId:paymentId,customer:custId,date:new Date().toISOString().split('T')[0],amount:amount,method:method,ref:ref,notes:notes,status:'paid'};
+    await API.savePayment(paymentData);
+    POS.showToast('Payment recorded!');
+    POS.closeModal('collectModal');
+    await loadPayments();
+    await loadCustomers();
+    updateKPIs();
+    renderCustomersTable();
+    renderHistoryTable();
+    renderHistoryTable();
+}
+function renderHistoryTable(){
+    var tbody = $id('historyTableBody');
+    var saPayments = payments.filter(function(p){return p.customer;});
+    tbody.innerHTML = saPayments.map(function(p){
+        var cust = customers.find(function(c){return String(c.id)===String(p.customer);});
+        var name = cust? (cust.firstName||'') + ' ' + (cust.lastName||''): 'Unknown';
+        return '<tr><td>' + POS.formatDate(p.date) + '</td><td>' + POS.esc(name) + '</td><td>' + POS.formatCurrency(p.amount) + '</td><td>' + POS.esc(p.method||p.payment_method||'') + '</td><td>' + POS.esc(p.ref||p.invoice||'') + '</td><td>' + POS.esc(p.notes||'') + '</td><td><button class="icon-btn view" onclick="viewPaymentDetail(' + p.id + ')"><i class="fas fa-eye"></i></button></td></tr>';
+    }).join('');
+}
+function viewPaymentDetail(id){
+    var p = payments.find(function(py){return py.id==id;});
+    if(!p) return;
+    var cust = customers.find(function(c){return String(c.id)===String(p.customer);});
+    var name = cust? (cust.firstName||'') + ' ' + (cust.lastName||''): 'Unknown';
+    var modalHtml = '<div class="modal-overlay open" id="viewModal"><div class="modal" style="max-width:400px;"><div class="modal-header"><h3>Payment Details</h3><button class="modal-close" onclick="POS.closeModal(\'viewModal\')">&times;</button></div>' +
+        '<div class="kpi-grid"><div class="kpi-card"><div class="kpi-label">Customer</div><div class="kpi-value">' + POS.esc(name) + '</div></div><div class="kpi-card"><div class="kpi-label">Amount</div><div class="kpi-value">' + POS.formatCurrency(p.amount) + '</div></div></div>' +
+        '<div style="margin-top:12px;"><p><strong>Date:</strong> ' + POS.formatDate(p.date) + '</p><p><strong>Method:</strong> ' + POS.esc(p.method||p.payment_method||'') + '</p><p><strong>Reference:</strong> ' + POS.esc(p.ref||p.invoice||'') + '</p><p><strong>Notes:</strong> ' + POS.esc(p.notes||'') + '</p></div>' +
+        '<div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal(\'viewModal\')">Close</button></div></div></div>';
+    document.body.insertAdjacentHTML('beforeend',modalHtml);
+}
+function switchTab(tabId,el){
+    document.querySelectorAll('.tab-btn').forEach(function(btn){btn.classList.remove('active');});
+    document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});
+    el.classList.add('active');
+    document.getElementById('tab-'+tabId).classList.add('active');
+}
+function showStatementFilter(){
+    $id('statementCustomer').innerHTML = '<option value="">All Customers</option>' + customers.map(function(c){return '<option value="' + c.id + '">' + POS.esc((c.firstName||'') + ' ' + (c.lastName||'')) + '</option>';}).join('');
+    $id('stmtFromDate').value = '';
+    $id('stmtToDate').value = '';
+    $id('statementFilter').classList.add('open');
+}
+function applyStatementFilter(){
+    var custId = $id('statementCustomer').value;
+    var from = $id('stmtFromDate').value;
+    var to = $id('stmtToDate').value;
+    renderStatements(custId,from,to);
+    POS.closeModal('statementFilter');
+}
+function renderStatements(custId,from,to){
+    var tbody = $id('statementsTableBody');
+    var stmtData = [];
+    var runningBal = 0;
+    var custSales = sales.filter(function(s){return !custId || String(s.customer_id)===String(custId);});
+    var custPays = payments.filter(function(p){return custId && String(p.customer)===String(custId);});
+    custSales.forEach(function(s){
+        if((!from||s.date>=from)&&(!to||s.date<=to)){
+            stmtData.push({date:s.date,type:'Sale',ref:s.invoice||s.id,debit:s.total||0,credit:0});
+        }
+    });
+    custPays.forEach(function(p){
+        if((!from||p.date>=from)&&(!to||p.date<=to)){
+            stmtData.push({date:p.date,type:'Payment',ref:p.ref||p.invoice||p.paymentId,debit:0,credit:p.amount||0});
+        }
+    });
+    stmtData.sort(function(a,b){return new Date(a.date) - new Date(b.date);});
+    var html = stmtData.map(function(r){runningBal += r.debit - r.credit; return '<tr><td>' + POS.formatDate(r.date) + '</td><td>' + (custId? customers.find(function(c){return String(c.id)===String(custId);}).firstName + ' ' + customers.find(function(c){return String(c.id)===String(custId);}).lastName: 'Multiple') + '</td><td>' + POS.esc(r.type) + '</td><td>' + POS.esc(r.ref) + '</td><td>' + (r.debit? POS.formatCurrency(r.debit): '-') + '</td><td>' + (r.credit? POS.formatCurrency(r.credit): '-') + '</td><td>' + POS.formatCurrency(runningBal) + '</td></tr>';}).join('');
+tbody.innerHTML = html || '<tr><td colspan="7" class="empty-state">No transactions found</td></tr>';
+ }
+ var detailCustId = null;
+function viewAccountDetails(custId){
+    detailCustId = custId;
+    var cust = customers.find(function(c){return String(c.id)===String(custId);});
+    if(!cust) return;
+    $id('accountDetailTitle').textContent = (cust.firstName||'') + ' ' + (cust.lastName||'') + ' - Account Details';
+    $id('detailCustomerName').textContent = (cust.firstName||'') + ' ' + (cust.lastName||'');
+    var bal = parseFloat(cust.balance)||0;
+    var totalSales = sales.filter(function(s){return String(s.customer_id)===String(custId);}).reduce(function(s,sal){return s + (parseFloat(sal.total)||0);},0);
+    var totalPaid = payments.filter(function(p){return String(p.customer)===String(custId);}).reduce(function(s,p){return s + (parseFloat(p.amount)||0);},0);
+    $id('detailBalanceInput').value = bal;
+    $id('detailTotalSales').textContent = POS.formatCurrency(totalSales);
+    $id('detailTotalPayments').textContent = POS.formatCurrency(totalPaid);
+    var tbody = $id('accountTransactionsBody');
+    var stmtData = [];
+    var custSales = sales.filter(function(s){return String(s.customer_id)===String(custId);});
+    var custPays = payments.filter(function(p){return String(p.customer)===String(custId);});
+    custSales.forEach(function(s){stmtData.push({date:s.date,type:'Sale',ref:s.invoice||s.id,debit:s.total||0,credit:0});});
+    custPays.forEach(function(p){stmtData.push({date:p.date,type:'Payment',ref:p.ref||p.invoice||p.paymentId,debit:0,credit:p.amount||0});});
+    stmtData.sort(function(a,b){return new Date(b.date) - new Date(a.date);});
+    tbody.innerHTML = stmtData.map(function(r){return '<tr><td>' + POS.formatDate(r.date) + '</td><td>' + POS.esc(r.type) + '</td><td>' + POS.esc(r.ref) + '</td><td>' + (r.debit? POS.formatCurrency(r.debit): '-') + '</td><td>' + (r.credit? POS.formatCurrency(r.credit): '-') + '</td></tr>';}).join('') || '<tr><td colspan="5" class="empty-state">No transactions yet</td></tr>';
+    POS.openModal('accountDetailModal');
+}
+async function saveBalanceOnly(){
+    var cust = customers.find(function(c){return String(c.id)===String(detailCustId);});
+    if(!cust) return;
+    var newBal = parseFloat($id('detailBalanceInput').value)||0;
+    try{
+        await API.updateCustomer(cust.id, {balance: newBal});
+        cust.balance = newBal;
+        POS.showToast('Balance saved!');
+    }catch(e){
+        cust.balance = newBal;
+        try{localStorage.setItem('danzona_customers',JSON.stringify(customers));}catch(err){}
+        POS.showToast('Balance saved locally', true);
+    }
+    updateKPIs();
+    renderCustomersTable();
+    POS.closeModal('accountDetailModal');
+}
+ function payFromAccountDetail(){
+     POS.closeModal('accountDetailModal');
+     openCollectForCustomer(detailCustId);
+ }
+ async function refreshAll(){
+    await loadCustomers(); await loadSales(); await loadPayments();
+    updateKPIs(); renderCustomersTable(); renderHistoryTable();
+}
+document.addEventListener('DOMContentLoaded',function(){
+    if(!POS.requireAuth()) return;
+    POS.renderSidebar();
+    POS.renderUserMenu();
+    refreshAll();
+    var ccs = $id('collectCustomerSearch');
+    if(ccs) ccs.addEventListener('input',function(e){searchCollectCustomer(e.target.value);});
+    document.addEventListener('click',function(e){var dd=$id('collectCustomerDropdown');if(!dd) return;if($id('collectCustomerSearch')&&$id('collectCustomerSearch').contains(e.target)) return;if(dd.contains(e.target)) return;dd.style.display='none';});
+    if(!localStorage.getItem('SHEDS_sales')){localStorage.setItem('SHEDS_sales','[{"id":1,"customer_id":1,"customer_name":"John Doe","total":5000,"date":"2024-01-15"},{"id":2,"customer_id":2,"customer_name":"Jane Smith","total":12000,"date":"2024-01-20"}]');}
+    if(!localStorage.getItem('SHEDS_payments')){localStorage.setItem('SHEDS_payments','[{"id":1,"customer":2,"amount":3000,"date":"2024-01-10","method":"cash","status":"paid"}]');}
+    if(!localStorage.getItem('danzona_customers')){localStorage.setItem('danzona_customers','[{"id":1,"firstName":"John","lastName":"Doe","phone":"08012345678","balance":5000},{"id":2,"firstName":"Jane","lastName":"Smith","phone":"08087654321","balance":9000}]');}
+});
+</script>
+</body>
+</html>
+
+
+
+

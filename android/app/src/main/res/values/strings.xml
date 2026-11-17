@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Shanks Shop Management</string>
+    <string name="title_activity_main">Shanks Shop Management</string>
+    <string name="package_name">com.shanks.shopmanagement</string>
+    <string name="custom_url_scheme">com.shanks.shopmanagement</string>
+</resources>

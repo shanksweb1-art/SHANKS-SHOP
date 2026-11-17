@@ -1,0 +1,213 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Variations - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .section-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.05);margin-bottom:18px}
+        .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+        .section-title h3{margin:0;font-size:18px;color:var(--text)}
+        .link-btn{background:none;border:0;color:var(--info);cursor:pointer;font-weight:700;padding:0}
+        .link-btn:hover{text-decoration:underline}
+        .attr-grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(260px,1.4fr) auto;gap:10px;align-items:end;margin-bottom:14px}
+        .checkbox-cell{text-align:center}
+        .modal-backdrop{position:fixed;inset:0;background:rgba(14, 19, 31, 0.55);display:none;align-items:center;justify-content:center;z-index:2500;padding:20px}
+        .modal-backdrop.open{display:flex}
+        .modal-card{background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(15,23,42,.25)}
+        .modal-head{padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .modal-body{padding:20px}
+        .modal-actions{padding:16px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+        .bottom-actions{position:sticky;bottom:0;background:rgba(243,244,246,.92);backdrop-filter:blur(8px);padding:14px 0;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #e5e7eb;z-index:10}
+        @media(max-width:768px){.attr-grid{grid-template-columns:1fr}.bottom-actions{position:static;flex-direction:column}.bottom-actions .btn{width:100%}}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-layer-group"></i> Product Variations</h2>
+        <div id="userMenu"></div>
+    </div>
+    <div class="content">
+        <div class="page-head">
+            <div>
+                <h3>Variation Setup</h3>
+                <p>Define packaging types, product attributes, and generated item variations for multi-variant products.</p>
+            </div>
+            <div class="actions">
+                <a class="btn btn-outline" href="variations.html"><i class="fas fa-arrow-left"></i> Previous Item</a>
+                <button class="btn btn-primary" onclick="saveDraft()"><i class="fas fa-save"></i> Save</button>
+            </div>
+        </div>
+        <div class="section-card">
+            <div class="section-title">
+                <h3><i class="fas fa-box-open"></i> Packaging Type</h3>
+                <button class="btn btn-sm btn-outline" onclick="openPackagingModal()"><i class="fas fa-plus"></i> Add</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Qty.</th>
+                            <th>Cost Price</th>
+                            <th>Selling Price</th>
+                            <th>Item Number</th>
+                            <th class="checkbox-cell">Default For Sale</th>
+                            <th class="checkbox-cell">Default For Receiving</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody id="packagingBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="section-card">
+            <div class="section-title">
+                <h3><i class="fas fa-sliders-h"></i> Variations</h3>
+                <a class="link-btn" href="#" onclick="openGlobalAttributeModal();return false;"><i class="fas fa-globe"></i> Manage Global Attributes</a>
+            </div>
+            <div class="section-card" style="box-shadow:none;background:#f8fafc;border-style:dashed">
+                <h3 style="font-size:15px;margin-bottom:12px;">Item Attributes Area</h3>
+                <div class="attr-grid">
+                    <div class="form-group"><label>Select an Attribute</label><select id="attributeSelect" class="form-select"></select></div>
+                    <button class="btn btn-primary" onclick="addSelectedAttribute()"><i class="fas fa-plus"></i> Add Attribute</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Values</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attributeBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="section-card" style="box-shadow:none;background:#f8fafc;border-style:dashed;margin-top:14px">
+                <h3 style="font-size:15px;margin-bottom:12px;">Item Variations Area</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Attributes</th>
+                                <th>Item Number</th>
+                                <th class="checkbox-cell">Is Ecommerce Item</th>
+                                <th>Supplier</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="variationBody"></tbody>
+                    </table>
+                </div>
+                <button class="link-btn" onclick="openVariationModal()"><i class="fas fa-plus"></i> Add Item Variation</button>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-actions">
+        <button class="btn btn-outline" onclick="POS.navigateTo('variations.html')"><i class="fas fa-arrow-left"></i> Previous Item</button>
+        <button class="btn btn-primary" onclick="saveDraft()"><i class="fas fa-save"></i> Save</button>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal-backdrop" id="packagingModal">
+    <div class="modal-card">
+        <div class="modal-head"><h3 id="packagingModalTitle">Add Packaging Type</h3><button class="icon-btn" onclick="closePackagingModal()"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="packagingIndex">
+            <div class="form-row">
+                <div class="form-group full"><label class="required">Name</label><input id="packagingName" class="form-control" placeholder="e.g. Packet"></div>
+                <div class="form-group"><label>Qty.</label><input id="packagingQty" class="form-control" type="number" min="1" value="1"></div>
+                <div class="form-group"><label>Cost Price</label><input id="packagingCost" class="form-control" type="number" min="0" step="0.01" value="0"></div>
+                <div class="form-group"><label>Selling Price</label><input id="packagingSell" class="form-control" type="number" min="0" step="0.01" value="0"></div>
+                <div class="form-group"><label>Item Number</label><input id="packagingItemNumber" class="form-control" placeholder="Optional"></div>
+            </div>
+            <label class="checkbox-row" style="display:flex;align-items:center;gap:8px;margin-top:12px;"><input type="checkbox" id="packagingDefaultSale"> Default For Sale</label>
+            <label class="checkbox-row" style="display:flex;align-items:center;gap:8px;margin-top:8px;"><input type="checkbox" id="packagingDefaultReceive"> Default For Receiving</label>
+        </div>
+        <div class="modal-actions"><button class="btn btn-outline" onclick="closePackagingModal()">Cancel</button><button class="btn btn-primary" onclick="savePackagingType()">Save</button></div>
+    </div>
+</div>
+<div class="modal-backdrop" id="variationModal">
+    <div class="modal-card">
+        <div class="modal-head"><h3 id="variationModalTitle">Add Item Variation</h3><button class="icon-btn" onclick="closeVariationModal()"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="variationIndex">
+            <div class="form-row">
+                <div class="form-group full"><label class="required">Name</label><input id="variationName" class="form-control" placeholder="e.g. Large / Red"></div>
+                <div class="form-group full"><label>Attributes</label><textarea id="variationAttributes" class="form-control" placeholder="Size: Large; Color: Red"></textarea></div>
+                <div class="form-group"><label>Item Number</label><input id="variationItemNumber" class="form-control" placeholder="SKU / barcode"></div>
+                <div class="form-group"><label>Supplier</label><input id="variationSupplier" class="form-control" placeholder="Supplier name"></div>
+            </div>
+            <label class="checkbox-row" style="display:flex;align-items:center;gap:8px;margin-top:12px;"><input type="checkbox" id="variationEcommerce"> Is Ecommerce Item</label>
+        </div>
+        <div class="modal-actions"><button class="btn btn-outline" onclick="closeVariationModal()">Cancel</button><button class="btn btn-primary" onclick="saveVariation()">Save</button></div>
+    </div>
+</div>
+<div class="modal-backdrop" id="globalAttributeModal">
+    <div class="modal-card">
+        <div class="modal-head"><h3>Manage Global Attributes</h3><button class="icon-btn" onclick="closeGlobalAttributeModal()"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <div class="form-row">
+                <div class="form-group full"><label class="required">Attribute Name</label><input id="globalAttributeName" class="form-control" placeholder="e.g. Size"></div>
+                <div class="form-group full"><label class="required">Values</label><input id="globalAttributeValues" class="form-control" placeholder="Small, Medium, Large"></div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="saveGlobalAttribute()" style="margin-top:12px;"><i class="fas fa-plus"></i> Add / Update Attribute</button>
+            <div class="table-wrap" style="margin-top:16px;max-height:260px;">
+                <table>
+                    <thead><tr><th>Name</th><th>Values</th><th>Delete</th></tr></thead>
+                    <tbody id="globalAttributeBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-actions"><button class="btn btn-outline" onclick="closeGlobalAttributeModal()">Close</button></div>
+    </div>
+</div>
+<script>
+var packagingTypes=[],globalAttributes=[],selectedAttributes=[],variations=[];
+function defaultPackagingTypes(){return[{id:'pkt',name:'Packet',qty:1,cost_price:0,selling_price:0,item_number:'',default_sale:true,default_receiving:false},{id:'strip',name:'Strip',qty:10,cost_price:0,selling_price:0,item_number:'',default_sale:false,default_receiving:false},{id:'bottle',name:'Bottle',qty:1,cost_price:0,selling_price:0,item_number:'',default_sale:false,default_receiving:false},{id:'carton',name:'Carton',qty:1,cost_price:0,selling_price:0,item_number:'',default_sale:false,default_receiving:true},{id:'tube',name:'Tube',qty:1,cost_price:0,selling_price:0,item_number:'',default_sale:false,default_receiving:false},{id:'box',name:'Box',qty:1,cost_price:0,selling_price:0,item_number:'',default_sale:false,default_receiving:false},{id:'sachet',name:'Sachet',qty:1,cost_price:0,selling_price:0,item_number:'',default_sale:false,default_receiving:false},{id:'jar',name:'Jar',qty:1,cost_price:0,selling_price:0,item_number:'',default_sale:false,default_receiving:false},{id:'can',name:'Can',qty:1,cost_price:0,selling_price:0,item_number:'',default_sale:false,default_receiving:false},{id:'pcs',name:'Piece / Unit',qty:1,cost_price:0,selling_price:0,item_number:'',default_sale:false,default_receiving:false}];}
+function getPackagingTypes(){try{var saved=JSON.parse(localStorage.getItem('packagingTypes')||'[]');return Array.isArray(saved)&&saved.length?saved:defaultPackagingTypes();}catch(e){return defaultPackagingTypes();}}
+function savePackagingStorage(){localStorage.setItem('packagingTypes',JSON.stringify(packagingTypes));}
+function loadDraft(){try{var d=JSON.parse(localStorage.getItem('productVariationDraft')||'{}');packagingTypes=getPackagingTypes();globalAttributes=Array.isArray(d.globalAttributes)?d.globalAttributes:[];selectedAttributes=Array.isArray(d.selectedAttributes)?d.selectedAttributes:[];variations=Array.isArray(d.variations)?d.variations:[];}catch(e){packagingTypes=getPackagingTypes();globalAttributes=[];selectedAttributes=[];variations=[]}renderAll();}
+function saveDraft(){localStorage.setItem('productVariationDraft',JSON.stringify({globalAttributes:globalAttributes,selectedAttributes:selectedAttributes,variations:variations}));POS.showToast('Variation setup saved');}
+function renderAll(){renderPackaging();renderGlobalAttributes();renderSelectedAttributes();renderVariations();}
+function renderPackaging(){var body=$('packagingBody');if(!packagingTypes.length){body.innerHTML='<tr><td colspan="8" class="empty-state">No packaging types added</td></tr>';return;}body.innerHTML=packagingTypes.map(function(p,i){return '<tr><td>'+POS.esc(p.name)+'</td><td>'+POS.formatNumber(p.qty||1)+'</td><td>'+POS.formatCurrency(p.cost_price||0)+'</td><td>'+POS.formatCurrency(p.selling_price||0)+'</td><td>'+POS.esc(p.item_number||'-')+'</td><td class="checkbox-cell"><input type="checkbox" '+(p.default_sale?'checked':'')+' onchange="setPackagingDefault('+i+',"sale",this.checked)"></td><td class="checkbox-cell"><input type="checkbox" '+(p.default_receiving?'checked':'')+' onchange="setPackagingDefault('+i+',"receiving",this.checked)"></td><td class="action-btns"><button class="icon-btn edit" onclick="openPackagingModal('+i+')"><i class="fas fa-edit"></i></button><button class="icon-btn delete" onclick="deletePackagingType('+i+')"><i class="fas fa-trash"></i></button></td></tr>';}).join('');}
+function renderGlobalAttributes(){var select=$('attributeSelect');select.innerHTML='<option value="">Select an Attribute</option>';globalAttributes.forEach(function(a,i){select.innerHTML+='<option value="'+i+'">'+POS.esc(a.name)+' ('+POS.esc((a.values||[]).join(', '))+')</option>';});}
+function renderSelectedAttributes(){var body=$('attributeBody');if(!selectedAttributes.length){body.innerHTML='<tr><td colspan="3" class="empty-state">No attributes selected for this product</td></tr>';return;}body.innerHTML=selectedAttributes.map(function(a,i){return '<tr><td>'+POS.esc(a.name)+'</td><td>'+POS.esc((a.values||[]).join(', '))+'</td><td class="action-btns"><button class="icon-btn delete" onclick="deleteSelectedAttribute('+i+')"><i class="fas fa-trash"></i></button></td></tr>';}).join('');}
+function renderVariations(){var body=$('variationBody');if(!variations.length){body.innerHTML='<tr><td colspan="6" class="empty-state">No item variations added</td></tr>';return;}body.innerHTML=variations.map(function(v,i){return '<tr><td>'+POS.esc(v.name)+'</td><td>'+POS.esc(v.attributes)+'</td><td>'+POS.esc(v.item_number||'-')+'</td><td class="checkbox-cell"><input type="checkbox" '+(v.ecommerce?'checked':'')+' onchange="setVariationEcommerce('+i+',this.checked)"></td><td>'+POS.esc(v.supplier||'-')+'</td><td class="action-btns"><button class="icon-btn edit" onclick="openVariationModal('+i+')"><i class="fas fa-edit"></i></button><button class="icon-btn delete" onclick="deleteVariation('+i+')"><i class="fas fa-trash"></i></button></td></tr>';}).join('');}
+function openPackagingModal(idx){var p=idx===undefined?null:packagingTypes[idx];$('packagingModalTitle').textContent=p?'Edit Packaging Type':'Add Packaging Type';$('packagingIndex').value=p?idx:'';$('packagingName').value=p?p.name:'';$('packagingQty').value=p?p.qty||1:1;$('packagingCost').value=p?p.cost_price||0:0;$('packagingSell').value=p?p.selling_price||0:0;$('packagingItemNumber').value=p?p.item_number||'';$('packagingDefaultSale').checked=!!(p&&p.default_sale);$('packagingDefaultReceive').checked=!!(p&&p.default_receiving);POS.openModal('packagingModal');}
+function closePackagingModal(){POS.closeModal('packagingModal');}
+function savePackagingType(){var idx=$('packagingIndex').value,name=$('packagingName').value.trim();if(!name){POS.showToast('Packaging name is required',true);return;}var item={name:name,qty:parseInt($('packagingQty').value)||1,cost_price:parseFloat($('packagingCost').value)||0,selling_price:parseFloat($('packagingSell').value)||0,item_number:$('packagingItemNumber').value.trim(),default_sale:!!$('packagingDefaultSale').checked,default_receiving:!!$('packagingDefaultReceive').checked};if(idx===''){packagingTypes.push(item);}else{packagingTypes[idx]=item;}if(packagingTypes.filter(function(p){return p.default_sale;}).length>1){packagingTypes.forEach(function(p){if(p!==item)p.default_sale=false;});}if(packagingTypes.filter(function(p){return p.default_receiving;}).length>1){packagingTypes.forEach(function(p){if(p!==item)p.default_receiving=false;});}closePackagingModal();renderPackaging();savePackagingStorage();saveDraft();}
+function deletePackagingType(idx){if(!confirm('Delete this packaging type?'))return;packagingTypes.splice(idx,1);renderPackaging();savePackagingStorage();saveDraft();}
+function setPackagingDefault(idx,type,value){packagingTypes[idx][type==='sale'?'default_sale':'default_receiving']=value;if(value){packagingTypes.forEach(function(p,i){if(i!==idx)p[type==='sale'?'default_sale':'default_receiving']=false;});}renderPackaging();savePackagingStorage();saveDraft();}
+function addSelectedAttribute(){var idx=$('attributeSelect').value;if(idx===''){POS.showToast('Select an attribute',true);return;}var attr=globalAttributes[parseInt(idx)];if(!attr)return;if(selectedAttributes.some(function(a){return a.name===attr.name;})){POS.showToast('Attribute already added',true);return;}selectedAttributes.push({name:attr.name,values:[].slice.call(attr.values||[])});renderSelectedAttributes();}
+function deleteSelectedAttribute(idx){selectedAttributes.splice(idx,1);renderSelectedAttributes();}
+function openVariationModal(idx){var v=idx===undefined?null:variations[idx];$('variationModalTitle').textContent=v?'Edit Item Variation':'Add Item Variation';$('variationIndex').value=v?idx:'';$('variationName').value=v?v.name:'';$('variationAttributes').value=v?v.attributes:'';$('variationItemNumber').value=v?v.item_number||'';$('variationSupplier').value=v?v.supplier||'';$('variationEcommerce').checked=!!(v&&v.ecommerce);POS.openModal('variationModal');}
+function closeVariationModal(){POS.closeModal('variationModal');}
+function saveVariation(){var idx=$('variationIndex').value,name=$('variationName').value.trim();if(!name){POS.showToast('Variation name is required',true);return;}var item={name:name,attributes:$('variationAttributes').value.trim(),item_number:$('variationItemNumber').value.trim(),supplier:$('variationSupplier').value.trim(),ecommerce:!!$('variationEcommerce').checked};if(idx===''){variations.push(item);}else{variations[idx]=item;}closeVariationModal();renderVariations();saveDraft();}
+function deleteVariation(idx){if(!confirm('Delete this item variation?'))return;variations.splice(idx,1);renderVariations();saveDraft();}
+function setVariationEcommerce(idx,value){variations[idx].ecommerce=value;saveDraft();}
+function openGlobalAttributeModal(){renderGlobalAttributeBody();POS.openModal('globalAttributeModal');setTimeout(function(){$('globalAttributeName').focus();},50);}
+function closeGlobalAttributeModal(){POS.closeModal('globalAttributeModal');}
+function renderGlobalAttributeBody(){var body=$('globalAttributeBody');if(!globalAttributes.length){body.innerHTML='<tr><td colspan="3" class="empty-state">No global attributes saved</td></tr>';return;}body.innerHTML=globalAttributes.map(function(a,i){return '<tr><td>'+POS.esc(a.name)+'</td><td>'+POS.esc((a.values||[]).join(', '))+'</td><td class="action-btns"><button class="icon-btn edit" onclick="loadGlobalAttribute('+i+')"><i class="fas fa-edit"></i></button><button class="icon-btn delete" onclick="deleteGlobalAttribute('+i+')"><i class="fas fa-trash"></i></button></td></tr>';}).join('');}
+function saveGlobalAttribute(){var name=$('globalAttributeName').value.trim(),values=$('globalAttributeValues').value.split(',').map(function(v){return v.trim();}).filter(function(v){return v;});if(!name||!values.length){POS.showToast('Attribute name and values are required',true);return;}var existing=globalAttributes.findIndex(function(a){return a.name.toLowerCase()===name.toLowerCase();});var item={name:name,values:values};if(existing>-1){globalAttributes[existing]=item;selectedAttributes.forEach(function(a){if(a.name.toLowerCase()===name.toLowerCase())a.values=values;});}else{globalAttributes.push(item);}$('globalAttributeName').value='';$('globalAttributeValues').value='';renderGlobalAttributes();renderGlobalAttributeBody();renderSelectedAttributes();saveDraft();}
+function loadGlobalAttribute(idx){var a=globalAttributes[idx];if(!a)return;$('globalAttributeName').value=a.name;$('globalAttributeValues').value=(a.values||[]).join(', ');}
+function deleteGlobalAttribute(idx){if(!confirm('Delete this global attribute?'))return;globalAttributes.splice(idx,1);renderGlobalAttributes();renderGlobalAttributeBody();renderSelectedAttributes();saveDraft();}
+document.addEventListener('DOMContentLoaded',function(){if(!POS.requireAuth())return;POS.renderSidebar();POS.renderUserMenu();loadDraft();});
+</script>
+</body>
+</html>
+
+

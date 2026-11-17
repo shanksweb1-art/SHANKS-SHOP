@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Transfer - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-primary:hover{background:#059669}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        .btn-danger{background:#ef4444;color:#fff}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .badge-pending{background:#fffbeb;color:#92400e}
+        .badge-shipped{background:#eff6ff;color:#1e40af}
+        .badge-received{background:#ecfdf5;color:#065f46}
+        .badge-cancelled{background:#fef2f2;color:#991b1b}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-truck-ramp-box"></i> Stock Transfer</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <h3><i class="fas fa-plus"></i> New Transfer</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Source Location</label>
+                    <select id="fromLocation" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>Destination Location</label>
+                    <select id="toLocation" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>Product</label>
+                    <input type="text" id="transferProduct" class="form-control" placeholder="Search product name / SKU">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="transferQty" class="form-control" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Reference Note</label>
+                    <input type="text" id="transferNote" class="form-control" placeholder="Optional note">
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="submitTransfer()"><i class="fas fa-paper-plane"></i> Send Transfer</button>
+                <button class="btn btn-outline" onclick="clearTransfer()"><i class="fas fa-eraser"></i> Clear</button>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-list"></i> Recent Transfers</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>From</th><th>To</th><th>Product</th><th>Qty</th><th>Note</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="transfersBody">
+                        <tr><td colspan="7" class="empty-state">No transfers yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var transfers = [];
+function fmt(n){ try { return StoreConfig.formatCurrency(n); } catch(e) { return '₦' + (parseFloat(n) || 0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); } }
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){ t.style.display='none'; },3000); }
+function submitTransfer(){
+    var from = $('fromLocation').value;
+    var to = $('toLocation').value;
+    var product = $('transferProduct').value.trim();
+    var qty = parseInt($('transferQty').value) || 0;
+    var note = $('transferNote').value.trim();
+    if(!from || !to || from === to){ showToast('Select different source and destination', true); return; }
+    if(!product || qty <= 0){ showToast('Enter product and valid quantity', true); return; }
+    var record = { date: new Date().toISOString(), from: from, to: to, product: product, qty: qty, note: note, status: 'pending' };
+    transfers.unshift(record);
+    try { localStorage.setItem('SHEDS_transfers', JSON.stringify(transfers)); } catch(e){}
+    showToast('Transfer submitted');
+    clearTransfer();
+    renderTransfers();
+    logAction('transfer', product, qty + ' units from ' + from + ' to ' + to);
+}
+function clearTransfer(){
+    $('fromLocation').value = $('fromLocation').options[0] ? $('fromLocation').options[0].value : '';
+    $('toLocation').value = '';
+    $('transferProduct').value = '';
+    $('transferQty').value = 1;
+    $('transferNote').value = '';
+}
+function badgeFor(s){
+    if(s==='pending') return '<span class="badge badge-pending">Pending</span>';
+    if(s==='shipped') return '<span class="badge badge-shipped">Shipped</span>';
+    if(s==='received') return '<span class="badge badge-received">Received</span>';
+    if(s==='cancelled') return '<span class="badge badge-cancelled">Cancelled</span>';
+    return '<span class="badge badge-pending">' + esc(s) + '</span>';
+}
+function renderTransfers(){
+    var tbody = $('transfersBody');
+    if(!transfers.length){ tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No transfers yet</td></tr>'; return; }
+    tbody.innerHTML = transfers.map(function(t){
+        return '<tr><td>' + esc(new Date(t.date).toLocaleString('en-NG')) + '</td><td>' + esc(fromLocationName(t.from)) + '</td><td>' + esc(toLocationName(t.to)) + '</td><td>' + esc(t.product) + '</td><td>' + esc(t.qty) + '</td><td>' + esc(t.note || '-') + '</td><td>' + badgeFor(t.status) + '</td></tr>';
+    }).join('');
+}
+function fromLocationName(v){ return v; }
+function toLocationName(v){ return v; }
+function loadLocations(){
+    var locations = [];
+    try { locations = JSON.parse(localStorage.getItem('SHEDS_locations') || '[]'); if(!Array.isArray(locations)) locations = []; } catch(e){}
+    var opts = locations.map(function(l){ return '<option value="' + esc(l.id || l.name) + '">' + esc(l.name) + '</option>'; }).join('');
+    var defaultOpt = '<option value="">-- Select --</option>';
+    $('fromLocation').innerHTML = defaultOpt + opts;
+    $('toLocation').innerHTML = defaultOpt + opts;
+}
+function loadTransfers(){
+    try { transfers = JSON.parse(localStorage.getItem('SHEDS_transfers') || '[]'); if(!Array.isArray(transfers)) transfers = []; } catch(e){ transfers = []; }
+    renderTransfers();
+}
+function logAction(action, ref, note){
+    var user = API.getUserName ? API.getUserName() : 'System';
+    API.post('/audit-log', {action: action, entity: 'stock_transfer', entity_id: String(ref || ''), details: note || '', user: user}).catch(function(){});
+}
+document.addEventListener('DOMContentLoaded', function(){
+    if(!POS.requireAuth()) return;
+    loadLocations();
+    loadTransfers();
+});
+</script>
+</body>
+</html>
+
+
+
+
+

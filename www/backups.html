@@ -1,0 +1,173 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Backups - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .btn{padding:12px 16px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-primary:hover{background:#059669}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        .btn-outline:hover{background:#f9fafb}
+        .btn-danger{background:#ef4444;color:#fff}
+        .btn-info{background:#3b82f6;color:#fff}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .badge-ok{background:#ecfdf5;color:#065f46}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-download"></i> System Backups</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <h3><i class="fas fa-cloud-arrow-up"></i> Backup Now</h3>
+            <p style="color:#6b7280;margin-bottom:14px;">Create a full system snapshot containing sales, inventory, customers, suppliers, settings, and audit log.</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Backup Name</label>
+                    <input type="text" id="backupName" class="form-control" placeholder="Optional label (defaults to timestamp)">
+                </div>
+                <div class="form-group">
+                    <label>Include</label>
+                    <select id="backupInclude" class="form-control">
+                        <option value="all">All Data</option>
+                        <option value="minimal">Essential Only (Sales + Inventory + Customers)</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="createBackup()"><i class="fas fa-download"></i> Download Backup</button>
+                <button class="btn btn-info" onclick="saveToLocal()"><i class="fas fa-floppy-disk"></i> Save to Browser</button>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-clock-rotate-left"></i> Backup History</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Name</th><th>Records</th><th>Size</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="backupBody">
+                        <tr><td colspan="5" class="empty-state">No backups yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-upload"></i> Restore</h3>
+            <p style="color:#6b7280;margin-bottom:14px;">Restore system from a previously saved backup file or browser snapshot.</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Restore Source</label>
+                    <select id="restoreSource" class="form-control">
+                        <option value="latest">Latest Browser Snapshot</option>
+                        <option value="file">Upload Backup File</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;">
+                    <button class="btn btn-danger" onclick="restoreBackup()"><i class="fas fa-rotate-left"></i> Restore Now</button>
+                </div>
+            </div>
+            <p style="font-size:11px;color:#ef4444;"><i class="fas fa-triangle-exclamation"></i> Warning: Restoring will overwrite current data. This cannot be undone.</p>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var backupHistory=[];
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function fmtSize(bytes){ if(!bytes) return '0 B'; var k=1024, s=['B','KB','MB','GB'], i=Math.floor(Math.log(bytes)/Math.log(k)); return (bytes/Math.pow(k,i)).toFixed(1)+' '+s[i]; }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){t.style.display='none';},3000); }
+function createBackup(){
+    var label=$('backupName').value.trim() || new Date().toLocaleString('en-NG');
+    var include=$('backupInclude').value;
+    var data={};
+    var keys=['danzona_products','danzona_customers','danzona_suppliers','danzona_sales','danzona_inventory','danzona_expenses','danzona_employees'];
+    var count=0;
+    keys.forEach(function(k){
+        try{ var v=localStorage.getItem(k); if(v){ data[k]=JSON.parse(v); count+=Array.isArray(data[k])?data[k].length:1; } }catch(e){}
+    });
+    var jsonStr=JSON.stringify(data);
+    var blob=new Blob([jsonStr],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download='backup-' + new Date().toISOString().split('T')[0] + '.json'; a.click();
+    URL.revokeObjectURL(url);
+    var record={ id:'BKP-'+Date.now(), date:new Date().toISOString(), label:label, mode:'all', records:count, size:jsonStr.length };
+    backupHistory.unshift(record);
+    try{ localStorage.setItem('danzona_backup_history', JSON.stringify(backupHistory)); }catch(e){}
+    showToast('Backup downloaded');
+    renderBackups();
+}
+function saveToLocal(){
+    var label=$('backupName').value.trim() || new Date().toLocaleString('en-NG');
+    var data={};
+    var keys=['danzona_products','danzona_customers','danzona_suppliers','danzona_sales','danzona_inventory','danzona_expenses','danzona_employees'];
+    var count=0;
+    keys.forEach(function(k){
+        try{ var v=localStorage.getItem(k); if(v){ data[k]=JSON.parse(v); count+=Array.isArray(data[k])?data[k].length:1; } }catch(e){}
+    });
+    var jsonStr=JSON.stringify(data);
+    try{ localStorage.setItem('danzona_snapshot', jsonStr); }catch(e){}
+    var record={ id:'BKP-'+Date.now(), date:new Date().toISOString(), label:label, mode:'snapshot', records:count, size:jsonStr.length };
+    backupHistory.unshift(record);
+    try{ localStorage.setItem('danzona_backup_history', JSON.stringify(backupHistory)); }catch(e){}
+    showToast('Snapshot saved to browser');
+    renderBackups();
+}
+function restoreBackup(){
+    var source=$('restoreSource').value;
+    var raw=null;
+    if(source==='latest'){
+        raw=localStorage.getItem('danzona_snapshot');
+        if(!raw){ showToast('No snapshot found', true); return; }
+    }
+    if(!raw){ showToast('No data to restore', true); return; }
+    if(!confirm('Restore will overwrite current data. Continue?')) return;
+    try{
+        var data=JSON.parse(raw);
+        Object.keys(data).forEach(function(k){
+            if(k.startsWith('danzona_')) localStorage.setItem(k, JSON.stringify(data[k]));
+        });
+        showToast('Restore successful. Refresh page.');
+    }catch(e){ showToast('Restore failed: invalid data', true); }
+}
+function renderBackups(){
+    var tbody=$('backupBody');
+    if(!backupHistory.length){ tbody.innerHTML='<tr><td colspan="5" class="empty-state">No backups yet</td></tr>'; return; }
+    tbody.innerHTML=backupHistory.map(function(b){
+        var d=new Date(b.date).toLocaleString('en-NG');
+        return '<tr><td>'+esc(d)+'</td><td><strong>'+esc(b.label)+'</strong></td><td>'+esc(b.records)+'</td><td>'+fmtSize(b.size)+'</td><td><span class="badge badge-ok">Saved</span></td></tr>';
+    }).join('');
+}
+function loadBackups(){ try{ backupHistory=JSON.parse(localStorage.getItem('danzona_backup_history')||'[]'); if(!Array.isArray(backupHistory)) backupHistory=[]; }catch(e){ backupHistory=[]; } renderBackups(); }
+document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; $('backupName').value=''; loadBackups(); });
+</script>
+</body>
+</html>
+
+
+

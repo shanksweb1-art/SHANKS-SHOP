@@ -1,0 +1,199 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Danzona POS</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="api.js"></script>
+<script src="common.js"></script>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--primary:#10b981;--primary-hover:#059669;--primary-soft:#ecfdf5;--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;}
+.date-filter{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;padding:12px;background:#fff;border-radius:12px;box-shadow:var(--shadow);}
+.date-filter label{color:#475569;font-weight:600;}
+.date-filter input{padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;}
+.preset-btns{display:flex;gap:6px;}
+.preset-btn{padding:7px 12px;border:1px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;transition:.2s;}
+.preset-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.chart-container{background:#fff;border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-bottom:20px;}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.chart-header h3{font-size:16px;color:#111827;font-weight:800;}
+.chart-wrapper{position:relative;height:300px;}
+@media(max-width:768px){.date-filter{align-items:stretch;}.preset-btns{flex-wrap:wrap;}.preset-btn{width:100%;text-align:center;}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+.live-pulse{animation:pulse 2s infinite;}
+</style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+<div class="header">
+<h2><i class="fas fa-chart-line"></i> Dashboard</h2>
+<div id="userMenu"></div>
+<div class="header-clock" id="topClock"></div>
+</div>
+<div class="content">
+<div class="date-filter">
+<label><i class="fas fa-calendar-alt"></i> Period:</label>
+<input type="date" id="startDate">
+<span>to</span>
+<input type="date" id="endDate">
+<button class="btn btn-primary" onclick="applyFilter()"><i class="fas fa-filter"></i> Apply</button>
+<button class="btn btn-outline" onclick="loadDashboard()" title="Refresh now"><i class="fas fa-sync-alt"></i></button>
+<div class="preset-btns">
+<button class="preset-btn active" onclick="setPreset('7d',this)">7D</button>
+<button class="preset-btn" onclick="setPreset('30d',this)">30D</button>
+<button class="preset-btn" onclick="setPreset('90d',this)">90D</button>
+<button class="preset-btn" onclick="setPreset('1y',this)">1Y</button>
+</div>
+</div>
+<div class="kpi-grid" id="kpiGrid"></div>
+<div class="chart-container">
+<div class="chart-header"><h3><i class="fas fa-chart-line"></i> Sales Trend</h3><span id="trendPeriod" style="font-size:12px;color:#6b7280;"></span></div>
+<div class="chart-wrapper"><canvas id="trendChart"></canvas></div>
+<div class="spinner-overlay" id="trendLoader" style="display:none;"><div class="spinner"></div></div>
+</div>
+<div class="chart-container">
+<div class="chart-header"><h3><i class="fas fa-chart-pie"></i> Sales by Category</h3></div>
+<div class="chart-wrapper"><canvas id="categoryChart"></canvas></div>
+<div class="spinner-overlay" id="catLoader" style="display:none;"><div class="spinner"></div></div>
+</div>
+<div class="chart-container">
+<div class="chart-header"><h3><i class="fas fa-chart-bar"></i> Payment Methods</h3></div>
+<div class="chart-wrapper"><canvas id="paymentChart"></canvas></div>
+<div class="spinner-overlay" id="payLoader" style="display:none;"><div class="spinner"></div></div>
+</div>
+<div class="chart-container">
+<div class="chart-header"><h3><i class="fas fa-history"></i> Recent Activity <span id="liveIndicator" class="live-pulse" style="font-size:11px;background:#10b981;color:#fff;padding:2px 8px;border-radius:999px;margin-left:8px;">LIVE</span><span id="lastUpdated" style="font-size:11px;color:#6b7280;margin-left:8px;"></span></h3></div>
+<div id="activityFeed" style="max-height:200px;overflow-y:auto;"></div>
+</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var catChart=null,trendChart=null,payChart=null,sales=[],products=[],expenses=[],customers=[];
+var datePreset='7d';
+function $(id){return document.getElementById(id);}
+function formatCurrency(v){return '₦'+(parseFloat(v)||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function toLocalDateStr(d){var dd=String(d.getDate()).padStart(2,'0');var mm=String(d.getMonth()+1).padStart(2,'0');return d.getFullYear()+'-'+mm+'-'+dd;}
+function showLoader(id){$('loader'+id).style.display='flex';}
+function hideLoader(id){$('loader'+id).style.display='none';}
+async function loadDashboard(){
+if(!POS.requireAuth())return;
+var now=new Date();var start=new Date();
+if(datePreset==='7d')start.setDate(now.getDate()-7);
+else if(datePreset==='30d')start.setDate(now.getDate()-30);
+else if(datePreset==='90d')start.setDate(now.getDate()-90);
+else if(datePreset==='1y')start.setFullYear(now.getFullYear()-1);
+$('startDate').value=toLocalDateStr(start);
+$('endDate').value=toLocalDateStr(now);
+$('trendPeriod').textContent=datePreset.toUpperCase()+' Sales Trend';
+try{
+var results=await Promise.allSettled([loadSales(),loadProducts(),loadExpenses(),loadCustomers()]);
+var failed=results.filter(function(r){return r.status==='rejected';}).length;
+if(failed>0)console.warn('Some dashboard data failed to load ('+failed+' endpoints)');
+renderKPIs();
+renderCharts();
+renderActivity();
+var ts=new Date();
+$('lastUpdated').textContent='Updated '+ts.toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+if(failed>0)POS.showToast('Dashboard updated — some data may be stale','error');
+}catch(err){
+console.error('Dashboard load error:',err);
+POS.showToast('Failed to load dashboard','error');
+}
+}
+async function loadSales(){
+try{sales=await API.getSales()||[];}catch(e){try{sales=JSON.parse(localStorage.getItem('SHEDS_sales')||'[]');}catch(err){sales=[];}}
+if(!sales.length){sales=JSON.parse(localStorage.getItem('SHEDS_completed_sales')||'[]');}
+}
+async function loadProducts(){
+try{products=await API.getProducts()||[];}catch(e){try{products=JSON.parse(localStorage.getItem('SHEDS_products')||'[]');}catch(err){products=[];}}
+}
+async function loadExpenses(){
+try{expenses=await API.getExpenses()||[];}catch(e){try{expenses=JSON.parse(localStorage.getItem('SHEDS_expenses')||'[]');}catch(err){expenses=[];}}
+}
+async function loadCustomers(){
+try{customers=await API.getCustomers()||[];}catch(e){try{customers=JSON.parse(localStorage.getItem('danzona_customers')||'[]');}catch(err){customers=[];}}
+}
+function renderKPIs(){
+var totalSales=sales.reduce(function(s,x){return s+parseFloat(x.total||0);},0);
+var totalCost=0;
+sales.forEach(function(s){(s.items||[]).forEach(function(it){var p=products.find(function(prod){return prod.id==it.id||prod.id==it.productId;});totalCost+=(p?(parseFloat(p.cost_price)||0):(parseFloat(it.cost)||0))*(parseInt(it.qty)||1);});});
+var profit=totalSales-totalCost;
+var totalTx=sales.length;
+$('kpiGrid').innerHTML=
+'<div class="kpi-card"><div class="kpi-label"><i class="fas fa-chart-line"></i> Sales Profit</div><div class="kpi-value" style="color:'+(profit>=0?'#10b981':'#ef4444')+'">'+formatCurrency(profit)+'</div></div>'+
+'<div class="kpi-card"><div class="kpi-label"><i class="fas fa-shopping-cart"></i> Total Sales</div><div class="kpi-value">'+formatCurrency(totalSales)+'</div></div>'+
+'<div class="kpi-card"><div class="kpi-label"><i class="fas fa-receipt"></i> Transactions</div><div class="kpi-value">'+totalTx+'</div></div>'+
+'<div class="kpi-card"><div class="kpi-label"><i class="fas fa-users"></i> Customers</div><div class="kpi-value">'+(customers.length||0)+'</div></div>'+
+'<div class="kpi-card"><div class="kpi-label"><i class="fas fa-boxes"></i> Products</div><div class="kpi-value">'+(products.length||0)+'</div></div>';
+}
+function setPreset(preset,el){
+datePreset=preset;
+document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
+el.classList.add('active');
+loadDashboard();
+}
+function applyFilter(){loadDashboard();}
+function renderCharts(){
+var daily={};var days=7;
+if(datePreset==='30d')days=30;
+else if(datePreset==='90d')days=90;
+else if(datePreset==='1y')days=365;
+var now=new Date();
+for(var i=days-1;i>=0;i--){var d=new Date(now);d.setDate(d.getDate()-i);daily[toLocalDateStr(d)]=0;}
+sales.forEach(function(s){var datePart=POS.getDatePart(s.date||s.created_at);if(datePart&&daily.hasOwnProperty(datePart))daily[datePart]+=parseFloat(s.total||0);});
+var labels=Object.keys(daily);
+var vals=Object.values(daily);
+if(trendChart)trendChart.destroy();
+trendChart=new Chart($('trendChart'),{type:'line',data:{labels:labels.map(function(l){return l.split('-')[1]+'/'+l.split('-')[2];}),datasets:[{data:vals,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,borderWidth:2,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}});
+var pm={};sales.forEach(function(s){var m=s.payment_method||'cash';pm[m]=(pm[m]||0)+parseFloat(s.total||0);});
+var pmLabels=Object.keys(pm);var pmVals=Object.values(pm);
+if(payChart)payChart.destroy();
+payChart=new Chart($('paymentChart'),{type:'doughnut',data:{labels:pmLabels.map(function(l){return l?l.toUpperCase():'N/A';}),datasets:[{data:pmVals,backgroundColor:['#10b981','#3b82f6','#f59e0b','#8b5cf6']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+var cat={};sales.forEach(function(s){(s.items||[]).forEach(function(it){cat[it.category||it.name||'Other']=(cat[it.category||it.name||'Other']||0)+parseFloat(it.price||it.total||0);});});
+var catLabels=Object.keys(cat);var catVals=Object.values(cat);
+if(catChart)catChart.destroy();
+catChart=new Chart($('categoryChart'),{type:'bar',data:{labels:catLabels,datasets:[{data:catVals,backgroundColor:'#10b981',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{beginAtZero:true}}}});
+}
+function renderActivity(){
+var activity=[];
+sales.slice(-10).forEach(function(s){activity.push({type:'sale',icon:'fa-shopping-cart',text:'Sale #'+s.id+' - '+formatCurrency(s.total),time:s.date||s.created_at,sale:s});});
+expenses.slice(-5).forEach(function(e){activity.push({type:'expense',icon:'fa-receipt',text:'Expense - '+formatCurrency(e.amount),time:e.date||e.created_at});});
+activity.sort(function(a,b){return new Date((b.time||'').replace(' ','T')) - new Date((a.time||'').replace(' ','T'));}).slice(0,10);
+$('activityFeed').innerHTML=activity.map(function(a){
+if(a.type==='sale'){
+return '<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="viewSale('+a.sale.id+')"><i class="fas '+a.icon+'" style="color:#10b981;margin-right:8px;"></i><strong>Sale #'+a.sale.id+'</strong> - '+formatCurrency(a.sale.total)+'<span style="float:right;font-size:11px;color:#6b7280;">'+POS.formatDate(a.time)+'</span><br><small style="color:#6b7280;">Click to view details</small></div>';
+}else{
+return '<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><i class="fas '+a.icon+'" style="color:#ef4444;margin-right:8px;"></i>'+a.text+'<span style="float:right;font-size:11px;color:#6b7280;">'+POS.formatDate(a.time)+'</span></div>';
+}
+}).join('')||'<div style="padding:20px;color:#6b7280;">No recent activity</div>';
+}
+function viewSale(id){
+var s=sales.find(function(sal){return sal.id==id;});
+if(!s)return;
+var items=s.items&&s.items.length?s.items.map(function(it){return '<tr><td>'+(it.name||it.product||'Product')+'</td><td>'+it.qty+'</td><td>'+formatCurrency(it.price||it.total||0)+'</td><td>'+formatCurrency((it.price||it.total||0)*(it.qty||1))+'</td></tr>';}).join(''):'<tr><td colspan="4" style="text-align:center;color:#6b7280;">No items</td></tr>';
+var modal='<div class="modal-overlay open" id="saleDetailModal"><div class="modal" style="max-width:500px;max-height:80vh;overflow-y:auto;"><div class="modal-header"><h3>Sale #'+s.id+'</h3><button class="modal-close" onclick="document.getElementById(\'saleDetailModal\').remove()">&times;</button></div><div style="padding:12px 0;"><p><strong>Date:</strong> '+POS.formatDate(s.date||s.created_at)+'</p><p><strong>Total:</strong> '+formatCurrency(s.total)+'</p><p><strong>Payment:</strong> '+(s.payment_method||'Cash')+'</p><table style="width:100%;border-collapse:collapse;margin-top:12px;"><thead><tr><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb;">Item</th><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb;">Qty</th><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb;">Price</th><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb;">Total</th></tr></thead><tbody>'+items+'</tbody></table><div style="margin-top:12px;display:flex;gap:8px;"><button class="btn btn-primary" onclick="editSale('+s.id+')"><i class="fas fa-edit"></i> Edit Sale</button><button class="btn btn-secondary" onclick="document.getElementById(\'saleDetailModal\').remove()"><i class="fas fa-times"></i> Close</button></div></div></div></div>';
+document.body.insertAdjacentHTML('beforeend',modal);
+}
+function editSale(id){
+var s=sales.find(function(sal){return sal.id==id;});
+if(!s)return;
+document.getElementById('saleDetailModal').remove();
+showToast('Edit functionality would open sale editor for ID: '+id);
+}
+document.addEventListener('DOMContentLoaded',loadDashboard);
+setInterval(loadDashboard,20000);
+</script>
+</body>
+</html>
+
+

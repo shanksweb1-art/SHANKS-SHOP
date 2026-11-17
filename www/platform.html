@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platform Administrator - SHANKS SHOP MANAGEMENT</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .login-container { background: white; border-radius: 10px; padding: 2.5rem; width: 100%; max-width: 520px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .brand-logo { width: 88px; height: 88px; object-fit: contain; display: block; margin: 0 auto 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 22px; padding: 9px; box-shadow: 0 8px 20px rgba(15,23,42,.08); }
+    .login-container h2 { color: #2c3e50; margin-bottom: 0.5rem; text-align: center; }
+    .login-container .subtitle { color: #718096; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.4rem; color: #4a5568; font-weight: 500; font-size: 0.9rem; }
+    .form-group input { width: 100%; padding: 0.75rem; border: 1.5px solid #ddd; border-radius: 5px; font-size: 0.95rem; }
+    .form-group input:focus { outline: none; border-color: #10b981; }
+    .login-btn { width: 100%; padding: 0.85rem; background: #10b981; color: white; border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; margin-top: 0.5rem; }
+    .login-btn:hover { background: #059669; }
+    .login-btn:disabled { opacity: .6; cursor: default; }
+    .btn-secondary { width: 100%; padding: 0.75rem; background: #fff; color: #2c3e50; border: 1.5px solid #ddd; border-radius: 5px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 0.6rem; }
+    .btn-secondary:hover { background: #f8fafc; }
+    .back-link { display: block; text-align: center; margin-top: 1.5rem; color: #3498db; text-decoration: none; cursor: pointer; font-size: 0.9rem; }
+    .notification-toast { position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 5px; display: none; z-index: 1000; color: white; font-weight: 500; }
+    .notification-toast.success { background: #48bb78; }
+    .notification-toast.error { background: #f56565; }
+    .notification-toast.info { background: #4299e1; }
+    .note { background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px 14px; border-radius: 6px; margin-bottom: 1.2rem; font-size: 0.85rem; color: #1e40af; line-height: 1.6; }
+    .note strong { display: block; margin-bottom: 4px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .session-user { display: flex; align-items: center; gap: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 14px 16px; margin-bottom: 1.2rem; }
+    .session-user .avatar { width: 42px; height: 42px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+    .session-user .who { flex: 1; }
+    .session-user .who strong { display: block; color: #065f46; font-size: 0.95rem; }
+    .session-user .who span { font-size: 0.78rem; color: #047857; }
+    .action-list { display: flex; flex-direction: column; gap: 10px; }
+    .action { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #2c3e50; transition: .2s; }
+    .action:hover { border-color: #10b981; background: #f0fdf4; }
+    .action i { width: 34px; height: 34px; border-radius: 8px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; }
+    .action span strong { display: block; font-size: 0.92rem; }
+    .action span small { color: #718096; font-size: 0.78rem; }
+    .required-star { color: #ef4444; }
+    .hint { font-size: 0.78rem; color: #94a3b8; margin-top: 6px; line-height: 1.5; }
+    code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 0.8rem; color: #334155; }
+</style>
+</head>
+<body>
+<div class="login-container">
+    <img class="brand-logo" src="brand-logo.png" alt="Shanks Shop Management logo">
+    <h2>Platform Administrator</h2>
+    <p class="subtitle">Creates and manages store accounts</p>
+
+    <div class="note">
+        <strong><i class="fas fa-user-shield"></i> This is a separate account</strong>
+        The platform administrator is the account that creates a store and sets the store's own
+        administrator login. The two are never the same account, and the platform administrator
+        cannot open a store's books.
+    </div>
+
+    <div class="panel active" id="loginPanel">
+        <form onsubmit="platformLogin(event)">
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Platform username <span class="required-star">*</span></label>
+                <input type="text" id="username" required placeholder="Platform administrator username" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Password <span class="required-star">*</span></label>
+                <input type="password" id="password" required placeholder="Platform administrator password" autocomplete="current-password">
+            </div>
+            <button type="submit" class="login-btn" id="signInBtn"><i class="fas fa-right-to-bracket"></i> Sign in</button>
+        </form>
+        <p class="hint">First run? The account is created automatically as <code>platformadmin</code> with the password in the <code>PLATFORM_ADMIN_PASSWORD</code> environment variable (default <code>PlatformAdmin123!</code>). Change it before going live.</p>
+    </div>
+
+    <div class="panel" id="sessionPanel">
+        <div class="session-user">
+            <div class="avatar" id="avatar">PA</div>
+            <div class="who">
+                <strong id="sessionName">Platform administrator</strong>
+                <span id="sessionRole">Signed in</span>
+            </div>
+        </div>
+        <div class="action-list">
+            <a class="action" href="login.html?tab=register"><i class="fas fa-store"></i><span><strong>Create a store account</strong><small>Set the business details and its own administrator login</small></span></a>
+            <a class="action" href="tenants.html"><i class="fas fa-building"></i><span><strong>Manage tenants</strong><small>View, edit and suspend stores on the platform</small></span></a>
+            <a class="action" href="index.html"><i class="fas fa-globe"></i><span><strong>View the public site</strong><small>Pricing, testimonials and release notes</small></span></a>
+        </div>
+        <button class="btn-secondary" onclick="signOut()"><i class="fas fa-right-from-bracket"></i> Sign out</button>
+    </div>
+
+    <a class="back-link" onclick="window.location.href='login.html'"><i class="fas fa-arrow-left"></i> Back to staff login</a>
+</div>
+<div class="notification-toast" id="toast"></div>
+
+<script src="api.js"></script>
+<script>
+function $id(id){return document.getElementById(id);}
+function showToast(msg, type){
+    var t=$id('toast');
+    t.textContent=msg;
+    t.className='notification-toast '+(type||'success');
+    t.style.display='block';
+    setTimeout(function(){t.style.display='none';},4000);
+}
+function initials(name){
+    return String(name||'PA').split(/\s+/).map(function(w){return w.charAt(0);}).slice(0,2).join('').toUpperCase();
+}
+function showSession(username){
+    $id('loginPanel').classList.remove('active');
+    $id('sessionPanel').classList.add('active');
+    $id('sessionName').textContent=username||'Platform administrator';
+    $id('avatar').textContent=initials(username);
+}
+function platformLogin(e){
+    e.preventDefault();
+    var username=$id('username').value.trim();
+    var password=$id('password').value;
+    if(!username||!password){showToast('Username and password are required','error');return;}
+    var btn=$id('signInBtn');
+    btn.disabled=true;
+    showToast('Signing in...','info');
+    API.platformLogin(username,password).then(function(res){
+        btn.disabled=false;
+        if(res&&res.error){showToast(res.error,'error');return;}
+        showSession(res&&res.user?res.user.username:username);
+        showToast('Signed in as '+username,'success');
+    }).catch(function(){
+        btn.disabled=false;
+        showToast('Connection error. Is the server running?','error');
+    });
+}
+function signOut(){
+    API.clearPlatformSession();
+    $id('username').value='';
+    $id('password').value='';
+    $id('sessionPanel').classList.remove('active');
+    $id('loginPanel').classList.add('active');
+    showToast('Signed out','success');
+}
+(function init(){
+    var user=API.platformUser();
+    var token=API.platformToken();
+    if(user&&token)showSession(user);
+})();
+</script>
+</body>
+</html>

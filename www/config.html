@@ -1,0 +1,269 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Store Config - SHANKS SHOP MANAGEMENT</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="common.css">
+<script src="api.js"></script>
+<script src="common.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+<div class="header">
+<h2><i class="fas fa-cog"></i> Store Configuration</h2>
+<div id="userMenu"></div>
+<div class="header-clock" id="topClock"></div>
+</div>
+<div class="content">
+<div class="page-head">
+<div>
+<h3>Store Settings</h3>
+<p>Manage your business name, address, currency, receipts and system preferences.</p>
+</div>
+<button class="btn btn-success" onclick="saveAllConfig()" id="saveBtn"><i class="fas fa-save"></i> Save Changes</button>
+</div>
+
+<div class="panel" style="margin-bottom:18px;">
+<h3 style="font-size:15px;font-weight:850;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i class="fas fa-store" style="color:var(--primary);"></i> General Information</h3>
+<div class="form-row">
+<div class="form-group"><label class="required">Store / Business Name</label><input type="text" id="storeName" placeholder="e.g. Danzona Pharmacy"></div>
+<div class="form-group"><label>Phone Number</label><input type="tel" id="phoneNumber" placeholder="+234 801 234 5678"></div>
+</div>
+<div class="form-group"><label>Store Address</label><textarea id="storeAddress" class="notes-area" placeholder="Full address"></textarea></div>
+<div class="form-row">
+<div class="form-group"><label>Email Address</label><input type="email" id="emailAddress" placeholder="info@danzonapharm.com"></div>
+<div class="form-group"><label>Store Logo URL</label><input type="text" id="storeLogo" placeholder="https://... or leave blank"></div>
+</div>
+</div>
+
+<div class="panel" style="margin-bottom:18px;">
+<h3 style="font-size:15px;font-weight:850;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i class="fas fa-coins" style="color:#f59e0b;"></i> Currency & Formatting</h3>
+<div class="form-row">
+<div class="form-group"><label class="required">Currency Symbol</label><input type="text" id="currency" placeholder="₦" maxlength="3"></div>
+<div class="form-group"><label class="required">Currency Code / Locale</label><select id="currencyLocale"><option value="en-NG">Nigeria (₦ — en-NG)</option><option value="en-US">USA ($ — en-US)</option><option value="en-GB">UK (Â£ — en-GB)</option><option value="en-KE">Kenya (KSh — en-KE)</option><option value="en-GH">Ghana (GHâ‚µ — en-GH)</option><option value="en-ZA">South Africa (R — en-ZA)</option></select></div>
+</div>
+</div>
+
+<div class="panel" style="margin-bottom:18px;">
+<h3 style="font-size:15px;font-weight:850;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i class="fas fa-receipt" style="color:#3b82f6;"></i> Receipt Settings</h3>
+<div class="form-row">
+<div class="form-group"><label>Printer Type</label><select id="printerType"><option value="small">Small (58mm / 80mm)</option><option value="large">Large (A4 / Letter)</option></select></div>
+</div>
+<div class="form-group"><label>Receipt Footer Text</label><input type="text" id="footerText" placeholder="Thank you for your patronage!"></div>
+</div>
+
+<div class="panel" style="margin-bottom:18px;">
+<h3 style="font-size:15px;font-weight:850;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i class="fas fa-boxes" style="color:#ef4444;"></i> Inventory Thresholds</h3>
+<div class="form-row">
+<div class="form-group"><label>Low Stock Threshold</label><input type="number" id="lowStockThreshold" min="1" placeholder="e.g. 5"></div>
+</div>
+</div>
+
+<div class="panel" style="margin-bottom:18px;">
+<h3 style="font-size:15px;font-weight:850;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i class="fas fa-user-shield" style="color:#8b5cf6;"></i> System Preferences</h3>
+<div class="form-row">
+<div class="form-group"><label>Session Timeout (minutes)</label><input type="number" id="sessionTimeout" min="5" placeholder="30"></div>
+<div class="form-group"><label>Opening Time</label><input type="time" id="openingTime" value="08:00"></div>
+<div class="form-group"><label>Closing Time</label><input type="time" id="closingTime" value="20:00"></div>
+</div>
+<div class="form-group"><label>Open Days</label><select id="openDays"><option value="Mon-Sat">Monday - Saturday</option><option value="Mon-Fri">Monday - Friday</option><option value="Mon-Sun">Everyday</option><option value="Sat-Thu">Saturday - Thursday</option></select></div>
+<div class="form-row">
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="allowStoreAccount" style="width:16px;height:16px;"> Enable Store Account</label></div>
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="allowGiftCard" style="width:16px;height:16px;"> Enable Gift Cards</label></div>
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="allowCardPayment" style="width:16px;height:16px;"> Enable Card Payment</label></div>
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="allowPosPayment" style="width:16px;height:16px;"> Enable POS Payment</label></div>
+</div>
+</div>
+
+<div class="panel" style="margin-bottom:18px;">
+<h3 style="font-size:15px;font-weight:850;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i class="fas fa-percent" style="color:#f59e0b;"></i> Tax & Discount</h3>
+<div class="form-row">
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="taxEnabled" style="width:16px;height:16px;"> Enable Tax</label></div>
+<div class="form-group"><label>Tax Rate (%)</label><input type="number" id="taxRate" min="0" max="100" step="0.1" placeholder="7.5"></div>
+<div class="form-group"><label>Tax Name</label><input type="text" id="taxName" placeholder="VAT"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="allowDiscount" style="width:16px;height:16px;"> Allow Discounts</label></div>
+<div class="form-group"><label>Max Discount (%)</label><input type="number" id="maxDiscount" min="0" max="100" placeholder="20"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="requireManagerForDiscount" style="width:16px;height:16px;"> Require Manager for Discount</label></div>
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="requireManagerForVoid" style="width:16px;height:16px;"> Require Manager to Void Sale</label></div>
+</div>
+</div>
+
+<div class="panel" style="margin-bottom:18px;">
+<h3 style="font-size:15px;font-weight:850;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i class="fas fa-receipt" style="color:#3b82f6;"></i> Receipt Settings</h3>
+<div class="form-row">
+<div class="form-group"><label>Receipt Prefix</label><input type="text" id="receiptPrefix" placeholder="DAN" maxlength="5"></div>
+<div class="form-group"><label>Printer Type</label><select id="printerType"><option value="small">Small (58mm / 80mm)</option><option value="large">Large (A4 / Letter)</option></select></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="autoPrintReceipt" style="width:16px;height:16px;"> Auto-print After Sale</label></div>
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="showReceiptLogo" style="width:16px;height:16px;"> Show Logo on Receipt</label></div>
+</div>
+<div class="form-group"><label>Receipt Footer Text</label><input type="text" id="footerText" placeholder="Thank you for your patronage!"></div>
+</div>
+
+<div class="panel" style="margin-bottom:18px;">
+<h3 style="font-size:15px;font-weight:850;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><i class="fas fa-boxes" style="color:#ef4444;"></i> Inventory & Expiry</h3>
+<div class="form-row">
+<div class="form-group"><label>Low Stock Threshold</label><input type="number" id="lowStockThreshold" min="1" placeholder="5"></div>
+<div class="form-group"><label>Expiry Alert (days before)</label><input type="number" id="expiryAlertDays" min="1" placeholder="30"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="lowStockAlert" style="width:16px;height:16px;"> Low Stock Alert</label></div>
+<div class="form-group"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="expiryBlockSales" style="width:16px;height:16px;"> Block Sale of Expired Items</label></div>
+</div>
+<div class="form-group"><label>Low Stock Alert Email</label><input type="email" id="lowStockEmail" placeholder="manager@danzonapharm.com"></div>
+</div>
+
+<div id="saveStatus" style="margin-top:12px;"></div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+  var toastTimer = null;
+
+  function $(id){return document.getElementById(id);}
+
+  function showToast(msg, isError) {
+      var t = $('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      t.style.display = 'block';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ t.style.display = 'none'; }, 3000);
+  }
+
+  async function loadForm() {
+      try {
+          var cfg = await API.get('/store-config');
+          if (!cfg || Object.keys(cfg).length === 0) {
+              cfg = StoreConfig.getAll();
+          }
+          StoreConfig.save(cfg);
+      } catch (e) {
+          var cfg = StoreConfig.getAll();
+      }
+      $('storeName').value = StoreConfig.get('storeName') || '';
+      $('storeAddress').value = StoreConfig.get('storeAddress') || '';
+      $('phoneNumber').value = StoreConfig.get('phoneNumber') || '';
+      $('emailAddress').value = StoreConfig.get('emailAddress') || '';
+      $('currency').value = StoreConfig.get('currency') || '₦';
+      $('currencyLocale').value = StoreConfig.get('currencyLocale') || 'en-NG';
+      $('printerType').value = StoreConfig.get('printerType') || 'small';
+      $('storeLogo').value = StoreConfig.get('storeLogo') || '';
+      $('footerText').value = StoreConfig.get('footerText') || '';
+      $('lowStockThreshold').value = StoreConfig.get('lowStockThreshold') || 5;
+      $('sessionTimeout').value = StoreConfig.get('sessionTimeout') || 30;
+      $('openingTime').value = StoreConfig.get('openingTime') || '08:00';
+      $('closingTime').value = StoreConfig.get('closingTime') || '20:00';
+      $('openDays').value = StoreConfig.get('openDays') || 'Mon-Sat';
+      $('receiptPrefix').value = StoreConfig.get('receiptPrefix') || 'DAN';
+      $('taxEnabled').checked = StoreConfig.get('taxEnabled') || false;
+      $('taxRate').value = StoreConfig.get('taxRate') || 7.5;
+      $('taxName').value = StoreConfig.get('taxName') || 'VAT';
+      $('allowDiscount').checked = StoreConfig.get('allowDiscount') !== false;
+      $('maxDiscount').value = StoreConfig.get('maxDiscount') || 20;
+      $('requireManagerForDiscount').checked = StoreConfig.get('requireManagerForDiscount') || false;
+      $('requireManagerForVoid').checked = StoreConfig.get('requireManagerForVoid') || true;
+      $('expiryAlertDays').value = StoreConfig.get('expiryAlertDays') || 30;
+      $('expiryBlockSales').checked = StoreConfig.get('expiryBlockSales') || false;
+      $('lowStockAlert').checked = StoreConfig.get('lowStockAlert') !== false;
+      $('lowStockEmail').value = StoreConfig.get('lowStockEmail') || '';
+      $('allowStoreAccount').checked = StoreConfig.get('allowStoreAccount') !== false;
+      $('allowGiftCard').checked = StoreConfig.get('allowGiftCard') !== false;
+      $('allowCardPayment').checked = StoreConfig.get('allowCardPayment') !== false;
+      $('allowPosPayment').checked = StoreConfig.get('allowPosPayment') !== false;
+      $('autoPrintReceipt').checked = StoreConfig.get('autoPrintReceipt') !== false;
+      $('showReceiptLogo').checked = StoreConfig.get('showReceiptLogo') !== false;
+  }
+
+  function collectForm() {
+      return {
+          storeName: $('storeName').value.trim(),
+          storeAddress: $('storeAddress').value.trim(),
+          phoneNumber: $('phoneNumber').value.trim(),
+          emailAddress: $('emailAddress').value.trim(),
+          currency: $('currency').value.trim() || '₦',
+          currencyLocale: $('currencyLocale').value || 'en-NG',
+          printerType: $('printerType').value || 'small',
+          storeLogo: $('storeLogo').value.trim(),
+          footerText: $('footerText').value.trim(),
+          lowStockThreshold: parseInt($('lowStockThreshold').value) || 5,
+          sessionTimeout: parseInt($('sessionTimeout').value) || 30,
+          openingTime: $('openingTime').value || '08:00',
+          closingTime: $('closingTime').value || '20:00',
+          openDays: $('openDays').value || 'Mon-Sat',
+          receiptPrefix: $('receiptPrefix').value.trim() || 'DAN',
+          taxEnabled: $('taxEnabled').checked,
+          taxRate: parseFloat($('taxRate').value) || 7.5,
+          taxName: $('taxName').value.trim() || 'VAT',
+          allowDiscount: $('allowDiscount').checked,
+          maxDiscount: parseInt($('maxDiscount').value) || 20,
+          requireManagerForDiscount: $('requireManagerForDiscount').checked,
+          requireManagerForVoid: $('requireManagerForVoid').checked,
+          expiryAlertDays: parseInt($('expiryAlertDays').value) || 30,
+          expiryBlockSales: $('expiryBlockSales').checked,
+          lowStockAlert: $('lowStockAlert').checked,
+          lowStockEmail: $('lowStockEmail').value.trim(),
+          allowStoreAccount: $('allowStoreAccount').checked,
+          allowGiftCard: $('allowGiftCard').checked,
+          allowCardPayment: $('allowCardPayment').checked,
+          allowPosPayment: $('allowPosPayment').checked,
+          autoPrintReceipt: $('autoPrintReceipt').checked,
+          showReceiptLogo: $('showReceiptLogo').checked
+      };
+  }
+
+  async function saveAllConfig() {
+      var cfg = collectForm();
+      if (!cfg.storeName) { showToast('Store name is required', true); return; }
+      try {
+          await API.put('/store-config', cfg);
+          StoreConfig.save(cfg);
+          showToast('Configuration saved successfully!');
+          $('saveStatus').innerHTML = '<div style="color:#10b981;font-size:13px;"><i class="fas fa-check-circle"></i> Saved at ' + new Date().toLocaleTimeString() + '</div>';
+      } catch (err) {
+          showToast(err.message || 'Save failed', true);
+          $('saveStatus').innerHTML = '<div style="color:#ef4444;font-size:13px;"><i class="fas fa-exclamation-circle"></i> ' + err.message + '</div>';
+          console.error('Save config error:', err);
+      }
+  }
+
+  async function init() {
+      try {
+          if (typeof POS !== 'undefined') {
+              POS.renderSidebar();
+              POS.renderUserMenu();
+              POS.startClock();
+          }
+          await loadForm();
+      } catch (err) {
+          console.error('Store Config init error:', err);
+      }
+  }
+
+  window.saveAllConfig = saveAllConfig;
+  window.loadForm = loadForm;
+
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+  } else {
+      init();
+  }
+})();
+</script>
+</body>
+</html>
+
+

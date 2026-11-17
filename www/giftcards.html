@@ -1,0 +1,299 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Cards - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-gift"></i> Gift Cards</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-gift"></i> Total Gift Cards</div>
+                <div class="kpi-value" id="totalCards">0</div>
+                <div class="kpi-sub">Gift cards created</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-circle-check"></i> Active</div>
+                <div class="kpi-value" style="color:#10b981;" id="activeCards">0</div>
+                <div class="kpi-sub">Available balance</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-times-circle"></i> Used/Expired</div>
+                <div class="kpi-value" style="color:#ef4444;" id="usedExpiredCards">0</div>
+                <div class="kpi-sub">No balance remaining</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-coins"></i> Total Value</div>
+                <div class="kpi-value" id="totalValue">?0.00</div>
+                <div class="kpi-sub">Combined worth</div>
+            </div>
+        </div>
+        <div class="page-head">
+            <div>
+                <h3>Gift Card Management</h3>
+                <p>Create and manage gift cards for your pharmacy customers.</p>
+            </div>
+            <button class="btn btn-primary" onclick="showAddGiftCardForm()"><i class="fas fa-plus"></i> Add Gift Card</button>
+        </div>
+        <div class="panel">
+            <div class="toolbar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search cards..." oninput="filterGiftCards()">
+                <select id="statusFilter" class="form-select" onchange="filterGiftCards()">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="used">Used</option>
+                    <option value="expired">Expired</option>
+                </select>
+                <button class="btn btn-info" onclick="exportGiftCardsCSV()"><i class="fas fa-file-export"></i> Export CSV</button>
+                <button class="btn btn-secondary" onclick="printGiftCards()"><i class="fas fa-print"></i> Print</button>
+            </div>
+        </div>
+        <div id="addGiftCardForm" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="giftCardFormTitle">Add New Gift Card</h3>
+                    <button class="modal-close" onclick="POS.closeModal('addGiftCardForm')">&times;</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">Card Number</label>
+                        <input type="text" id="cardNumber" class="form-control" placeholder="GC-XXXXXX">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Recipient Name</label>
+                        <input type="text" id="recipientName" class="form-control" placeholder="Customer name">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Amount (?)</label>
+                        <input type="number" id="amount" class="form-control" min="0" step="0.01" placeholder="Enter amount">
+                    </div>
+                    <div class="form-group">
+                        <label>Expiry Date</label>
+                        <input type="date" id="expiryDate" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="POS.closeModal('addGiftCardForm')">Cancel</button>
+                    <button class="btn btn-success" onclick="addGiftCard()">Save Gift Card</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-panel">
+            <div class="table-top">
+                <strong><i class="fas fa-list"></i> Gift Card Directory</strong>
+                <span id="selectedCount">Manage gift cards</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Card Number</th>
+                            <th>Recipient</th>
+                            <th>Amount</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="giftcardsTableBody">
+                        <tr><td colspan="6" class="empty-state">Loading gift cards...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var giftcards = [];
+var filteredCards = [];
+function showAddGiftCardForm() {
+    $('addGiftCardForm').classList.add('open');
+    $('giftCardFormTitle').textContent = 'Add New Gift Card';
+    $('cardNumber').value = 'GC-' + Math.floor(100000 + Math.random() * 900000);
+    $('recipientName').value = '';
+    $('amount').value = '';
+    $('expiryDate').value = '';
+}
+function $id(id) { return document.getElementById(id); }
+function updateKPIs() {
+    $('totalCards').textContent = giftcards.length;
+    $('activeCards').textContent = giftcards.filter(function(c) { return c.status === 'active'; }).length;
+    $('usedExpiredCards').textContent = giftcards.filter(function(c) { return c.status !== 'active'; }).length;
+    var total = giftcards.reduce(function(sum, c) { return sum + (parseFloat(c.amount) || 0); }, 0);
+    $('totalValue').textContent = POS.formatCurrency(total);
+}
+function filterGiftCards() {
+    var search = $('searchInput').value.toLowerCase();
+    var status = $('statusFilter').value;
+    filteredCards = giftcards.filter(function(c) {
+        var matchesSearch = (c.code || c.cardNumber || '').toLowerCase().includes(search) ||
+            (c.customer_name || c.recipient || '').toLowerCase().includes(search);
+        var matchesStatus = status === 'all' || c.status === status;
+        return matchesSearch && matchesStatus;
+    });
+    renderGiftCards();
+}
+async function addGiftCard() {
+    var code = $('cardNumber').value.trim();
+    var recipient = $('recipientName').value.trim();
+    var amount = parseFloat($('amount').value) || 0;
+    var expiry = $('expiryDate').value;
+    if (!code || !recipient || amount <= 0) {
+        POS.showToast('Please enter card number, recipient, and amount', true);
+        return;
+    }
+    try {
+        if ($('addGiftCardForm').dataset.editId) {
+            var editId = $('addGiftCardForm').dataset.editId;
+            await API.updateGiftCard(editId, { code: code, customer_name: recipient, amount: amount, expiry_date: expiry });
+            POS.showToast('Gift card updated!');
+        } else {
+            var newId = giftcards.length > 0 ? Math.max.apply(null, giftcards.map(function(g) { return g.id; })) + 1 : 1;
+            await API.saveGiftCard({ id: newId, code: code, customer_name: recipient, amount: amount, expiry_date: expiry, balance: amount, status: 'active' });
+            POS.showToast('Gift card added successfully!');
+        }
+        POS.closeModal('addGiftCardForm');
+        delete $('addGiftCardForm').dataset.editId;
+        loadGiftCards();
+    } catch (err) {
+        POS.showToast(err.message || 'Failed to save gift card', true);
+    }
+}
+function viewGiftCard(id) {
+    var gc = giftcards.find(function(g) { return g.id === id || g.id == id; });
+    if (!gc) return;
+    var modalHtml = '<div class="modal-overlay open" id="viewModal">' +
+        '<div class="modal"><div class="modal-header"><h3>Gift Card Details</h3><button class="modal-close" onclick="POS.closeModal(\'viewModal\')">&times;</button></div>' +
+        '<div class="form-row">' +
+        '<div class="kpi-card" style="flex:1;"><div class="kpi-label">Card Number</div><div class="kpi-value">' + POS.esc(gc.code || gc.cardNumber) + '</div></div>' +
+        '<div class="kpi-card" style="flex:1;"><div class="kpi-label">Recipient</div><div class="kpi-value">' + POS.esc(gc.customer_name || gc.recipient || '-') + '</div></div>' +
+        '</div>' +
+        '<div class="form-row" style="margin-top:15px;">' +
+        '<div class="kpi-card" style="flex:1;"><div class="kpi-label">Amount</div><div class="kpi-value">' + POS.formatCurrency(gc.amount || 0) + '</div></div>' +
+        '<div class="kpi-card" style="flex:1;"><div class="kpi-label">Balance</div><div class="kpi-value">' + POS.formatCurrency(gc.balance || gc.amount || 0) + '</div></div>' +
+        '</div>' +
+        '<div class="form-row" style="margin-top:15px;">' +
+        '<div class="form-group"><label>Status</label>' + POS.statusBadge(gc.status || 'active') + '</div>' +
+        '<div class="form-group"><label>Expiry</label><span>' + (gc.expiry_date || gc.expiry || 'N/A') + '</span></div>' +
+        '</div>' +
+        '<div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal(\'viewModal\')">Close</button></div>' +
+        '</div></div>';
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+function editGiftCard(id) {
+    var gc = giftcards.find(function(g) { return g.id === id || g.id == id; });
+    if (!gc) return;
+    $('addGiftCardForm').dataset.editId = id;
+    $('giftCardFormTitle').textContent = 'Edit Gift Card';
+    $('cardNumber').value = gc.code || gc.cardNumber;
+    $('recipientName').value = gc.customer_name || gc.recipient;
+    $('amount').value = gc.amount || gc.value;
+    $('expiryDate').value = gc.expiry_date || gc.expiry;
+    $('addGiftCardForm').classList.add('open');
+}
+async function deleteGiftCard(id) {
+    if (!confirm('Delete this gift card?')) return;
+    try {
+        await API.deleteGiftCard(id);
+        POS.showToast('Gift card deleted!');
+        loadGiftCards();
+    } catch (err) {
+        POS.showToast(err.message || 'Delete failed', true);
+    }
+}
+async function renderGiftCards() {
+    try {
+        giftcards = await API.getGiftCards() || [];
+        filteredCards = [...giftcards];
+    } catch (err) {
+        giftcards = [];
+        POS.showToast('Failed to load gift cards', true);
+    }
+    updateKPIs();
+    var tbody = $('giftcardsTableBody');
+    var data = filteredCards.length > 0 ? filteredCards : giftcards;
+    if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No gift cards found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(function(g) {
+        return '<tr>' +
+            '<td>' + POS.esc(g.code || g.cardNumber) + '</td>' +
+            '<td>' + POS.esc(g.customer_name || g.recipient || '') + '</td>' +
+            '<td>' + POS.formatCurrency(g.amount || g.value || 0) + '</td>' +
+            '<td>' + POS.formatCurrency(g.balance || g.amount || 0) + '</td>' +
+            '<td>' + POS.statusBadge(g.status || 'active') + '</td>' +
+            '<td class="action-btns">' +
+            '<button class="icon-btn view" onclick="viewGiftCard(' + (g.id || g._id) + ')"><i class="fas fa-eye"></i></button>' +
+            '<button class="icon-btn edit" onclick="editGiftCard(' + (g.id || g._id) + ')"><i class="fas fa-edit"></i></button>' +
+            '<button class="icon-btn delete" onclick="deleteGiftCard(' + (g.id || g._id) + ')"><i class="fas fa-trash"></i></button>' +
+            '</td></tr>';
+    }).join('');
+}
+function exportGiftCardsCSV() {
+    var data = filteredCards.length > 0 ? filteredCards : giftcards;
+    if (!data.length) {
+        POS.showToast('No gift cards to export', true);
+        return;
+    }
+    POS.exportCSV('giftcards_' + POS.today() + '.csv',
+        ['Card Number', 'Recipient', 'Amount', 'Balance', 'Status', 'Expiry Date'],
+        data.map(function(c) {
+            return {
+                'Card Number': c.code || c.cardNumber,
+                'Recipient': c.customer_name || c.recipient || '',
+                'Amount': c.amount || c.value || 0,
+                'Balance': c.balance || c.amount || 0,
+                'Status': c.status || 'active',
+                'Expiry Date': c.expiry_date || c.expiry || ''
+            };
+        })
+    );
+}
+function printGiftCards() {
+    var data = filteredCards.length > 0 ? filteredCards : giftcards;
+    POS.printTable('SHANKS SHOP MANAGEMENT Gift Cards Report',
+        ['Card Number', 'Recipient', 'Amount', 'Balance', 'Status', 'Expiry Date'],
+        data.map(function(c) {
+            return {
+                'Card Number': POS.esc(c.code || c.cardNumber || ''),
+                'Recipient': POS.esc(c.customer_name || c.recipient || ''),
+                'Amount': POS.formatCurrency(c.amount || c.value || 0),
+                'Balance': POS.formatCurrency(c.balance || c.amount || 0),
+                'Status': c.status || 'active',
+                'Expiry Date': c.expiry_date || c.expiry || 'N/A'
+            };
+        })
+    );
+}
+document.addEventListener('DOMContentLoaded', function() {
+    if (!POS.requireAuth()) return;
+    POS.renderSidebar();
+    POS.renderUserMenu();
+    loadGiftCards();
+});
+</script>
+</body>
+</html>
+
+
+
+

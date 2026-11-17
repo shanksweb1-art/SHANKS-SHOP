@@ -1,0 +1,249 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Orders - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        .btn-send{background:#2563eb;color:#fff}
+        .btn-send:hover{background:#1d4ed8}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .badge-draft{background:#f3f4f6;color:#374151}
+        .badge-sent{background:#eff6ff;color:#1e40af}
+        .badge-approved{background:#ecfdf5;color:#065f46}
+        .badge-received{background:#dbeafe;color:#1e40af}
+        .badge-cancelled{background:#fef2f2;color:#991b1b}
+        .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-file-invoice-dollar"></i> Purchase Orders</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="panel">
+            <h3><i class="fas fa-plus"></i> New Purchase Order</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Supplier</label>
+                    <select id="poSupplier" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>Expected Delivery</label>
+                    <input type="date" id="poDelivery" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Product</label>
+                    <input type="text" id="poProduct" class="form-control" placeholder="Product name / SKU">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="poQty" class="form-control" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Unit Cost (₦)</label>
+                    <input type="number" id="poUnitCost" class="form-control" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Total Amount (₦)</label>
+                    <input type="text" id="poTotal" class="form-control" readonly>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label>Notes</label>
+                    <textarea id="poNotes" class="form-control" rows="2" placeholder="Order notes or delivery instructions..."></textarea>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="saveOrder()"><i class="fas fa-save"></i> Save Draft</button>
+                <button class="btn btn-send" onclick="sendOrder()"><i class="fas fa-paper-plane"></i> Submit to Supplier</button>
+                <button class="btn btn-outline" onclick="resetPO()"><i class="fas fa-eraser"></i> Clear</button>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-list"></i> Purchase Orders</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Order #</th><th>Date</th><th>Supplier</th><th>Items</th><th>Total</th><th>Delivery</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="poBody">
+                        <tr><td colspan="8" class="empty-state">No purchase orders created</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function $(id){return document.getElementById(id);}
+var orders = [];
+function fmt(n){ try { return StoreConfig.formatCurrency(n); } catch(e) { return '₦' + (parseFloat(n) || 0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); } }
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){ t.style.display='none'; },3000); }
+function calcPO(){
+    var qty = parseInt($('poQty').value) || 0;
+    var unit = parseFloat($('poUnitCost').value) || 0;
+    $('poTotal').value = fmt(qty * unit);
+}
+function saveOrder(){
+    var supplier = $('poSupplier').value;
+    var delivery = $('poDelivery').value;
+    var product = $('poProduct').value.trim();
+    var qty = parseInt($('poQty').value) || 0;
+    var unit = parseFloat($('poUnitCost').value) || 0;
+    var notes = $('poNotes').value.trim();
+    var total = qty * unit;
+    if(!supplier){ showToast('Select a supplier', true); return; }
+    if(!product || qty <= 0){ showToast('Enter product and valid quantity', true); return; }
+    var order = {
+        id: 'PO-' + Date.now().toString().slice(-6),
+        date: new Date().toISOString(),
+        supplier: supplier,
+        delivery: delivery,
+        product: product,
+        qty: qty,
+        unitCost: unit,
+        total: total,
+        notes: notes,
+        status: 'draft'
+    };
+    orders.unshift(order);
+    try { localStorage.setItem('SHEDS_purchase_orders', JSON.stringify(orders)); } catch(e){}
+    showToast('Order saved as draft');
+    resetPO();
+    renderOrders();
+    logAction('order', order.id, supplier + ' - ' + product);
+}
+function sendOrder(){
+    var supplier = $('poSupplier').value;
+    var delivery = $('poDelivery').value;
+    var product = $('poProduct').value.trim();
+    var qty = parseInt($('poQty').value) || 0;
+    var unit = parseFloat($('poUnitCost').value) || 0;
+    var notes = $('poNotes').value.trim();
+    var total = qty * unit;
+    if(!supplier){ showToast('Select a supplier', true); return; }
+    if(!product || qty <= 0){ showToast('Enter product and valid quantity', true); return; }
+    var order = {
+        id: 'PO-' + Date.now().toString().slice(-6),
+        date: new Date().toISOString(),
+        supplier: supplier,
+        delivery: delivery,
+        product: product,
+        qty: qty,
+        unitCost: unit,
+        total: total,
+        notes: notes,
+        status: 'sent'
+    };
+    orders.unshift(order);
+    try { localStorage.setItem('SHEDS_purchase_orders', JSON.stringify(orders)); } catch(e){}
+    showToast('Order submitted to supplier');
+    resetPO();
+    renderOrders();
+    logAction('order', order.id, supplier + ' - ' + product);
+}
+function resetPO(){
+    $('poSupplier').value = $('poSupplier').options[0] ? $('poSupplier').options[0].value : '';
+    $('poDelivery').value = '';
+    $('poProduct').value = '';
+    $('poQty').value = 1;
+    $('poUnitCost').value = '';
+    $('poTotal').value = '₦0.00';
+    $('poNotes').value = '';
+}
+function badgeFor(s){
+    if(s==='draft') return '<span class="badge badge-draft">Draft</span>';
+    if(s==='sent') return '<span class="badge badge-sent">Sent</span>';
+    if(s==='approved') return '<span class="badge badge-approved">Approved</span>';
+    if(s==='received') return '<span class="badge badge-received">Received</span>';
+    if(s==='cancelled') return '<span class="badge badge-cancelled">Cancelled</span>';
+    return '<span class="badge badge-draft">' + esc(s) + '</span>';
+}
+function renderOrders(){
+    var tbody = $('poBody');
+    if(!orders.length){ tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No purchase orders created</td></tr>'; return; }
+    tbody.innerHTML = orders.map(function(o){
+        var actions = '';
+        if(o.status === 'draft' || o.status === 'sent'){
+            actions = '<button class="btn btn-primary" style="padding:6px 10px;font-size:11px;" onclick="markReceived(\'' + o.id + '\')"><i class="fas fa-check"></i> Mark Received</button> ';
+        }
+        actions += '<button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="voidOrder(\'' + o.id + '\')"><i class="fas fa-times"></i> Void</button>';
+        return '<tr><td>#' + esc(o.id) + '</td><td>' + esc(new Date(o.date).toLocaleDateString('en-NG')) + '</td><td>' + esc(o.supplier) + '</td><td>' + esc(o.product) + ' x' + esc(o.qty) + '</td><td style="font-weight:900;">' + fmt(o.total) + '</td><td>' + esc(o.delivery || '-') + '</td><td>' + badgeFor(o.status) + '</td><td style="display:flex;gap:6px;flex-wrap:wrap;">' + actions + '</td></tr>';
+    }).join('');
+}
+function markReceived(id){
+    if(!confirm('Mark order as received?')) return;
+    var order = orders.find(function(o){ return o.id === id; });
+    if(order){ order.status = 'received'; }
+    try { localStorage.setItem('SHEDS_purchase_orders', JSON.stringify(orders)); } catch(e){}
+    renderOrders();
+    showToast('Order marked as received');
+}
+function voidOrder(id){
+    if(!confirm('Void this order?')) return;
+    orders = orders.filter(function(o){ return o.id !== id; });
+    try { localStorage.setItem('SHEDS_purchase_orders', JSON.stringify(orders)); } catch(e){}
+    renderOrders();
+    showToast('Order voided');
+}
+function loadSuppliers(){
+    var suppliers = [];
+    try { suppliers = JSON.parse(localStorage.getItem('SHEDS_suppliers') || '[]'); if(!Array.isArray(suppliers)) suppliers = []; } catch(e){ suppliers = []; }
+    var opts = suppliers.map(function(s){ return '<option value="' + esc(s.name || s.id) + '">' + esc(s.name) + '</option>'; }).join('');
+    var defaultOpt = '<option value="">-- Select Supplier --</option>';
+    $('poSupplier').innerHTML = defaultOpt + opts;
+}
+function loadOrders(){
+    try { orders = JSON.parse(localStorage.getItem('SHEDS_purchase_orders') || '[]'); if(!Array.isArray(orders)) orders = []; } catch(e){ orders = []; }
+    renderOrders();
+}
+function logAction(action, ref, note){
+    var user = API.getUserName ? API.getUserName() : 'System';
+    API.post('/audit-log', {action: action, entity: 'purchase_order', entity_id: String(ref || ''), details: note || '', user: user}).catch(function(){});
+}
+$('poQty').addEventListener('input', calcPO);
+$('poUnitCost').addEventListener('input', calcPO);
+document.addEventListener('DOMContentLoaded', function(){
+    if(!POS.requireAuth()) return;
+    loadSuppliers();
+    loadOrders();
+});
+</script>
+</body>
+</html>
+
+
+
+
+

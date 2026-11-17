@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Today's Receipts - SHANKS SHOP MANAGEMENT</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="common.css">
+<script src="api.js"></script>
+<script src="common.js"></script>
+<style>
+.date-bar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.date-bar .form-group{margin:0}
+.receipt-no{font-weight:800;color:#0f172a}
+.empty-state{padding:40px;text-align:center;color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:800}
+.tag-cash{background:#dcfce7;color:#166534}.tag-card{background:#dbeafe;color:#1d4ed8}.tag-store{background:#fef3c7;color:#92400e}.tag-pos{background:#ede9fe;color:#6d28d9}.tag-bank{background:#cffafe;color:#0e7490}.tag-gift{background:#ffe4e6;color:#9f1239}
+</style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+  <div class="header"><h2><i class="fas fa-receipt"></i> Today's Receipts</h2><div id="userMenu"></div><div class="header-clock" id="topClock"></div></div>
+  <div class="content">
+    <div class="date-bar">
+      <div class="form-group"><label class="form-group label" style="font-size:12px;font-weight:850;color:#475569;">Date</label><input type="date" id="filterDate" class="form-control" style="width:auto;"></div>
+      <button class="btn btn-primary" onclick="loadReceipts()"><i class="fas fa-sync-alt"></i> Load</button>
+      <button class="btn btn-outline" onclick="setToday()"><i class="fas fa-calendar-day"></i> Today</button>
+    </div>
+    <div class="table-panel">
+      <div class="table-top"><strong><i class="fas fa-list"></i> Sales Receipts</strong><span id="countLabel"></span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Receipt #</th><th>Time</th><th>Customer</th><th style="text-align:center">Items</th><th style="text-align:right">Total</th><th>Payment</th><th>Actions</th></tr></thead>
+          <tbody id="receiptsBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header"><h3><i class="fas fa-edit"></i> Edit Invoice</h3><button class="modal-close" onclick="closeEdit()">&times;</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Customer Name</label><input id="edCustomer" class="form-control"></div>
+      <div class="form-group"><label>Payment Method</label>
+        <select id="edPayment" class="form-control">
+          <option value="cash">Cash</option>
+          <option value="store_account">Store Account</option>
+          <option value="card">Card</option>
+          <option value="pos">POS</option>
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="giftcard">Gift Card</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Discount Amount (?)</label><input id="edDiscount" type="number" min="0" step="0.01" class="form-control"></div>
+      <div class="form-group"><label>New Total (auto)</label><input id="edTotal" class="form-control" disabled></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="edNotes" class="form-control" placeholder="Invoice notes / comments"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()"><i class="fas fa-save"></i> Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var allReceipts = [];
+var editingId = null;
+function $(id){return document.getElementById(id);}
+function navigateTo(p){window.location.href=p;}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+function fmt(n){try{return StoreConfig.formatCurrency(n);}catch(e){return '₦'+(parseFloat(n)||0).toLocaleString('en-NG',{minimumFractionDigits:2});}}
+function formatDate(d){if(!d)return '-';try{return new Date(d).toLocaleString('en-NG',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch(e){return d;}}
+function showToast(m,err){var t=$('toast');t.textContent=m;t.className='toast'+(err?' error':'');t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
+function getPaymentLabel(m){if(!m)return 'Cash';var map={cash:'Cash',store_account:'Store Account',card:'Card',pos:'POS',bank_transfer:'Bank Transfer',giftcard:'Gift Card'};return map[m]||m;}
+function getPaymentClass(m){var map={cash:'tag-cash',store_account:'tag-store',card:'tag-card',pos:'tag-pos',bank_transfer:'tag-bank',giftcard:'tag-gift'};return map[m]||'tag-cash';}
+function setToday(){$('filterDate').value=POS.today();loadReceipts();}
+
+function loadReceipts(){
+  var tbody=$('receiptsBody');
+  tbody.innerHTML='<tr><td colspan="7" class="empty-state">Loading...</td></tr>';
+  API.getSales().then(function(list){
+    allReceipts=list||[];
+    renderTable();
+  }).catch(function(e){
+    tbody.innerHTML='<tr><td colspan="7" class="empty-state">Failed to load receipts: '+(e.message||'error')+'</td></tr>';
+  });
+}
+
+function renderTable(){
+  var dateFilter=$('filterDate').value;
+  var rows=allReceipts.filter(function(s){
+    if(!dateFilter)return true;
+    return (s.date||'').indexOf(dateFilter)===0;
+  });
+  rows.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  $('countLabel').textContent=rows.length+' receipt(s)';
+  if(!rows.length){$('receiptsBody').innerHTML='<tr><td colspan="7" class="empty-state">No receipts found for this date.</td></tr>';return;}
+  $('receiptsBody').innerHTML=rows.map(function(s){
+    var items=s.items||[];
+    var itemCount=items.length;
+    var isVoid=(s.status||'completed')==='void';
+    if(isVoid){
+      return '<tr style="opacity:.6">'+
+        '<td class="receipt-no">POS-'+s.id+'</td>'+
+        '<td>'+formatDate(s.date)+'</td>'+
+        '<td>'+esc(s.customer_name||'Walk-in')+'</td>'+
+        '<td style="text-align:center">'+itemCount+'</td>'+
+        '<td style="text-align:right;font-weight:800">'+fmt(s.total)+'</td>'+
+        '<td><span class="tag tag-muted" style="background:#fee2e2;color:#991b1b;">VOID</span></td>'+
+        '<td><span style="color:#94a3b8;font-size:12px;">Voided</span></td>'+
+      '</tr>';
+    }
+    return '<tr>'+
+      '<td class="receipt-no">POS-'+s.id+'</td>'+
+      '<td>'+formatDate(s.date)+'</td>'+
+      '<td>'+esc(s.customer_name||'Walk-in')+'</td>'+
+      '<td style="text-align:center">'+itemCount+'</td>'+
+      '<td style="text-align:right;font-weight:800">'+fmt(s.total)+'</td>'+
+      '<td><span class="tag '+getPaymentClass(s.payment_method)+'">'+getPaymentLabel(s.payment_method)+'</span></td>'+
+      '<td><div class="action-btns">'+
+        '<button class="icon-btn view" onclick="printReceipt('+s.id+')"><i class="fas fa-print"></i></button>'+
+        '<button class="icon-btn edit" onclick="editInvoice('+s.id+')"><i class="fas fa-edit"></i></button>'+
+        '<button class="icon-btn delete" onclick="voidInvoice('+s.id+')"><i class="fas fa-ban"></i></button>'+
+      '</div></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function findSale(id){return allReceipts.find(function(s){return String(s.id)===String(id);});}
+
+function printReceipt(id){
+  var s=findSale(id);
+  if(!s){showToast('Receipt not found',true);return;}
+  var receipt={
+    sale_id:s.id,
+    created_at:s.date,
+    business_name:API.getPharmacyName?API.getPharmacyName():StoreConfig.getPharmacyName()||'Shanks Shop Management',
+    business_address:StoreConfig.get('storeAddress')||'',
+    employee:s.cashier||'Cashier',
+    customer_name:s.customer_name||'Walk-in',
+    items:s.items||[],
+    subtotal:s.subtotal,
+    tax_amount:s.tax,
+    total:s.total,
+    cash_received:s.amount_tendered,
+    change_due:s.change,
+    payment_method:s.payment_method,
+    comments:s.notes||'',
+    notes:s.notes||''
+  };
+  try{ localStorage.setItem('last_receipt',JSON.stringify(receipt)); }catch(e){}
+  navigateTo('receipt.html?print=1');
+}
+
+function editInvoice(id){
+  if(!id){showToast('Receipt not found',true);return;}
+  navigateTo('sales.html?edit='+id);
+}
+
+function voidInvoice(id){
+  if(!id){showToast('Receipt not found',true);return;}
+  if(!confirm('Void this invoice? Stock and customer balance will be reversed.'))return;
+  API.post('/sales/'+id+'/void',{}).then(function(){
+    showToast('Invoice voided');
+    loadReceipts();
+  }).catch(function(e){showToast('Void failed: '+(e.message||'error'),true);});
+}
+function updateEditTotal(){
+  var s=findSale(editingId);
+  if(!s)return;
+  var subtotal=parseFloat(s.subtotal)||0;
+  var disc=parseFloat($('edDiscount').value)||0;
+  var tax=parseFloat(s.tax)||0;
+  $('edTotal').value=fmt(round2(subtotal-disc+tax));
+}
+function round2(n){return Math.round((parseFloat(n)||0)*100)/100;}
+function closeEdit(){editingId=null;POS.closeModal('editModal');}
+function saveEdit(){
+  if(!editingId){return;}
+  var data={
+    customer_name:$('edCustomer').value.trim(),
+    payment_method:$('edPayment').value,
+    discount_amount:parseFloat($('edDiscount').value)||0,
+    notes:$('edNotes').value.trim()
+  };
+  API.put('/sales/'+editingId,data).then(function(){
+    showToast('Invoice updated');
+    closeEdit();
+    loadReceipts();
+  }).catch(function(e){showToast('Update failed: '+(e.message||'error'),true);});
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  POS.initCommon();
+  setToday();
+  $('edDiscount').addEventListener('input',updateEditTotal);
+});
+</script>
+</body>
+</html>

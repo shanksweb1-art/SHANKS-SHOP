@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+    .step-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+    .step-btn{border:0;background:#f1f5f9;color:#475569;border-radius:999px;padding:10px 16px;font-weight:800;cursor:pointer}
+    .step-btn.active{background:#2563eb;color:#fff}
+    .step-panel{display:none}.step-panel.active{display:block}
+    .preview-image{height:120px;border:1px dashed #cbd5e1;border-radius:10px;background:#f8fafc;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:36px;overflow:hidden}
+    .preview-image img{width:100%;height:100%;object-fit:cover}
+    @media(max-width:768px){.step-nav{justify-content:center}.step-btn{padding:8px 12px;font-size:12px}}
+    </style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header"><h2><i class="fas fa-plus-circle"></i> Add / Edit Product</h2><div id="userMenu"></div><div class="header-clock" id="topClock"></div></div>
+    <div class="content">
+        <div class="step-nav">
+            <button class="step-btn active" data-step="basic" onclick="switchStep('basic')">Basic Info</button>
+            <button class="step-btn" data-step="pricing" onclick="switchStep('pricing')">Pricing</button>
+            <button class="step-btn" data-step="inventory" onclick="switchStep('inventory')">Inventory</button>
+        </div>
+        
+        <div id="basic" class="step-panel active">
+            <div class="table-panel">
+                <div class="table-top"><strong><i class="fas fa-info-circle"></i> Product Details</strong></div>
+                <div class="form-row">
+                    <div class="form-group"><label class="required">Product Name</label><input id="productName" class="form-control" placeholder="e.g. Paracetamol 500mg"></div>
+                    <div class="form-group"><label>SKU</label><input id="productSKU" class="form-control" placeholder="Optional - auto-generated if blank"></div>
+                    <div class="form-group"><label>Category</label><input id="productCategory" class="form-control" placeholder="Tablet / Syrup / Equipment"></div>
+                    <div class="form-group"><label>Description</label><textarea id="productDescription" class="form-control" placeholder="Usage instructions, warnings..."></textarea></div>
+                </div>
+            </div>
+            
+            <div class="table-panel" style="margin-top:16px;">
+                <div class="table-top"><strong><i class="fas fa-box"></i> Packaging / Units</strong><span>Enter the quantity you are adding for each package type &mdash; stock is calculated in base units. The cost price of a package is the cost of ONE package and is what profit is calculated on.</span></div>
+                <div id="pkgBody" class="table-wrap"><table><thead><tr><th>Name</th><th>Units / Pkg</th><th>Opening Qty (packs)</th><th>Base Units</th><th>Cost Price (1 pkg)</th><th>Sell Price</th><th>Default</th><th>Actions</th></tr></thead><tbody><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody><tfoot></tfoot></table></div>
+                <div style="padding:12px;display:flex;gap:8px;flex-wrap:wrap;">
+                    <input type="text" id="newPkgName" class="form-control" placeholder="Package name (e.g. Carton)" style="flex:1;min-width:120px;">
+                    <input type="number" id="newPkgQty" class="form-control" placeholder="Units/Pkg" value="1" min="1" step="1" style="width:90px;" title="How many base units (e.g. packets) one package contains">
+                    <input type="number" id="newPkgOpen" class="form-control" placeholder="Opening Qty" value="0" min="0" step="1" style="width:110px;" title="How many of this package you are adding now">
+                    <input type="number" id="newPkgCost" class="form-control" placeholder="Cost (1 pkg)" step="0.01" min="0" style="width:110px;" title="Cost of one package. Profit is calculated on this price.">
+                    <input type="number" id="newPkgPrice" class="form-control" placeholder="Sell Price" step="0.01" min="0" style="width:110px;" title="Selling price of one package">
+                    <button class="btn btn-primary" onclick="addPackage()"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="pricing" class="step-panel">
+            <div class="table-panel">
+                <div class="table-top"><strong><i class="fas fa-tags"></i> Pricing</strong></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Cost Price (?) - per base unit</label><input id="costPrice" class="form-control" type="number" min="0" step="0.01" value="0" title="Cost of one base unit. Used for stock value and for package types that have no cost price of their own."></div>
+                    <div class="form-group"><label>Selling Price (?)</label><input id="sellPrice" class="form-control" type="number" min="0" step="0.01" value="0"></div>
+                    <div class="form-group"><label>Wholesale Price (?)</label><input id="wholesalePrice" class="form-control" type="number" min="0" step="0.01" value="0"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="inventory" class="step-panel">
+            <div class="table-panel">
+                <div class="table-top"><strong><i class="fas fa-boxes"></i> Inventory</strong></div>
+                <div class="form-row">
+                    <div class="form-group"><label id="stockQtyLabel">Opening Stock (base units)</label><input id="stockQty" class="form-control" type="number" min="0" value="0" oninput="setStockOverride(this.value)"><small id="stockQtyHint">Type the stock you actually have in individual units (e.g. 800). Leave it to calculate from the package quantities in Step 1.</small></div>
+                    <div class="form-group"><label>Reorder Level</label><input id="reorderLevel" class="form-control" type="number" min="0" value="10"></div>
+                    <div class="form-group"><label>Expiry Date</label><input id="expiryDate" class="form-control" type="date"></div>
+                    <div class="form-group full"><label>Image URL</label><input id="productImage" class="form-control" placeholder="https://... or logo.png"></div>
+                    <div class="form-group full"><div class="preview-image" id="imagePreview"><i class="fas fa-image"></i></div></div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top:20px;display:flex;gap:10px;">
+            <button class="btn btn-primary" onclick="saveProduct()"><i class="fas fa-save"></i> Save Product</button>
+            <button class="btn btn-outline" onclick="resetForm()"><i class="fas fa-undo"></i> Reset</button>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var editingId=null,packages=[];
+function updatePackagePrices(sellPrice){packages.forEach(function(p){if(typeof p.price==='undefined'||p.price===0)p.price=sellPrice||0;});}
+function $(id){return document.getElementById(id);}
+function num(v,f){var n=parseFloat(v);return isNaN(n)?(f||0):n;}
+function switchStep(name){document.querySelectorAll('.step-btn').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-step')===name)});document.querySelectorAll('.step-panel').forEach(function(p){p.classList.remove('active');});document.getElementById(name).classList.add('active');}
+function pkgUnits(pkg){return Math.max(1,num(pkg&&pkg.qty,1));}
+function pkgBaseUnits(pkg){return Math.max(0,num(pkg&&pkg.open_qty))*pkgUnits(pkg);}
+var stockOverride=null;
+function computeOpeningStock(){if(stockOverride!==null)return stockOverride;return packages.reduce(function(sum,p){return sum+pkgBaseUnits(p);},0);}
+function setStockOverride(val){stockOverride=Math.max(0,num(val,0));packages.forEach(function(p){p.open_qty=0;});renderPackages();$('stockQty').value=stockOverride;}
+function clearStockOverride(){stockOverride=null;}
+function syncStockField(){if(editingId)return;if(stockOverride!==null){$('stockQty').value=stockOverride;return;}$('stockQty').value=computeOpeningStock();}
+function renderPackages(){var tbody=$('pkgBody').querySelector('tbody');var editing=!!editingId;tbody.innerHTML=packages.map(function(p,i){return '<tr><td>'+POS.esc(p.name)+'</td>'+'<td><input type="number" min="1" step="1" class="form-control" style="padding:6px 8px" value="'+pkgUnits(p)+'" onchange="setPkgQty('+i+',this.value)"></td>'+'<td><input type="number" min="0" step="1" class="form-control" style="padding:6px 8px" value="'+num(p.open_qty)+'" onchange="setOpenQty('+i+',this.value)"'+(editing?' disabled':'')+'></td>'+'<td style="font-weight:800;color:#047857;">'+POS.formatNumber(pkgBaseUnits(p))+'</td>'+'<td>'+POS.formatCurrency(p.cost_price||0)+'</td>'+'<td>'+POS.formatCurrency(p.price||0)+'</td>'+'<td><input type="radio" name="defaultPkg" '+(p.default_sale?'checked':'')+' onclick="setDefaultPkg('+i+')"></td>'+'<td><button class="icon-btn delete" onclick="deletePackage('+i+')"><i class="fas fa-trash"></i></button></td></tr>';}).join('');var tfoot=$('pkgBody').querySelector('tfoot');if(tfoot){tfoot.innerHTML='<tr><td colspan="3" style="font-weight:800;">'+(editing?'Current stock (base units)':'Total opening stock (base units)')+'</td><td style="font-weight:900;color:#047857;">'+POS.formatNumber(editing?num($('stockQty').value):computeOpeningStock())+'</td><td colspan="4"></td></tr>';}}
+function setPkgQty(i,val){if(!packages[i])return;packages[i].qty=Math.max(1,num(val,1));clearStockOverride();renderPackages();syncStockField();}
+function setOpenQty(i,val){if(!packages[i])return;packages[i].open_qty=Math.max(0,num(val));clearStockOverride();renderPackages();syncStockField();}
+function addPackage(){var name=$('newPkgName').value.trim();var qty=num($('newPkgQty').value,1);var open=num($('newPkgOpen').value);var cost=num($('newPkgCost').value);var price=num($('newPkgPrice').value);if(!name){POS.showToast('Package name required',true);return;}packages.push({id:name.toLowerCase().replace(/[^a-z0-9]+/g,'_'),name:name,qty:Math.max(1,qty),open_qty:Math.max(0,open),cost_price:cost,price:price,default_sale:false});clearStockOverride();$('newPkgName').value='';$('newPkgQty').value='1';$('newPkgOpen').value='0';$('newPkgCost').value='';$('newPkgPrice').value='';renderPackages();syncStockField();}
+function deletePackage(i){if(packages.length===1){POS.showToast('Cannot delete last package',true);return;}packages.splice(i,1);clearStockOverride();if(packages.find(function(p){return p.default_sale;})||packages.length===0){packages[0].default_sale=true;}renderPackages();syncStockField();}
+function setDefaultPkg(i){packages.forEach(function(p){p.default_sale=false;});packages[i].default_sale=true;renderPackages();}
+function renderImagePreview(){var img=$('productImage').value.trim(),box=$('imagePreview');if(!box)return;box.innerHTML=img?'<img src="'+POS.esc(img)+'" alt="Product image">':'<i class="fas fa-image"></i>';}
+function buildProductData(validate){var name=$('productName').value.trim(),sku=$('productSKU').value.trim(),price=num($('sellPrice').value);updatePackagePrices(price);if(validate&&!name){POS.showToast('Product name is required',true);return null;}if(!sku){sku='SKU-'+Date.now().toString(36).toUpperCase();}if(validate&&(!name||!sku)){POS.showToast('Product name and SKU required',true);return null;}var pkgOut=packages.map(function(p){return{id:p.id,name:p.name,qty:pkgUnits(p),cost_price:num(p.cost_price),price:num(p.price),default_sale:!!p.default_sale};});return{name:name,sku:sku,category:$('productCategory').value.trim(),description:$('productDescription').value.trim(),cost_price:num($('costPrice').value),price:price,selling_price:price,wholesale_price:num($('wholesalePrice').value),stock:editingId?num($('stockQty').value):computeOpeningStock(),reorder_level:num($('reorderLevel').value),expiry:$('expiryDate').value,image_url:$('productImage').value.trim(),packaging_types:pkgOut};}
+async function saveProduct(){var data=buildProductData(true);if(!data)return;if(window.location.protocol==='file:'){POS.showToast('Cannot reach server. Open the app through the server URL (e.g. http://localhost:5000/variations.html), not the file directly.',true);return;}if(!API.isLoggedIn()){POS.showToast('Not signed in to the server. Please log in first so products are saved online.',true);return;}try{if(editingId){await API.updateProduct(editingId,data);POS.showToast('Product updated on server');}else{var res=await API.saveProduct(data);data.id=res.id||data.id;POS.showToast('Product saved to server');}resetForm();var list=JSON.parse(localStorage.getItem('danzona_products')||'[]');var idx=list.findIndex(function(x){return String(x.id)===String(data.id);});if(idx>-1)list[idx]=data;else list.unshift(data);localStorage.setItem('danzona_products',JSON.stringify(list));}catch(e){var msg=(e&&e.message)?e.message:'';var isNetwork=String(msg).indexOf('fetch')>-1||String(msg).indexOf('Failed to fetch')>-1||String(msg).indexOf('NetworkError')>-1||String(msg).indexOf('Network request')>-1;if(isNetwork){var list=JSON.parse(localStorage.getItem('danzona_products')||'[]');list.unshift(data);localStorage.setItem('danzona_products',JSON.stringify(list));POS.showToast('No server connection - saved locally (offline only)',true);}else{POS.showToast('Server rejected save: '+msg,true);}}}
+function resetForm(){editingId=null;clearStockOverride();$('productName').value='';$('productSKU').value='';$('productCategory').value='';$('productDescription').value='';$('costPrice').value='0';$('sellPrice').value='0';$('wholesalePrice').value='0';$('stockQty').value='0';$('stockQty').readOnly=false;$('stockQtyLabel').textContent='Opening Stock (base units)';$('stockQtyHint').textContent='Type the stock you actually have in individual units (e.g. 800). Leave it to calculate from the package quantities in Step 1.';$('reorderLevel').value='10';$('expiryDate').value='';$('productImage').value='';$('newPkgOpen').value='0';packages=[{id:'pkt',name:'Packet',qty:1,open_qty:0,cost_price:0,price:0,default_sale:true}];renderPackages();renderImagePreview();}
+async function loadProductForEdit(id){editingId=id;clearStockOverride();var p=null;try{var list=await API.getProducts()||[];p=list.find(function(x){return String(x.id)===String(id);});}catch(e){}if(!p){try{var cached=JSON.parse(localStorage.getItem('danzona_products')||'[]');p=cached.find(function(x){return String(x.id)===String(id);});}catch(e){}}if(!p)return;$('productName').value=p.name||'';$('productSKU').value=p.sku||p.barcode||'';$('productCategory').value=p.category_name||p.category||'';$('productDescription').value=p.description||p.description||'';$('costPrice').value=num(p.cost_price||p.costPrice);$('sellPrice').value=num(p.price||p.selling_price);$('wholesalePrice').value=num(p.wholesale_price);$('stockQty').value=num(p.stock);$('stockQty').readOnly=false;$('stockQtyLabel').textContent='Current Stock (base units)';$('stockQtyHint').textContent='Existing stock for this product. Opening quantities do not apply when editing.';$('reorderLevel').value=num(p.reorder_level,10);$('expiryDate').value=p.expiry||p.expiry_date||'';$('productImage').value=p.image_url||p.image||'';renderImagePreview();if(p.packaging_types&&p.packaging_types.length){packages=p.packaging_types.map(function(pkg){return{id:pkg.id,name:pkg.name,qty:pkg.qty||1,open_qty:0,cost_price:pkg.cost_price||0,price:pkg.price||num(p.selling_price),default_sale:pkg.default_sale||pkg.id==='pkt'||pkg.id===(p.default_pkg_sale||'pkt')};});}else{packages=[{id:'pkt',name:'Packet',qty:1,open_qty:0,cost_price:num(p.cost_price||p.costPrice),price:num(p.price||p.selling_price),default_sale:true}];}renderPackages();switchStep('basic');}
+document.addEventListener('DOMContentLoaded',function(){if(!POS.requireAuth())return;POS.renderSidebar();POS.renderUserMenu();if(!localStorage.getItem('danzona_products')){localStorage.setItem('danzona_products','[{"id":1,"name":"Paracetamol 500mg","sku":"PTM-001","price":500,"stock":100},{"id":2,"name":"Amoxicillin","sku":"AMX-002","price":1500,"stock":50}]');}var editId=new URLSearchParams(window.location.search).get('edit');if(editId){loadProductForEdit(editId);}renderPackages();$('productImage').addEventListener('input',renderImagePreview);});</script>
+</body>
+</html>
+
+
+

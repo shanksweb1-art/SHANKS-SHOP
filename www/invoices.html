@@ -1,0 +1,299 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoices - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-file-invoice"></i> Invoices</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-file-invoice"></i> Total Invoices</div>
+                <div class="kpi-value" id="kpiTotal">0</div>
+                <div class="kpi-sub">All invoices</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-check-circle"></i> Paid</div>
+                <div class="kpi-value" style="color:#10b981;" id="kpiPaid">0</div>
+                <div class="kpi-sub">Settled</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-clock"></i> Pending</div>
+                <div class="kpi-value" style="color:#f59e0b;" id="kpiPending">0</div>
+                <div class="kpi-sub">Awaiting payment</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label"><i class="fas fa-coins"></i> Outstanding</div>
+                <div class="kpi-value" id="kpiOutstanding">?0.00</div>
+                <div class="kpi-sub">Unpaid</div>
+            </div>
+        </div>
+        <div class="page-head">
+            <div>
+                <h3>Invoice Management</h3>
+                <p>Create and track customer invoices.</p>
+            </div>
+            <button class="btn btn-primary" onclick="showAddInvoiceForm()"><i class="fas fa-plus"></i> Create Invoice</button>
+        </div>
+        <div class="panel">
+            <div class="toolbar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search invoices..." oninput="renderInvoices()">
+                <select id="statusFilter" class="form-select" onchange="renderInvoices()">
+                    <option value="all">All Status</option>
+                    <option value="paid">Paid</option>
+                    <option value="pending">Pending</option>
+                    <option value="draft">Draft</option>
+                </select>
+                <button class="btn btn-info" onclick="exportInvoicesCSV()"><i class="fas fa-file-export"></i> Export CSV</button>
+                <button class="btn btn-secondary" onclick="printInvoices()"><i class="fas fa-print"></i> Print</button>
+            </div>
+        </div>
+        <div id="addInvoiceForm" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="invoiceFormTitle">Create New Invoice</h3>
+                    <button class="modal-close" onclick="POS.closeModal('addInvoiceForm')">&times;</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">Customer</label>
+                        <select id="invoiceCustomerSelect" class="form-select">
+                            <option value="">Select Customer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Date</label>
+                        <input type="date" id="invoiceDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Due Date</label>
+                        <input type="date" id="dueDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Amount (?)</label>
+                        <input type="number" id="invoiceAmount" class="form-control" min="0" step="0.01" placeholder="Enter amount">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="POS.closeModal('addInvoiceForm')">Cancel</button>
+                    <button class="btn btn-success" onclick="addInvoice()">Save Invoice</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-panel">
+            <div class="table-top">
+                <strong><i class="fas fa-list"></i> Invoices</strong>
+                <span id="invoiceCount">0 invoices</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Due Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoicesTableBody">
+                        <tr><td colspan="7" class="empty-state">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var invoices = [];
+var filteredInvoices = [];
+var editInvoiceId = null;
+var customers = [];
+function $id(id) { return document.getElementById(id); }
+function updateKPIs() {
+    $id('kpiTotal').textContent = invoices.length;
+    $id('kpiPaid').textContent = invoices.filter(function(i) { return i.status === 'paid'; }).length;
+    $id('kpiPending').textContent = invoices.filter(function(i) { return i.status === 'pending'; }).length;
+    $id('kpiOutstanding').textContent = POS.formatCurrency(invoices.filter(function(i) { return i.status !== 'paid'; }).reduce(function(s, i) { return s + (parseFloat(i.amount) || 0); }, 0));
+}
+function showAddInvoiceForm() {
+    editInvoiceId = null;
+    $id('addInvoiceForm').classList.add('open');
+    $id('invoiceFormTitle').textContent = 'Create New Invoice';
+    $id('invoiceDate').value = new Date().toISOString().split('T')[0];
+    $id('dueDate').value = '';
+    $id('invoiceAmount').value = '';
+    loadCustomerOptions();
+}
+async function loadCustomerOptions() {
+    try {
+        customers = await API.getCustomers() || [];
+        $id('invoiceCustomerSelect').innerHTML = '<option value="">Select Customer</option>' + customers.map(function(c) {
+            return '<option value="' + c.id + '">' + POS.esc((c.firstName || '') + ' ' + (c.lastName || '')) + '</option>';
+        }).join('');
+    } catch (err) { POS.showToast('Failed to load customers: '+(err.message||'API error'), true); }
+  }
+  async function addInvoice() {
+    var customer = $id('invoiceCustomerSelect').value;
+    var date = $id('invoiceDate').value;
+    var dueDate = $id('dueDate').value;
+    var amount = parseFloat($id('invoiceAmount').value) || 0;
+    if (!customer || !date || amount <= 0) {
+        POS.showToast('Please fill all required fields', true);
+        return;
+    }
+    var cust = customers.find(function(c) { return String(c.id) === String(customer); });
+    var custName = cust ? ((cust.firstName || '') + ' ' + (cust.lastName || '')) : customer;
+    try {
+        if (editInvoiceId !== null) {
+            await API.updateInvoice(editInvoiceId, { customer: custName, date: date, dueDate: dueDate, amount: amount });
+            POS.showToast('Invoice updated!');
+        } else {
+            var newId = invoices.length > 0 ? Math.max.apply(null, invoices.map(function(i) { return i.id; })) + 1 : 1;
+            var number = 'INV-' + String(newId).padStart(3, '0');
+            await API.saveInvoice({ id: newId, number: number, customer: custName, date: date, dueDate: dueDate, amount: amount, status: 'draft' });
+            POS.showToast('Invoice created successfully!');
+        }
+        POS.closeModal('addInvoiceForm');
+        renderInvoices();
+    } catch (err) {
+        POS.showToast(err.message || 'Failed to save invoice', true);
+    }
+}
+async function renderInvoices() {
+    try {
+        invoices = await API.getInvoices() || [];
+        filteredInvoices = [...invoices];
+    } catch (err) {
+        invoices = [];
+        POS.showToast('Failed to load invoices', true);
+    }
+    var q = $id('searchInput').value.toLowerCase();
+    var st = $id('statusFilter').value;
+    filteredInvoices = invoices.filter(function(i) {
+        var text = [(i.customer || ''), (i.number || '')].join(' ').toLowerCase();
+        var matchesSearch = !q || text.indexOf(q) > -1;
+        var matchesStatus = st === 'all' || i.status === st;
+        return matchesSearch && matchesStatus;
+    });
+    updateKPIs();
+    $id('invoiceCount').textContent = filteredInvoices.length + ' invoices';
+    var tbody = $id('invoicesTableBody');
+    tbody.innerHTML = filteredInvoices.map(function(inv) {
+        return '<tr>' +
+            '<td>' + POS.esc(inv.number || '') + '</td>' +
+            '<td>' + POS.esc(inv.customer || '') + '</td>' +
+            '<td>' + POS.formatDate(inv.date) + '</td>' +
+            '<td>' + POS.formatDate(inv.dueDate) + '</td>' +
+            '<td>' + POS.formatCurrency(inv.amount || 0) + '</td>' +
+            '<td>' + POS.statusBadge(inv.status || 'draft') + '</td>' +
+            '<td class="action-btns">' +
+            '<button class="icon-btn view" onclick="viewInvoice(' + inv.id + ')"><i class="fas fa-eye"></i></button>' +
+            '<button class="icon-btn edit" onclick="editInvoice(' + inv.id + ')"><i class="fas fa-edit"></i></button>' +
+            '<button class="icon-btn delete" onclick="deleteInvoice(' + inv.id + ')"><i class="fas fa-trash"></i></button>' +
+            '</td></tr>';
+    }).join('');
+}
+function viewInvoice(id) {
+    var inv = invoices.find(function(i) { return i.id == id; });
+    if (!inv) return;
+    var modalHtml = '<div class="modal-overlay open" id="viewModal">' +
+        '<div class="modal"><div class="modal-header"><h3>Invoice Details</h3><button class="modal-close" onclick="POS.closeModal(\'viewModal\')">&times;</button></div>' +
+        '<div class="kpi-grid">' +
+        '<div class="kpi-card"><div class="kpi-label">Invoice #</div><div class="kpi-value">' + POS.esc(inv.number) + '</div></div>' +
+        '<div class="kpi-card"><div class="kpi-label">Customer</div><div class="kpi-value">' + POS.esc(inv.customer) + '</div></div>' +
+        '</div>' +
+        '<div class="form-row" style="margin-top:15px;">' +
+        '<div class="form-group"><label>Amount</label><span>' + POS.formatCurrency(inv.amount) + '</span></div>' +
+        '<div class="form-group"><label>Status</label><div>' + POS.statusBadge(inv.status) + '</div></div>' +
+        '</div>' +
+        '<div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal(\'viewModal\')">Close</button></div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+function editInvoice(id) {
+    var inv = invoices.find(function(i) { return i.id == id; });
+    if (!inv) return;
+    editInvoiceId = id;
+    $id('addInvoiceForm').classList.add('open');
+    $id('invoiceFormTitle').textContent = 'Edit Invoice';
+    loadCustomerOptions().then(function() {
+        var cust = customers.find(function(c) { return (c.firstName + ' ' + c.lastName) === inv.customer; });
+        if (cust) $id('invoiceCustomerSelect').value = cust.id;
+    });
+    $id('invoiceDate').value = inv.date;
+    $id('dueDate').value = inv.dueDate;
+    $id('invoiceAmount').value = inv.amount;
+}
+async function deleteInvoice(id) {
+    if (!confirm('Delete this invoice?')) return;
+    try {
+        await API.deleteInvoice(id);
+        POS.showToast('Invoice deleted!');
+        renderInvoices();
+    } catch (err) {
+        POS.showToast(err.message || 'Delete failed', true);
+    }
+}
+function exportInvoicesCSV() {
+    var data = filteredInvoices.length > 0 ? filteredInvoices : invoices;
+    POS.exportCSV('invoices_' + POS.today() + '.csv',
+        ['Invoice #', 'Customer', 'Date', 'Due Date', 'Amount', 'Status'],
+        data.map(function(i) {
+            return {
+                'Invoice #': i.number || '',
+                Customer: i.customer || '',
+                Date: i.date || '',
+                'Due Date': i.dueDate || '',
+                Amount: i.amount || 0,
+                Status: i.status || ''
+            };
+        })
+    );
+}
+function printInvoices() {
+    var data = filteredInvoices.length > 0 ? filteredInvoices : invoices;
+    POS.printTable('SHANKS SHOP MANAGEMENT Invoices Report',
+        ['Invoice #', 'Customer', 'Date', 'Due Date', 'Amount', 'Status'],
+        data.map(function(i) {
+            return {
+                'Invoice #': i.number || '',
+                Customer: i.customer || '',
+                Date: POS.formatDate(i.date),
+                'Due Date': POS.formatDate(i.dueDate),
+                Amount: POS.formatCurrency(i.amount || 0),
+                Status: i.status || ''
+            };
+        })
+    );
+}
+document.addEventListener('DOMContentLoaded', function() {
+    if (!POS.requireAuth()) return;
+    POS.renderSidebar();
+    POS.renderUserMenu();
+    renderInvoices();
+});
+</script>
+</body>
+</html>
+
+
+
