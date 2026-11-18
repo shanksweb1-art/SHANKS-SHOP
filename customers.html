@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -12,6 +12,8 @@
 <link rel="stylesheet" href="common.css">
 <script src="api.js"></script>
 <script src="common.js"></script>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -96,6 +98,7 @@ function fillTemplate(){var t=POS.$('messageTemplate').value;if(t==='promo')POS.
 function sendBulkMessage(){var msg=POS.$('bulkMessageBody').value.trim();if(!msg){POS.showToast('Message is required',true);return;}POS.showToast('Bulk message queued for '+filtered.length+' customers');POS.closeModal('bulkMessageModal');}
 document.addEventListener('DOMContentLoaded',function(){if(!POS.requireAuth())return;POS.renderSidebar();POS.renderUserMenu();loadCustomers();});
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

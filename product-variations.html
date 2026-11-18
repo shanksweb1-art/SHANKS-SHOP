@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -29,6 +29,8 @@
         .bottom-actions{position:sticky;bottom:0;background:rgba(243,244,246,.92);backdrop-filter:blur(8px);padding:14px 0;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #e5e7eb;z-index:10}
         @media(max-width:768px){.attr-grid{grid-template-columns:1fr}.bottom-actions{position:static;flex-direction:column}.bottom-actions .btn{width:100%}}
     </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -207,6 +209,7 @@ function loadGlobalAttribute(idx){var a=globalAttributes[idx];if(!a)return;$('gl
 function deleteGlobalAttribute(idx){if(!confirm('Delete this global attribute?'))return;globalAttributes.splice(idx,1);renderGlobalAttributes();renderGlobalAttributeBody();renderSelectedAttributes();saveDraft();}
 document.addEventListener('DOMContentLoaded',function(){if(!POS.requireAuth())return;POS.renderSidebar();POS.renderUserMenu();loadDraft();});
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

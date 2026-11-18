@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -37,6 +37,8 @@
     </style>
     <script src="api.js"></script>
     <script src="common.js"></script>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -550,6 +552,7 @@ if (document.readyState === 'loading') {
     setTimeout(clearLoadingState, 2000);
 }
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

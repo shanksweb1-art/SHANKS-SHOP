@@ -203,6 +203,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
   <div class="app-shell">
@@ -1113,5 +1115,6 @@ let pendingAction = { type: null, ids: [] };
     }
   })();
   </script>
+  <script src="/offline.js"></script>
 </body>
 </html>

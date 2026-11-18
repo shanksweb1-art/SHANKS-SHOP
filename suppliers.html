@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -36,6 +36,8 @@
 .compare-table tr:last-child td{border-bottom:none}
 .empty-tab{padding:30px;text-align:center;color:var(--muted);background:#f8fafc;border-radius:12px;border:1px dashed var(--border)}
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -216,5 +218,6 @@ function loadLocalSuppliers(){try{return JSON.parse(localStorage.getItem(SUPPLIE
 async function loadSuppliers(){try{var res=await API.getSuppliers()||[];suppliers=res.map(enrich);}catch(e){suppliers=loadLocalSuppliers().map(enrich);}if(!suppliers.length){suppliers=[{id:'SUP-1',name:'Default Supplier',contact_person:'Contact',phone:'08000000000',email:'supplier@example.com',address:'Lafia',status:'active',rating:4.0,performance:{leadTime:3,avgUnitCost:1000},products_supplied:'Paracetamol,Amoxicillin'}].map(enrich);}updateKPIs();renderSuppliers()}
 document.addEventListener('DOMContentLoaded',function(){if(!POS.requireAuth())return;loadSuppliers();});
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>

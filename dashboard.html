@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -109,6 +109,8 @@ tr:hover td{background:#f8fafc;}
 .toast{position:fixed;top:20px;right:20px;background:#48bb78;color:#fff;padding:12px 16px;border-radius:8px;display:none;z-index:1000;}
 .toast.error{background:#ef4444;}
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -289,6 +291,7 @@ function showDashboardError(msg){var el=$('errorBox');if(el)el.innerHTML='<div c
 function updateLastUpdated(){var el=$('lastUpdated');if(el){var now=new Date();el.textContent='Updated '+now.toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}}
 function startLiveUpdates(){if(DB.liveInterval)clearInterval(DB.liveInterval);DB.liveInterval=setInterval(function(){updateLastUpdated();refreshDashboard();},15000);window.addEventListener('storage',function(e){if(e.key==='danzona_sales'||e.key==='danzona_products'||e.key==='danzona_customers'||e.key==='SHEDS_completed_sales'){refreshDashboard();}});}
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

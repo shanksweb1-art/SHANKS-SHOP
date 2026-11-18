@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -32,6 +32,8 @@
         .badge-ok{background:#ecfdf5;color:#065f46}
         .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
     </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -166,6 +168,7 @@ function renderBackups(){
 function loadBackups(){ try{ backupHistory=JSON.parse(localStorage.getItem('danzona_backup_history')||'[]'); if(!Array.isArray(backupHistory)) backupHistory=[]; }catch(e){ backupHistory=[]; } renderBackups(); }
 document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; $('backupName').value=''; loadBackups(); });
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

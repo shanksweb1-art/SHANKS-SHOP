@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Shanks Shop Management - Multi-Tenant Backend API
 Each business gets isolated data with an API key.
@@ -4977,7 +4977,7 @@ def index():
 
 @app.route('/<path:filename>')
 def serve_static(filename):
-    allowed = {'.html', '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.txt', '.xml', '.webmanifest'}
+    allowed = {'.html', '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.txt', '.xml', '.webmanifest', '.json'}
     ext = os.path.splitext(filename)[1].lower()
     if ext not in allowed:
         return jsonify({'error': 'File type not allowed'}), 403
@@ -5009,3 +5009,4 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)
+

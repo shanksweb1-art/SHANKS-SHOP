@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -35,6 +35,8 @@
         .badge-rejected{background:#fef2f2;color:#991b1b}
         .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
     </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -181,6 +183,7 @@ $('returnSearch') && $('returnSearch').addEventListener('input', function(e){
 });
 document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; loadReturns(); });
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

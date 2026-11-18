@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,6 +34,8 @@
         .badge-received{background:#ecfdf5;color:#065f46}
         .badge-cancelled{background:#fef2f2;color:#991b1b}
     </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -158,6 +160,7 @@ document.addEventListener('DOMContentLoaded', function(){
     loadTransfers();
 });
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

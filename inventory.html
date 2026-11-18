@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -19,6 +19,8 @@
 .icon-btn.delete{background:#fff;color:#ef4444;border:1px solid #fecaca}
 .icon-btn.delete:hover{background:#fef2f2;border-color:#ef4444}
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -103,6 +105,7 @@ function handleInlineEdit(e){var cell=e.target.closest('.editable');if(!cell)ret
 async function saveInlineEdit(id,field,value){var p=products.find(function(x){return String(x.id)===String(id)});if(!p)return;var updates={};if(field==='stock'){updates.stock=parseFloat(value)||0;}else if(field==='reorder'){updates.reorder_level=parseFloat(value)||0;}else if(field==='expiry'){updates.expiry=value;}else{updates[field]=value;}try{await API.updateProduct(id,updates);POS.showToast('Updated '+field);await loadProducts();}catch(e){POS.showToast('Update failed: '+(e.message||'API error'),true);}}
 document.addEventListener('DOMContentLoaded',function(){if(!POS.requireAuth())return;loadProducts();});
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

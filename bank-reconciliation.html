@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -31,6 +31,8 @@
         .badge-unmatched{background:#fffbeb;color:#92400e}
         .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
     </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -141,6 +143,7 @@ function logAction(action, ref, note){
 }
 document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; $('bankDate').value=new Date().toISOString().split('T')[0]; loadBank(); });
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

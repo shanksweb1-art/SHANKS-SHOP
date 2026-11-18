@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -48,6 +48,8 @@
 .toggle-advanced i{transition:transform .2s}
 .toggle-advanced.open i{transform:rotate(180deg)}
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -553,5 +555,6 @@ document.addEventListener('DOMContentLoaded', function () {
   init();
 });
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>

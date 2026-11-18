@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -46,6 +46,8 @@
     .strength span { display: block; height: 100%; width: 0; background: #ef4444; transition: width .2s, background .2s; }
     .back-link.disabled { color: #a0aec0; pointer-events: none; }
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
     <div class="login-container">
@@ -224,6 +226,7 @@
         }
     })();
     </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

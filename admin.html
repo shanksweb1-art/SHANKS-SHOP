@@ -182,6 +182,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .slot-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--dark); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 .slot-head i { color: var(--primary); }
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -1747,5 +1749,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
   window.resetChangelogForm = resetChangelogForm;
 })();
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>

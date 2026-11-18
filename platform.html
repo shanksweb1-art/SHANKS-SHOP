@@ -50,6 +50,8 @@
     .hint { font-size: 0.78rem; color: #94a3b8; margin-top: 6px; line-height: 1.5; }
     code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 0.8rem; color: #334155; }
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="login-container">
@@ -150,5 +152,6 @@ function signOut(){
     if(user&&token)showSession(user);
 })();
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -30,6 +30,8 @@
     .note { background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px; border-radius: 5px; margin-bottom: 1rem; font-size: 0.85rem; color: #1e40af; text-align: center; }
     .required-star { color: #ef4444; }
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="login-container">
@@ -124,6 +126,7 @@ function createAccount(e){
     setTimeout(function(){window.location.href='login.html';},2500);
 }
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 
