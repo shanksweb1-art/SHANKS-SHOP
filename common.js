@@ -89,6 +89,7 @@ var AppInstall = (function() {
             } else {
                 alert('Android (Chrome): Tap the 3-dot menu (⋮) in the top-right, then tap "Add to Home screen" or "Install app".');
             }
+            dismiss();
         } catch (err) {
             console.warn('App install failed:', err);
             alert('Install failed. Use your browser menu → "Add to Home screen" instead.');
