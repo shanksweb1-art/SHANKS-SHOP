@@ -60,10 +60,18 @@ var API = (function() {
                 return res.text().then(function(text) {
                     var msg = 'Request failed';
                     try { var err = JSON.parse(text); msg = err.error || msg; } catch(e) {}
+                    if (res.status === 503 && !navigator.onLine) {
+                        return Promise.reject(new Error('Offline: cached data unavailable for this request.'));
+                    }
                     return Promise.reject(new Error(msg + ' (' + res.status + ')'));
                 });
             }
             return res.json();
+        }).catch(function(err) {
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                return Promise.reject(new Error('You are offline. Connect to the internet or use previously cached data.'));
+            }
+            throw err;
         });
     }
 

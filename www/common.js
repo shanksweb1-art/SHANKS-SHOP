@@ -48,6 +48,116 @@ var StoreConfig = (function() {
     return { getAll: getAll, get: get, set: set, save: save, formatCurrency: formatCurrency, formatDate: formatDate, getStoreName: getStoreName, getCurrency: getCurrency, getLowStockThreshold: getLowStockThreshold, getPharmacyName: getPharmacyName, syncFromServer: syncFromServer, syncToServer: syncToServer, defaults: defaults, KEY: KEY };
 })();
 
+var AppInstall = (function() {
+    var deferredPrompt = null;
+    var installed = false;
+    var btnEl = null;
+    function isStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+    function createButton() {
+        if (btnEl || isStandalone() || installed) return;
+        btnEl = document.createElement('div');
+        btnEl.id = 'appInstallPrompt';
+        btnEl.style.cssText = 'position:fixed;bottom:16px;left:16px;right:16px;z-index:1000;background:#0f172a;color:#fff;border-radius:10px;padding:10px 14px;font:600 14px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:space-between;gap:12px;transform:translateY(120px);transition:transform .3s ease;';
+        btnEl.innerHTML = '<span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-download"></i> Install Shanks POS App</span><button id="appInstallBtn" style="background:#10b981;border:none;color:#fff;border-radius:6px;padding:6px 12px;font:600 13px system-ui,sans-serif;cursor:pointer;">Install</button>';
+        document.body.appendChild(btnEl);
+        setTimeout(function() { btnEl.style.transform = 'translateY(0)'; }, 100);
+        $('appInstallBtn').onclick = function(e) { e.stopPropagation(); installApp(); };
+        btnEl.onclick = function(e) { if (e.target.id === 'appInstallPrompt') dismiss(); };
+    }
+    function dismiss() {
+        if (btnEl) { btnEl.style.transform = 'translateY(120px)'; setTimeout(function() { if (btnEl && btnEl.parentNode) btnEl.parentNode.removeChild(btnEl); btnEl = null; }, 300); }
+    }
+    async function installApp() {
+        if (installed) return;
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            var choice = await deferredPrompt.userChoice;
+            if (choice.outcome === 'accepted') { installed = true; dismiss(); }
+            deferredPrompt = null;
+            return;
+        }
+        if (window.matchMedia('(display-mode: standalone)').matches) { installed = true; dismiss(); return; }
+    }
+    function init() {
+        if (isStandalone()) { installed = true; return; }
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            createButton();
+        });
+        window.addEventListener('appinstalled', function() { installed = true; dismiss(); });
+        setTimeout(createButton, 3000);
+    }
+    return { init: init, install: installApp, isInstalled: function() { return installed || isStandalone(); } };
+})();
+
+var Native = (function() {
+    var Capacitor = null;
+    var ready = false;
+    var loading = false;
+    function ensureLoaded() {
+        if (ready) return Capacitor;
+        if (window.Capacitor) { Capacitor = window.Capacitor; ready = true; return Capacitor; }
+        return null;
+    }
+    function loadCapacitor() {
+        if (loading || window.Capacitor) return Promise.resolve(window.Capacitor);
+        loading = true;
+        return new Promise(function(resolve) {
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/@capacitor/core@6/dist/capacitor.cdn.js';
+            s.onload = function() { Capacitor = window.Capacitor; ready = true; loading = false; resolve(Capacitor); };
+            s.onerror = function() { loading = false; resolve(null); };
+            document.head.appendChild(s);
+        });
+    }
+    function isNative() { try { return window.Capacitor && window.Capacitor.isPlatformAvailable ? window.Capacitor.isPlatformAvailable('android') || window.Capacitor.isPlatformAvailable('ios') : !!window.Capacitor; } catch (e) { return false; } }
+    async function getDeviceInfo() {
+        if (!window.Capacitor) await loadCapacitor();
+        var c = ensureLoaded();
+        if (!c || !c.Device) return null;
+        try { return await c.Device.getInfo(); } catch (e) { return null; }
+    }
+    async function impact(style) {
+        if (!window.Capacitor) await loadCapacitor();
+        var c = ensureLoaded();
+        if (!c || !c.Haptics) return;
+        try { await c.Haptics.impact({ style: style || 'light' }); } catch (e) {}
+    }
+    async function notify(type) {
+        if (!window.Capacitor) await loadCapacitor();
+        var c = ensureLoaded();
+        if (!c || !c.Haptics) return;
+        try { await c.Haptics.notification({ type: type || 'success' }); } catch (e) {}
+    }
+    async function setStatusBar(color) {
+        if (!window.Capacitor) await loadCapacitor();
+        var c = ensureLoaded();
+        if (!c || !c.StatusBar) return;
+        try { await c.StatusBar.setBackgroundColor({ color: color || '#0f172a' }); } catch (e) {}
+    }
+    async function showSplash() {
+        if (!window.Capacitor) await loadCapacitor();
+        var c = ensureLoaded();
+        if (!c || !c.SplashScreen) return;
+        try { await c.SplashScreen.show(); } catch (e) {}
+    }
+    async function hideSplash() {
+        if (!window.Capacitor) await loadCapacitor();
+        var c = ensureLoaded();
+        if (!c || !c.SplashScreen) return;
+        try { await c.SplashScreen.hide(); } catch (e) {}
+    }
+    function init() {
+        ensureLoaded();
+        if (isNative()) {
+            document.body.classList.add('app-native');
+            setStatusBar('#0f172a');
+        }
+    }
+    return { init: init, isNative: isNative, getDeviceInfo: getDeviceInfo, impact: impact, notify: notify, setStatusBar: setStatusBar, showSplash: showSplash, hideSplash: hideSplash };
+})();
+
 var Notifications = (function() {
     var list = [];
     var panelEl = null;
@@ -527,7 +637,9 @@ function renderSubWarning(sub) {
         update();
         setInterval(update, 1000);
     }
-function initCommon() {
+    function initCommon() {
+        AppInstall.init();
+        Native.init();
         renderSidebar();
         renderUserMenu();
         Notifications.load();
