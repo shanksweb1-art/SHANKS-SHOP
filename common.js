@@ -115,6 +115,36 @@ var Native = (function() {
     return { init: init, isNative: isNative, getDeviceInfo: getDeviceInfo, impact: impact, notify: notify, setStatusBar: setStatusBar, showSplash: showSplash, hideSplash: hideSplash };
 })();
 
+var Theme = (function() {
+    var KEY = 'danzona_theme';
+    var dark = false;
+    var toggleEl = null;
+    function load() {
+        try { dark = localStorage.getItem(KEY) === 'dark'; } catch (e) { dark = false; }
+        apply();
+    }
+    function save() { try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {} }
+    function apply() {
+        if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+        else document.documentElement.removeAttribute('data-theme');
+        if (toggleEl) toggleEl.innerHTML = dark ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark';
+        var lbl = document.getElementById('themeToggleLabel');
+        if (lbl) lbl.textContent = dark ? 'Light Mode' : 'Dark Mode';
+    }
+    function toggle() {
+        dark = !dark;
+        apply();
+        save();
+    }
+    function isDark() { return dark; }
+    function init() {
+        load();
+        var el = document.getElementById('themeToggle');
+        if (el) { toggleEl = el; toggleEl.onclick = function(e) { e.stopPropagation(); toggle(); }; }
+    }
+    return { init: init, toggle: toggle, isDark: isDark, load: load, apply: apply };
+})();
+
 var Notifications = (function() {
     var list = [];
     var panelEl = null;
@@ -487,7 +517,7 @@ var POS = (function() {
         var pharm = API.getPharmacyName ? API.getPharmacyName() : 'Shanks Shop Management';
         // notification bell
         var bellHtml = '<div class="notif-wrap"><button class="notif-bell" id="notifBell" aria-label="Notifications"><i class="fas fa-bell"></i></button><span class="notif-badge hidden" id="notifBadge">0</span></div>';
-        el.innerHTML = '<span class="user-avatar"><i class="fas fa-user"></i></span><div class="user-text"><strong>' + esc(name || 'Admin User') + '</strong><small>' + esc(role || 'Role') + '</small></div><i class="fas fa-chevron-down"></i><div class="user-dropdown"><div class="user-info"><strong>' + esc(name || 'Admin User') + '</strong><small>' + esc(pharm || 'Shanks Shop Management') + '</small></div><hr><a href="#" onclick="POS.navigateTo(\'config.html\');return false;"><i class="fas fa-cog"></i> Settings</a><a href="#" onclick="POS.navigateTo(\'payments.html\');return false;"><i class="fas fa-credit-card"></i> Store Payments</a><a href="#" onclick="POS.switchToAdmin();return false;"><i class="fas fa-user-shield"></i> Switch to Admin</a><hr><a href="#" onclick="POS.logout();return false;"><i class="fas fa-sign-out-alt"></i> Logout</a></div>' + bellHtml;
+        el.innerHTML = '<span class="user-avatar"><i class="fas fa-user"></i></span><div class="user-text"><strong>' + esc(name || 'Admin User') + '</strong><small>' + esc(role || 'Role') + '</small></div><i class="fas fa-chevron-down"></i><div class="user-dropdown"><div class="user-info"><strong>' + esc(name || 'Admin User') + '</strong><small>' + esc(pharm || 'Shanks Shop Management') + '</small></div><hr><a href="#" id="themeToggle" onclick="Theme.toggle();return false;"><i class="fas fa-moon"></i> <span id="themeToggleLabel">Dark Mode</span></a><a href="#" onclick="POS.navigateTo(\'config.html\');return false;"><i class="fas fa-cog"></i> Settings</a><a href="#" onclick="POS.navigateTo(\'payments.html\');return false;"><i class="fas fa-credit-card"></i> Store Payments</a><a href="#" onclick="POS.switchToAdmin();return false;"><i class="fas fa-user-shield"></i> Switch to Admin</a><hr><a href="#" onclick="POS.logout();return false;"><i class="fas fa-sign-out-alt"></i> Logout</a></div>' + bellHtml;
         // attach notification panel once
         if (!$('notifPanel')) {
             var panel = document.createElement('div');
@@ -596,8 +626,10 @@ function renderSubWarning(sub) {
     }
     function initCommon() {
         Native.init();
+        Theme.init();
         renderSidebar();
         renderUserMenu();
+        Theme.apply();
         Notifications.load();
         setupMobileSidebar();
         startClock();
@@ -710,9 +742,62 @@ function renderSubWarning(sub) {
     }
     function buildSmallReceipt(cart,sub,disc,total,tendered,paymentMethod,accountAmount){accountAmount=accountAmount||0;var pmLabel=paymentMethod==='store_account'?'Store Account':paymentMethod==='card'?'Card':paymentMethod==='pos'?'POS':paymentMethod==='giftcard'?'Gift Card':'Cash';var rc=getReceiptConfig();var logoUrl=new URL('brand-logo.png',document.baseURI).href;var html='<html><head><title>Receipt</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:"Courier New",monospace;font-size:14px;color:#000;width:100%;padding:20px;background:#fff;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.receipt{max-width:380px;margin:0 auto}.center{text-align:center}.left{text-align:left}.right{text-align:right}.line{border-bottom:1px dashed #000;margin:10px 0;padding:6px 0}.item-row{display:flex;justify-content:space-between;margin:6px 0}.totals{display:flex;justify-content:space-between;font-weight:bold;font-size:16px;margin-top:10px}.footer{margin-top:14px;font-size:12px;text-align:center;color:#333}@media print{@page{size:80mm auto;margin:0}}</style></head><body>';html+='<div class="receipt"><div class="center"><img src="'+logoUrl+'" alt="logo" style="width:56px;height:56px;object-fit:contain;border-radius:14px;padding:6px;background:#fff;border:1px solid #e5e7eb;margin-bottom:6px;"><h2 style="font-size:16px;margin:0;">'+esc(rc.storeName)+'</h2>';if(rc.storeAddress){html+='<div style="font-size:10px;margin-top:4px;">'+esc(rc.storeAddress)+'</div>';}if(rc.phone){html+='<div style="font-size:10px;">'+esc(rc.phone)+'</div>';}html+='<div style="font-size:10px;margin-top:4px;">Date: '+(new Date()).toLocaleString()+'</div><div style="font-size:10px;">Receipt: #POS'+Date.now().toString().slice(-6)+'</div><div style="font-size:10px;">Cashier: '+esc(API.getUserName?API.getUserName():'Staff')+'</div></div><div class="line"></div><div style="font-weight:bold;margin:8px 0;">Items Purchased</div>';cart.forEach(function(it){var lt=(parseFloat(it.price)||0)*(parseFloat(it.qty)||0)-(parseFloat(it.discount)||0);html+='<div class="item-row"><span class="left">'+esc(it.name)+'</span><span class="right">'+esc(it.qty)+' x '+fmt(lt)+'</span></div>';if(it.discount>0){html+='<div class="item-row" style="font-size:10px;color:#666;"><span class="left">Discount</span><span class="right">-'+fmt(it.discount)+'</span></div>';}});html+='<div class="line"></div><div class="totals"><span>Total</span><span>'+fmt(total)+'</span></div>';if(pmLabel!=='Cash'){html+='<div class="item-row"><span class="left">Payment Method</span><span class="right">'+esc(pmLabel)+'</span></div>';}if(tendered>0||pmLabel==='Store Account'){html+='<div class="totals"><span>Amount Paid</span><span>'+fmt(pmLabel==='Store Account'?total:tendered)+'</span></div>';html+='<div class="totals"><span>Change</span><span>'+fmt(Math.max(0,(pmLabel==='Store Account'?total:tendered)-total))+'</span></div>';if(accountAmount>0){html+='<div class="totals"><span>Store Account</span><span>'+fmt(accountAmount)+'</span></div>';}}html+='<div class="line"></div><div class="center footer">'+esc(rc.footerText)+'</div></div></body></html>';return html;}
     function buildLargeReceipt(cart,sub,disc,total,tendered,paymentMethod,accountAmount){accountAmount=accountAmount||0;var pmLabel=paymentMethod==='store_account'?'Store Account':paymentMethod==='card'?'Card':paymentMethod==='pos'?'POS':paymentMethod==='giftcard'?'Gift Card':'Cash';var rc=getReceiptConfig();var logoUrl=new URL('brand-logo.png',document.baseURI).href;var html='<html><head><title>Receipt</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#000;padding:32px;background:#fff;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.r-header{text-align:center;margin-bottom:20px}.r-header h1{font-size:22px;font-weight:900;text-transform:uppercase;color:#000}.r-header p{font-size:14px;color:#333;margin-top:4px}.r-section{margin-bottom:18px}.r-section h3{font-size:14px;font-weight:800;text-transform:uppercase;color:#000;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px}.r-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}.r-grid div{font-size:14px}.r-grid .r-label{color:#555}.r-grid .r-value{font-weight:700;text-align:right}table{width:100%;border-collapse:collapse;margin-bottom:10px}th{background:#f1f5f9;text-align:left;padding:8px 10px;font-size:12px;font-weight:800;text-transform:uppercase;color:#333;border-bottom:2px solid #000}td{padding:8px 10px;font-size:14px;border-bottom:1px solid #e5e7eb}.r-total{font-weight:900;color:#000}.r-footer{text-align:center;margin-top:14px;font-size:12px;color:#555}</style></head><body>';html+='<div class="r-header"><img src="'+logoUrl+'" alt="logo" style="width:68px;height:68px;object-fit:contain;border-radius:16px;padding:7px;background:#fff;border:1px solid #e5e7eb;margin-bottom:10px;"><h1>'+esc(rc.storeName)+'</h1>';if(rc.storeAddress){html+='<p>'+esc(rc.storeAddress)+'</p>';}if(rc.phone){html+='<p>Phone: '+esc(rc.phone)+'</p>';}html+='<p>Date: '+(new Date()).toLocaleString()+'</p><p>Cashier: '+esc(API.getUserName?API.getUserName():'Staff')+'</p><p>Receipt: #POS'+Date.now().toString().slice(-6)+'</p></div>';html+='<div class="r-section"><h3>Items Sold</h3><table><thead><tr><th>Item Name</th><th style="text-align:right">Price</th><th style="text-align:center">Qty</th><th style="text-align:right">Total</th></tr></thead><tbody>';var totalQty=0;cart.forEach(function(it){var lt=(parseFloat(it.price)||0)*(parseFloat(it.qty)||0)-(parseFloat(it.discount)||0);totalQty+=parseFloat(it.qty)||0;html+='<tr><td>'+esc(it.name)+'</td><td style="text-align:right">'+fmt(it.price)+'</td><td style="text-align:center">'+esc(it.qty)+'</td><td style="text-align:right" class="r-total">'+fmt(lt)+'</td></tr>';});html+='</tbody></table></div>';html+='<div class="r-section"><h3>Sales Summary</h3><div class="r-grid"><div><span class="r-label">Subtotal:</span> <span class="r-value">'+fmt(sub)+'</span></div><div><span class="r-label">Sales Tax:</span> <span class="r-value">'+fmt(0)+' (0.000%)</span></div><div class="r-total"><span class="r-label">Total Amount:</span> <span class="r-value">'+fmt(total)+'</span></div><div><span class="r-label">Number of Items:</span> <span class="r-value">'+totalQty+'</span></div></div></div>';html+='<div class="r-section"><h3>Payment Information</h3><div class="r-grid"><div><span class="r-label">Payment Type:</span> <span class="r-value">'+esc(pmLabel)+'</span></div><div><span class="r-label">Amount Paid:</span> <span class="r-value">'+fmt(pmLabel==='Store Account'?total:tendered)+'</span></div><div><span class="r-label">Change Due:</span> <span class="r-value">'+fmt(Math.max(0,(pmLabel==='Store Account'?total:tendered)-total))+'</span></div>'+(accountAmount>0?'<div><span class="r-label">Store Account:</span> <span class="r-value">'+fmt(accountAmount)+'</span></div>':'')+'</div></div>';html+='<div class="r-footer">'+esc(rc.footerText)+'</div></body></html>';return html;}
+    function escPosInit() { return [0x1B, 0x40]; }
+    function escPosAlign(n) { return [0x1B, 0x61, n]; }
+    function escPosBold(on) { return [0x1B, 0x45, on ? 1 : 0]; }
+    function escPosDouble(on) { return [0x1B, 0x21, on ? 0x11 : 0x00]; }
+    function escPosFeed(n) { return [0x1B, 0x64, n]; }
+    function escPosCut() { return [0x1D, 0x56, 0x00]; }
+    function escPosText(text) {
+        var bytes = [];
+        for (var i = 0; i < text.length; i++) {
+            var c = text.charCodeAt(i);
+            bytes.push(c < 0x80 ? c : 0x3F);
+        }
+        return bytes;
+    }
+    function escPosLine(text) { return escPosText(text).concat([0x0A]); }
+    function escPosReceipt(lines) {
+        var bytes = [];
+        bytes = bytes.concat(escPosInit());
+        bytes = bytes.concat(escPosAlign(1));
+        bytes = bytes.concat(escPosBold(true));
+        bytes = bytes.concat(escPosLine(lines[0] || 'SHANKS SHOP MANAGEMENT'));
+        bytes = bytes.concat(escPosBold(false));
+        bytes = bytes.concat(escPosAlign(0));
+        for (var i = 1; i < lines.length; i++) {
+            bytes = bytes.concat(escPosLine(lines[i]));
+        }
+        bytes = bytes.concat(escPosFeed(3));
+        bytes = bytes.concat(escPosCut());
+        return bytes;
+    }
+    async function printBluetooth(lines) {
+        if (!navigator.bluetooth) {
+            showToast('Web Bluetooth not supported on this device', true);
+            return false;
+        }
+        try {
+            var device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: [0xFF00] }],
+                optionalServices: [0xFF00]
+            });
+            var server = await device.gatt.connect();
+            var service = await server.getPrimaryService(0xFF00);
+            var chars = await service.getCharacteristics();
+            var char = chars[0];
+            var bytes = escPosReceipt(lines);
+            await char.writeValue(new Uint8Array(bytes));
+            showToast('Receipt sent to thermal printer');
+            return true;
+        } catch (e) {
+            showToast('Bluetooth print failed: ' + e.message, true);
+            return false;
+        }
+    }
     return {
         $: $, esc: esc, navigateTo: navigateTo, formatCurrency: formatCurrency, formatNumber: formatNumber, formatDate: formatDate, today: today, getQueryParameter: getQueryParameter, showToast: showToast, openModal: openModal, closeModal: closeModal, exportCSV: exportCSV, printTable: printTable, renderSidebar: renderSidebar, renderUserMenu: renderUserMenu, switchToAdmin: switchToAdmin, logout: logout, statusBadge: statusBadge, debounce: debounce, initCommon: initCommon, requireAuth: requireAuth, getPrinterType: getPrinterType, buildSmallReceipt: buildSmallReceipt, buildLargeReceipt: buildLargeReceipt, fmt: fmt, startClock: startClock, loadPageConfig: loadPageConfig, loadUserAccess: loadUserAccess, checkPageAccess: checkPageAccess, isAdminRole: isAdminRole, canAccessPage: canAccessPage, getPageConfig: function() { return pageConfig; }, getUserAccess: function() { return userAccess; },
-        pkgTypesOf: pkgTypesOf, pkgTypeOf: pkgTypeOf, pkgCost: pkgCost, findProduct: findProduct, lineCost: lineCost, lineRevenue: lineRevenue, profitSummary: profitSummary
+        pkgTypesOf: pkgTypesOf, pkgTypeOf: pkgTypeOf, pkgCost: pkgCost, findProduct: findProduct, lineCost: lineCost, lineRevenue: lineRevenue, profitSummary: profitSummary, printBluetooth: printBluetooth, escPosReceipt: escPosReceipt
     };
 })();
 window.POS = POS;
