@@ -54,30 +54,29 @@ var AppInstall = (function() {
     var btnEl = null;
     function isIOS() { return /iPad|iPhone|iPod/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
     function isStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
-    function isChromeAndroid() { return /Android/.test(navigator.userAgent) && /Chrome/.test(navigator.userAgent); }
-    function createButton(ios) {
+    function createButton(hasPrompt) {
         if (btnEl || isStandalone() || installed) return;
         btnEl = document.createElement('div');
         btnEl.id = 'appInstallPrompt';
         btnEl.style.cssText = 'position:fixed;bottom:16px;left:16px;right:16px;z-index:1000;background:#0f172a;color:#fff;border-radius:10px;padding:10px 14px;font:600 14px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:space-between;gap:12px;transform:translateY(120px);transition:transform .3s ease;';
-        if (ios) {
-            btnEl.innerHTML = '<span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-share"></i> Add to Home Screen</span><button id="appInstallBtn" style="background:#10b981;border:none;color:#fff;border-radius:6px;padding:6px 12px;font:600 13px system-ui,sans-serif;cursor:pointer;">Add</button>';
-        } else {
+        if (hasPrompt) {
             btnEl.innerHTML = '<span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-download"></i> Install Shanks POS App</span><button id="appInstallBtn" style="background:#10b981;border:none;color:#fff;border-radius:6px;padding:6px 12px;font:600 13px system-ui,sans-serif;cursor:pointer;">Install</button>';
+        } else {
+            btnEl.innerHTML = '<span style="display:flex;align-items:center;gap:8px;"><i class="fas fa-info-circle"></i> Install Shanks POS App</span><button id="appInstallBtn" style="background:#10b981;border:none;color:#fff;border-radius:6px;padding:6px 12px;font:600 13px system-ui,sans-serif;cursor:pointer;">How to install</button>';
         }
         document.body.appendChild(btnEl);
         setTimeout(function() { btnEl.style.transform = 'translateY(0)'; }, 100);
         var instBtn = document.getElementById('appInstallBtn');
-        if (instBtn) instBtn.onclick = function(e) { e.stopPropagation(); installApp(); };
+        if (instBtn) instBtn.onclick = function(e) { e.stopPropagation(); installApp(hasPrompt); };
         btnEl.onclick = function(e) { if (e.target.id === 'appInstallPrompt') dismiss(); };
     }
     function dismiss() {
         if (btnEl) { btnEl.style.transform = 'translateY(120px)'; setTimeout(function() { if (btnEl && btnEl.parentNode) btnEl.parentNode.removeChild(btnEl); btnEl = null; }, 300); }
     }
-    async function installApp() {
+    async function installApp(hasPrompt) {
         if (installed) return;
         try {
-            if (deferredPrompt) {
+            if (hasPrompt && deferredPrompt) {
                 deferredPrompt.prompt();
                 var choice = await deferredPrompt.userChoice;
                 if (choice.outcome === 'accepted') { installed = true; dismiss(); }
@@ -86,29 +85,28 @@ var AppInstall = (function() {
             }
             if (window.matchMedia('(display-mode: standalone)').matches) { installed = true; dismiss(); return; }
             if (isIOS()) {
-                alert('To install Shanks POS on iPhone/iPad: tap the Share icon (square with arrow) in Safari, then tap "Add to Home Screen".');
+                alert('iPhone/iPad: In Safari, tap the Share icon (square with arrow pointing up), then tap "Add to Home Screen".');
             } else {
-                alert('Install not available yet. Make sure you are on HTTPS and the page has loaded fully, then try again.');
+                alert('Android (Chrome): Tap the 3-dot menu (⋮) in the top-right, then tap "Add to Home screen" or "Install app".');
             }
         } catch (err) {
             console.warn('App install failed:', err);
-            alert('Install failed. Please use your browser\'s "Add to Home screen" option instead.');
+            alert('Install failed. Use your browser menu → "Add to Home screen" instead.');
         }
     }
     function init() {
         if (isStandalone()) { installed = true; return; }
-        var ios = isIOS();
+        var hasPrompt = false;
         window.addEventListener('beforeinstallprompt', function(e) {
             e.preventDefault();
             deferredPrompt = e;
-            if (!ios) createButton(false);
+            hasPrompt = true;
+            if (!isIOS()) createButton(true);
         });
         window.addEventListener('appinstalled', function() { installed = true; dismiss(); });
-        if (ios) {
-            setTimeout(function() { createButton(true); }, 3000);
-        } else {
-            setTimeout(function() { if (!deferredPrompt) createButton(false); }, 5000);
-        }
+        setTimeout(function() {
+            if (!installed && !btnEl) createButton(hasPrompt);
+        }, 8000);
     }
     return { init: init, install: installApp, isInstalled: function() { return installed || isStandalone(); } };
 })();
