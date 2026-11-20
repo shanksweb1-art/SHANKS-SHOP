@@ -163,37 +163,51 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating your account...';
         showToast('Creating your account...', 'info');
 
-        API.completeStoreSetup({
-            setup_token: setupToken,
-            admin_username: adminUser,
-            admin_password: adminPass,
-            admin_name: adminName
-        }).then(function(res) {
-            if (res.error) {
-                showToast(res.error, 'error');
+        try {
+            API.completeStoreSetup({
+                setup_token: setupToken,
+                admin_username: adminUser,
+                admin_password: adminPass,
+                admin_name: adminName || adminUser
+            }).then(function(res) {
+                if (!res) {
+                    showToast('Empty response from server', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account &amp; Sign In';
+                    return;
+                }
+                if (res.error) {
+                    showToast(res.error, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account &amp; Sign In';
+                    return;
+                }
+                var pharmacy = res.pharmacy || {};
+                var user = res.user || {};
+                if (pharmacy && pharmacy.api_key) {
+                    API.setBusiness(pharmacy);
+                    var storeId = pharmacy.address ? pharmacy.address.trim() : '';
+                    if (!storeId) storeId = pharmacy.id;
+                    API.init(pharmacy.api_key || '', user.username || adminUser, pharmacy.name, user, storeId);
+                } else {
+                    API.init('', user.username || adminUser, '', user, '');
+                }
+                var roleName = user.role ? user.role.toUpperCase() : 'USER';
+                showToast('Welcome, ' + (user.name || adminName) + ' (' + roleName + ')!', 'success');
+                setTimeout(function() {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            }).catch(function(err) {
+                showToast('Connection error. Is the server running?', 'error');
+                console.error(err);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account &amp; Sign In';
-                return;
-            }
-            if (res.pharmacy) {
-                API.setBusiness(res.pharmacy);
-                var storeId = res.pharmacy.address ? res.pharmacy.address.trim() : '';
-                if (!storeId) storeId = res.pharmacy.id;
-                API.init(res.pharmacy.api_key || '', res.user.username, res.pharmacy.name, res.user, storeId);
-            } else {
-                API.init('', res.user.username, '', res.user, '');
-            }
-            var roleName = res.user.role ? res.user.role.toUpperCase() : 'USER';
-            showToast('Welcome, ' + res.user.name + ' (' + roleName + ')!', 'success');
-            setTimeout(function() {
-                window.location.href = 'dashboard.html';
-            }, 1000);
-        }).catch(function(err) {
-            showToast('Connection error. Is the server running?', 'error');
-            console.error(err);
+            });
+        } catch (err) {
+            showToast('Setup failed: ' + (err.message || 'unknown error'), 'error');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account &amp; Sign In';
-        });
+        }
     }
 
     (function init() {
