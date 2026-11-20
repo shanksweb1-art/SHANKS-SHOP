@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -77,8 +77,6 @@ body{background:#f3f4f6;min-height:100vh;display:flex;}
 @media(max-width:768px){.sidebar{position:fixed;top:0;left:0;z-index:2500;height:100%;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.45)}.sidebar.open{transform:translateX(0)}.sidebar-toggle{display:inline-flex}.receipt-meta{grid-template-columns:1fr;}.actions-bar{flex-direction:column;}.actions-bar .btn{min-width:auto;}}
 @media print{body{background:#fff;}.sidebar,.header,.actions-bar,.no-receipt-actions{display:none!important;}.main{padding:0;margin:0;}.receipt-container{max-width:100%;}.receipt-paper{border-radius:0;box-shadow:none;}}
 </style>
-  <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -98,7 +96,6 @@ body{background:#f3f4f6;min-height:100vh;display:flex;}
 <script>
 var currentReceipt = null;
 var currentSaleId = null;
-var editingSale = null;
 function $(id){return document.getElementById(id);}
 function esc(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
 function fmt(n){try{return StoreConfig.formatCurrency(n);}catch(e){return '₦'+(parseFloat(n)||0).toLocaleString('en-NG',{minimumFractionDigits:2});}}
@@ -114,122 +111,130 @@ function renderReceipt(r){
     $('receiptContainer').innerHTML='<div class="no-receipt"><i class="fas fa-file-invoice"></i><h3>No Receipt Found</h3><p>There is no recent receipt to display. Complete a sale to generate a receipt.</p><div class="no-receipt-actions" style="margin-top:20px;"><button class="btn btn-primary" onclick="navigateTo(\'sales.html\')" style="padding:12px 24px;"><i class="fas fa-shopping-cart"></i> Go to Sales</button></div></div>';
     return;
   }
-  var voidBadge = (r && r.status==='void') ? '<div style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:10px;padding:10px;margin-bottom:14px;text-align:center;font-weight:800;"><i class="fas fa-ban"></i> THIS INVOICE HAS BEEN VOIDED</div>' : '';
-  var storeName=esc(r.business_name||StoreConfig.getPharmacyName()||'Shanks Shop Management');
-  var storeAddress=esc(r.business_address||StoreConfig.get('storeAddress')||'');
-  var storePhone=esc(StoreConfig.get('phoneNumber')||'');
-  var footerText=esc(StoreConfig.get('footerText')||'Thank you for choosing Shanks Shop Management!');
-  var receiptId=esc(r.sale_id||'POS-'+Date.now().toString().slice(-6));
-  var date=formatDate(r.created_at);
-  var cashier=esc(r.employee||'Cashier');
-  var customer=esc(r.customer_name||'Walk-in');
-  var pm=getPaymentLabel(r.payment_method);
-  var cashReceived=parseFloat(r.cash_received)||0;
-  var accountAmount=parseFloat(r.account_amount)||0;
-  var changeDue=parseFloat(r.change_due)||0;
-  var subtotal=parseFloat(r.subtotal)||0;
-  var tax=parseFloat(r.tax_amount)||0;
-  var total=parseFloat(r.total)||0;
-  var items=r.items||[];
-  var comments=esc(r.comments||r.notes||'');
+  try {
+    var voidBadge = (r && r.status==='void') ? '<div style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:10px;padding:10px;margin-bottom:14px;text-align:center;font-weight:800;"><i class="fas fa-ban"></i> THIS INVOICE HAS BEEN VOIDED</div>' : '';
+    var storeName=esc(r.business_name||StoreConfig.getPharmacyName()||'Shanks Shop Management');
+    var storeAddress=esc(r.business_address||StoreConfig.get('storeAddress')||'');
+    var storePhone=esc(StoreConfig.get('phoneNumber')||'');
+    var footerText=esc(StoreConfig.get('footerText')||'Thank you for choosing Shanks Shop Management!');
+    var receiptId=esc(r.sale_id||'POS-'+Date.now().toString().slice(-6));
+    var date=formatDate(r.created_at);
+    var cashier=esc(r.employee||'Cashier');
+    var customer=esc(r.customer_name||'Walk-in');
+    var pm=getPaymentLabel(r.payment_method);
+    var cashReceived=parseFloat(r.cash_received)||0;
+    var accountAmount=parseFloat(r.account_amount)||0;
+    var changeDue=parseFloat(r.change_due)||0;
+    var subtotal=parseFloat(r.subtotal)||0;
+    var tax=parseFloat(r.tax_amount)||0;
+    var total=parseFloat(r.total)||0;
+    var items=r.items||[];
+    var comments=esc(r.comments||r.notes||'');
 
-  var html=voidBadge+'<div class="receipt-paper" id="receiptPaper">';
-  html+='<div class="receipt-header"><img class="receipt-logo" src="brand-logo.png" alt="logo"><h1>'+storeName+'</h1>';
-  if(storeAddress)html+='<p>'+storeAddress+'</p>';
-  if(storePhone)html+='<p><i class="fas fa-phone" style="margin-right:6px;"></i>'+storePhone+'</p>';
-  html+='</div>';
-  html+='<div class="receipt-body">';
-  html+='<div class="receipt-meta">';
-  html+='<div class="receipt-meta-box"><div class="label">Receipt No.</div><div class="value">'+receiptId+'</div></div>';
-  html+='<div class="receipt-meta-box"><div class="label">Date & Time</div><div class="value">'+date+'</div></div>';
-  html+='<div class="receipt-meta-box"><div class="label">Cashier</div><div class="value">'+cashier+'</div></div>';
-  html+='<div class="receipt-meta-box"><div class="label">Customer</div><div class="value">'+customer+'</div></div>';
-  html+='</div>';
-  html+='<div class="receipt-items"><h3>Items Purchased</h3>';
-  html+='<table class="items-table"><thead><tr><th style="width:45%">Item</th><th style="width:12%" class="col-qty">Qty</th><th style="width:22%" class="col-price">Price</th><th style="width:21%" class="col-total">Total</th></tr></thead><tbody>';
-  items.forEach(function(it){
-    var qty=parseFloat(it.qty)||0;
-    var price=parseFloat(it.unit_price)||0;
-    var disc=parseFloat(it.discount)||0;
-    var lineTotal=(price*qty)-disc;
-    html+='<tr><td class="col-name">'+esc(it.name||'Product')+'</td><td class="col-qty">'+qty+'</td><td class="col-price">'+fmt(price)+'</td><td class="col-total">'+fmt(lineTotal)+'</td></tr>';
-  });
-  html+='</tbody></table></div>';
-  html+='<div class="receipt-totals">';
-  html+='<div class="total-row"><span class="label">Subtotal</span><span class="value">'+fmt(subtotal)+'</span></div>';
-  if(tax>0)html+='<div class="total-row"><span class="label">Tax</span><span class="value">'+fmt(tax)+'</span></div>';
-  html+='<div class="total-row grand-total"><span class="label">Total</span><span class="value">'+fmt(total)+'</span></div>';
-  html+='<div class="total-row"><span class="label">Payment Method</span><span class="value">'+pm+'</span></div>';
-  html+='<div class="total-row"><span class="label">Cash Received</span><span class="value">'+fmt(cashReceived)+'</span></div>';
-  if(accountAmount>0)html+='<div class="total-row"><span class="label">Store Account</span><span class="value">'+fmt(accountAmount)+'</span></div>';
-  if(changeDue>0)html+='<div class="total-row"><span class="label">Change</span><span class="value">'+fmt(changeDue)+'</span></div>';
-  html+='</div>';
-  if(comments)html+='<div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:#92400e;"><i class="fas fa-comment-dots" style="margin-right:6px;"></i>'+comments+'</div>';
-  html+='<div class="receipt-footer"><div class="footer-text">'+footerText+'</div>';
-  html+='<div class="footer-notes"><i class="fas fa-redo" style="margin-right:4px;"></i> Keep this receipt for returns and exchanges</div>';
-  html+='</div>';
-  html+='</div></div>';
-  html+='<div class="actions-bar">';
-  html+='<button class="btn btn-primary" onclick="printCurrentReceipt()"><i class="fas fa-print"></i> Print Receipt</button>';
-  html+='<button class="btn btn-outline" onclick="editInvoice()"><i class="fas fa-edit"></i> Edit Invoice</button>';
-  html+='<button class="btn btn-danger" onclick="voidInvoice()"><i class="fas fa-ban"></i> Void Invoice</button>';
-  html+='<button class="btn btn-outline" onclick="navigateTo(\'sales.html\')"><i class="fas fa-shopping-cart"></i> New Sale</button>';
-  html+='</div>';
-  $('receiptContainer').innerHTML=html;
+    var html=voidBadge+'<div class="receipt-paper" id="receiptPaper">';
+    html+='<div class="receipt-header"><img class="receipt-logo" src="brand-logo.png" alt="logo"><h1>'+storeName+'</h1>';
+    if(storeAddress)html+='<p>'+storeAddress+'</p>';
+    if(storePhone)html+='<p><i class="fas fa-phone" style="margin-right:6px;"></i>'+storePhone+'</p>';
+    html+='</div>';
+    html+='<div class="receipt-body">';
+    html+='<div class="receipt-meta">';
+    html+='<div class="receipt-meta-box"><div class="label">Receipt No.</div><div class="value">'+receiptId+'</div></div>';
+    html+='<div class="receipt-meta-box"><div class="label">Date & Time</div><div class="value">'+date+'</div></div>';
+    html+='<div class="receipt-meta-box"><div class="label">Cashier</div><div class="value">'+cashier+'</div></div>';
+    html+='<div class="receipt-meta-box"><div class="label">Customer</div><div class="value">'+customer+'</div></div>';
+    html+='</div>';
+    html+='<div class="receipt-items"><h3>Items Purchased</h3>';
+    html+='<table class="items-table"><thead><tr><th style="width:45%">Item</th><th style="width:12%" class="col-qty">Qty</th><th style="width:22%" class="col-price">Price</th><th style="width:21%" class="col-total">Total</th></tr></thead><tbody>';
+    items.forEach(function(it){
+      var qty=parseFloat(it.qty)||0;
+      var price=parseFloat(it.unit_price)||0;
+      var disc=parseFloat(it.discount)||0;
+      var lineTotal=(price*qty)-disc;
+      html+='<tr><td class="col-name">'+esc(it.name||'Product')+'</td><td class="col-qty">'+qty+'</td><td class="col-price">'+fmt(price)+'</td><td class="col-total">'+fmt(lineTotal)+'</td></tr>';
+    });
+    html+='</tbody></table></div>';
+    html+='<div class="receipt-totals">';
+    html+='<div class="total-row"><span class="label">Subtotal</span><span class="value">'+fmt(subtotal)+'</span></div>';
+    if(tax>0)html+='<div class="total-row"><span class="label">Tax</span><span class="value">'+fmt(tax)+'</span></div>';
+    html+='<div class="total-row grand-total"><span class="label">Total</span><span class="value">'+fmt(total)+'</span></div>';
+    html+='<div class="total-row"><span class="label">Payment Method</span><span class="value">'+pm+'</span></div>';
+    html+='<div class="total-row"><span class="label">Cash Received</span><span class="value">'+fmt(cashReceived)+'</span></div>';
+    if(accountAmount>0)html+='<div class="total-row"><span class="label">Store Account</span><span class="value">'+fmt(accountAmount)+'</span></div>';
+    if(changeDue>0)html+='<div class="total-row"><span class="label">Change</span><span class="value">'+fmt(changeDue)+'</span></div>';
+    html+='</div>';
+    if(comments)html+='<div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:#92400e;"><i class="fas fa-comment-dots" style="margin-right:6px;"></i>'+comments+'</div>';
+    html+='<div class="receipt-footer"><div class="footer-text">'+footerText+'</div>';
+    html+='<div class="footer-notes"><i class="fas fa-redo" style="margin-right:4px;"></i> Keep this receipt for returns and exchanges</div>';
+    html+='</div>';
+    html+='</div></div>';
+    html+='<div class="actions-bar">';
+    html+='<button class="btn btn-primary" onclick="printCurrentReceipt()"><i class="fas fa-print"></i> Print Receipt</button>';
+    html+='<button class="btn btn-outline" onclick="editInvoice()"><i class="fas fa-edit"></i> Edit Invoice</button>';
+    html+='<button class="btn btn-danger" onclick="voidInvoice()"><i class="fas fa-ban"></i> Void Invoice</button>';
+    html+='<button class="btn btn-outline" onclick="navigateTo(\'sales.html\')"><i class="fas fa-shopping-cart"></i> New Sale</button>';
+    html+='</div>';
+    $('receiptContainer').innerHTML=html;
+  } catch(e) {
+    showToast('Error rendering receipt: '+(e.message||'unknown error'), true);
+    console.error('Receipt render error:', e);
+  }
 }
 
 function printCurrentReceipt(){
-  if(!currentReceipt)return;
-  var w=window.open('','_blank','width=800,height=1000');
-  if(!w){alert('Please allow popups to print receipts');return;}
-  var storeName=currentReceipt.business_name||StoreConfig.getPharmacyName()||'Shanks Shop Management';
-  var storeAddress=currentReceipt.business_address||StoreConfig.get('storeAddress')||'';
-  var storePhone=StoreConfig.get('phoneNumber')||'';
-  var footerText=StoreConfig.get('footerText')||'Thank you for choosing Shanks Shop Management!';
-  var receiptId=currentReceipt.sale_id||'POS-'+Date.now().toString().slice(-6);
-  var date=formatDate(currentReceipt.created_at);
-  var cashier=currentReceipt.employee||'Cashier';
-  var customer=currentReceipt.customer_name||'Walk-in';
-  var pm=getPaymentLabel(currentReceipt.payment_method);
-  var cashReceived=parseFloat(currentReceipt.cash_received)||0;
-  var accountAmount=parseFloat(currentReceipt.account_amount)||0;
-  var changeDue=parseFloat(currentReceipt.change_due)||0;
-  var subtotal=parseFloat(currentReceipt.subtotal)||0;
-  var tax=parseFloat(currentReceipt.tax_amount)||0;
-  var total=parseFloat(currentReceipt.total)||0;
-  var items=currentReceipt.items||[];
-  var comments=currentReceipt.comments||currentReceipt.notes||'';
-  var printHtml='<!DOCTYPE html><html><head><title>Receipt - '+esc(storeName)+'</title><style>body{font-family:Inter,Arial,sans-serif;margin:0;padding:0;color:#000;background:#fff;}*{box-sizing:border-box;}@page{size:80mm auto;margin:0;}@media print{body{margin:0;padding:0;}}.r-wrap{max-width:380px;margin:0 auto;padding:16px;}.r-header{text-align:center;padding-bottom:12px;border-bottom:2px dashed #000;margin-bottom:12px;}.r-header h1{font-size:18px;font-weight:800;margin:0;}.r-header p{margin:2px 0;font-size:11px;}.r-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:12px;font-size:12px;}.r-meta div{padding:2px 0;}.r-section{margin-bottom:14px;}.r-section h3{font-size:12px;font-weight:700;text-transform:uppercase;border-bottom:1px dashed #000;padding-bottom:4px;margin-bottom:6px;}table{width:100%;border-collapse:collapse;font-size:12px;}th{text-align:left;padding:4px 0;border-bottom:1px solid #eee;}td{padding:4px 0;border-bottom:1px solid #f5f5f5;}.r-totals{border-top:2px dashed #000;padding-top:8px;margin-top:8px;}.r-total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}.r-total-row.grand{font-size:16px;font-weight:800;border-top:1px solid #000;padding-top:6px;margin-top:4px;}.r-footer{text-align:center;margin-top:16px;padding-top:12px;border-top:2px dashed #000;font-size:11px;color:#555;}</style>  <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#10b981">
-</head><body><div class="r-wrap">';
-  printHtml+='<div class="r-header"><img src="brand-logo.png" alt="logo" style="width:56px;height:56px;object-fit:contain;background:#fff;border-radius:14px;padding:6px;margin-bottom:6px;"><h1>'+esc(storeName)+'</h1>';
-  if(storeAddress)printHtml+='<p>'+esc(storeAddress)+'</p>';
-  if(storePhone)printHtml+='<p>Phone: '+esc(storePhone)+'</p>';
-  printHtml+='</div>';
-  printHtml+='<div class="r-meta"><div><strong>Receipt:</strong> '+receiptId+'</div><div><strong>Date:</strong> '+date+'</div><div><strong>Cashier:</strong> '+esc(cashier)+'</div><div><strong>Customer:</strong> '+esc(customer)+'</div></div>';
-  printHtml+='<div class="r-section"><h3>Items</h3><table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead><tbody>';
-  items.forEach(function(it){
-    var qty=parseFloat(it.qty)||0;
-    var price=parseFloat(it.unit_price)||0;
-    var disc=parseFloat(it.discount)||0;
-    var lineTotal=(price*qty)-disc;
-    printHtml+='<tr><td>'+esc(it.name||'Product')+'</td><td style="text-align:center">'+qty+'</td><td style="text-align:right">'+fmt(price)+'</td><td style="text-align:right">'+fmt(lineTotal)+'</td></tr>';
-  });
-  printHtml+='</tbody></table></div>';
-  printHtml+='<div class="r-totals"><div class="r-total-row"><span>Subtotal</span><span>'+fmt(subtotal)+'</span></div>';
-  if(tax>0)printHtml+='<div class="r-total-row"><span>Tax</span><span>'+fmt(tax)+'</span></div>';
-  printHtml+='<div class="r-total-row grand"><span>Total</span><span>'+fmt(total)+'</span></div>';
-  printHtml+='<div class="r-total-row"><span>'+pm+'</span><span>'+fmt(cashReceived)+'</span></div>';
-  if(accountAmount>0)printHtml+='<div class="r-total-row"><span>Store Account</span><span>'+fmt(accountAmount)+'</span></div>';
-  if(changeDue>0)printHtml+='<div class="r-total-row"><span>Change</span><span>'+fmt(changeDue)+'</span></div>';
-  printHtml+='</div>';
-  if(comments)printHtml+='<div style="margin-top:10px;font-size:11px;color:#555;border-top:1px dashed #ccc;padding-top:8px;"><strong>Notes:</strong> '+esc(comments)+'</div>';
-  printHtml+='<div class="r-footer"><p>'+footerText+'</p><p style="margin-top:6px;font-size:10px;">Keep this receipt for returns and exchanges</p></div>';
-  printHtml+='</div>  <script src="/offline.js"></script>
-</body></html>';
-  w.document.write(printHtml);
-  w.document.close();
-  setTimeout(function(){w.focus();w.print();setTimeout(function(){w.close();},1000);},300);
+  if(!currentReceipt){showToast('No receipt data to print. Complete a sale first.',true);return;}
+  try {
+    var w=window.open('','_blank','width=800,height=1000');
+    if(!w){showToast('Popup blocked. Please allow popups for this site and try again.',true);return;}
+    var logoUrl = new URL('brand-logo.png', document.baseURI || window.location.href).href;
+    var storeName=currentReceipt.business_name||StoreConfig.getPharmacyName()||'Shanks Shop Management';
+    var storeAddress=currentReceipt.business_address||StoreConfig.get('storeAddress')||'';
+    var storePhone=StoreConfig.get('phoneNumber')||'';
+    var footerText=StoreConfig.get('footerText')||'Thank you for choosing Shanks Shop Management!';
+    var receiptId=currentReceipt.sale_id||'POS-'+Date.now().toString().slice(-6);
+    var date=formatDate(currentReceipt.created_at);
+    var cashier=currentReceipt.employee||'Cashier';
+    var customer=currentReceipt.customer_name||'Walk-in';
+    var pm=getPaymentLabel(currentReceipt.payment_method);
+    var cashReceived=parseFloat(currentReceipt.cash_received)||0;
+    var accountAmount=parseFloat(currentReceipt.account_amount)||0;
+    var changeDue=parseFloat(currentReceipt.change_due)||0;
+    var subtotal=parseFloat(currentReceipt.subtotal)||0;
+    var tax=parseFloat(currentReceipt.tax_amount)||0;
+    var total=parseFloat(currentReceipt.total)||0;
+    var items=currentReceipt.items||[];
+    var comments=currentReceipt.comments||currentReceipt.notes||'';
+    var printHtml='<!DOCTYPE html><html><head><title>Receipt - '+esc(storeName)+'</title><style>body{font-family:Inter,Arial,sans-serif;margin:0;padding:0;color:#000;background:#fff;}*{box-sizing:border-box;}@page{size:80mm auto;margin:0;}@media print{body{margin:0;padding:0;}}.r-wrap{max-width:380px;margin:0 auto;padding:16px;}.r-header{text-align:center;padding-bottom:12px;border-bottom:2px dashed #000;margin-bottom:12px;}.r-header h1{font-size:18px;font-weight:800;margin:0;}.r-header p{margin:2px 0;font-size:11px;}.r-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:12px;font-size:12px;}.r-meta div{padding:2px 0;}.r-section{margin-bottom:14px;}.r-section h3{font-size:12px;font-weight:700;text-transform:uppercase;border-bottom:1px dashed #000;padding-bottom:4px;margin-bottom:6px;}table{width:100%;border-collapse:collapse;font-size:12px;}th{text-align:left;padding:4px 0;border-bottom:1px solid #eee;}td{padding:4px 0;border-bottom:1px solid #f5f5f5;}.r-totals{border-top:2px dashed #000;padding-top:8px;margin-top:8px;}.r-total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}.r-total-row.grand{font-size:16px;font-weight:800;border-top:1px solid #000;padding-top:6px;margin-top:4px;}.r-footer{text-align:center;margin-top:16px;padding-top:12px;border-top:2px dashed #000;font-size:11px;color:#555;}</style></head><body><div class="r-wrap">';
+    printHtml+='<div class="r-header"><img src="'+logoUrl+'" alt="logo" style="width:56px;height:56px;object-fit:contain;background:#fff;border-radius:14px;padding:6px;margin-bottom:6px;"><h1>'+esc(storeName)+'</h1>';
+    if(storeAddress)printHtml+='<p>'+esc(storeAddress)+'</p>';
+    if(storePhone)printHtml+='<p>Phone: '+esc(storePhone)+'</p>';
+    printHtml+='</div>';
+    printHtml+='<div class="r-meta"><div><strong>Receipt:</strong> '+receiptId+'</div><div><strong>Date:</strong> '+date+'</div><div><strong>Cashier:</strong> '+esc(cashier)+'</div><div><strong>Customer:</strong> '+esc(customer)+'</div></div>';
+    printHtml+='<div class="r-section"><h3>Items</h3><table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead><tbody>';
+    items.forEach(function(it){
+      var qty=parseFloat(it.qty)||0;
+      var price=parseFloat(it.unit_price)||0;
+      var disc=parseFloat(it.discount)||0;
+      var lineTotal=(price*qty)-disc;
+      printHtml+='<tr><td>'+esc(it.name||'Product')+'</td><td style="text-align:center">'+qty+'</td><td style="text-align:right">'+fmt(price)+'</td><td style="text-align:right">'+fmt(lineTotal)+'</td></tr>';
+    });
+    printHtml+='</tbody></table></div>';
+    printHtml+='<div class="r-totals"><div class="r-total-row"><span>Subtotal</span><span>'+fmt(subtotal)+'</span></div>';
+    if(tax>0)printHtml+='<div class="r-total-row"><span>Tax</span><span>'+fmt(tax)+'</span></div>';
+    printHtml+='<div class="r-total-row grand"><span>Total</span><span>'+fmt(total)+'</span></div>';
+    printHtml+='<div class="r-total-row"><span>'+pm+'</span><span>'+fmt(cashReceived)+'</span></div>';
+    if(accountAmount>0)printHtml+='<div class="r-total-row"><span>Store Account</span><span>'+fmt(accountAmount)+'</span></div>';
+    if(changeDue>0)printHtml+='<div class="r-total-row"><span>Change</span><span>'+fmt(changeDue)+'</span></div>';
+    printHtml+='</div>';
+    if(comments)printHtml+='<div style="margin-top:10px;font-size:11px;color:#555;border-top:1px dashed #ccc;padding-top:8px;"><strong>Notes:</strong> '+esc(comments)+'</div>';
+    printHtml+='<div class="r-footer"><p>'+footerText+'</p><p style="margin-top:6px;font-size:10px;">Keep this receipt for returns and exchanges</p></div>';
+    printHtml+='</div></body></html>';
+    w.document.write(printHtml);
+    w.document.close();
+    setTimeout(function(){try{w.focus();w.print();setTimeout(function(){try{w.close();}catch(e){}},1000);}catch(e){showToast('Print dialog blocked by browser. Use Ctrl+P instead.',true);}},300);
+  } catch(e) {
+    showToast('Print failed: '+(e.message||'unknown error'), true);
+    console.error('Print error:', e);
+  }
 }
 
 function editInvoice(){
@@ -262,6 +267,5 @@ document.addEventListener('DOMContentLoaded',function(){
   }
 });
 </script>
-  <script src="/offline.js"></script>
 </body>
 </html>
