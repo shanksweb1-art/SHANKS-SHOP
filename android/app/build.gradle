@@ -1,5 +1,16 @@
 apply plugin: 'com.android.application'
 
+repositories {
+    maven { url 'https://mirrors.huaweicloud.com/repository/maven/' }
+    maven { url 'https://repo.maven.apache.org/maven2/' }
+    maven { url 'https://jitpack.io' }
+    google()
+    mavenCentral()
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
 android {
     namespace "com.shanks.shopmanagement"
     compileSdk rootProject.ext.compileSdkVersion

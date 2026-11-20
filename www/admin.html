@@ -347,9 +347,19 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
             <tbody id="usersBody"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
-      </div>
 
-      <!-- PAGES -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-user-clock"></i> Pending Staff Requests</div>
+            <button class="btn btn-outline btn-sm" onclick="loadPendingRequests()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+          <p class="panel-hint">Staff members have requested accounts. Review and approve or reject each request.</p>
+          <table class="table">
+            <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Email</th><th>Phone</th><th>Requested</th><th>Actions</th></tr></thead>
+            <tbody id="pendingRequestsBody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
       <div id="tab-pages" class="tab-pane">
         <div class="panel">
           <div class="panel-header">
@@ -538,7 +548,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 
 <script>
 (function() {
-  var DB = { users: [], pages: [], roles: [], presets: {}, overview: null, business: null, businessTypes: [], moduleCatalog: [] };
+  var DB = { users: [], pages: [], roles: [], presets: {}, overview: null, business: null, businessTypes: [], moduleCatalog: [], pendingRequests: [] };
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -1229,6 +1239,56 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
         '</td></tr>';
     }).join('');
   }
+  async function loadPendingRequests() {
+    try {
+      var reqs = await API.listAccountRequests() || [];
+      DB.pendingRequests = reqs;
+    } catch (e) {
+      DB.pendingRequests = [];
+      showToast(e.message || 'Could not load pending requests', true);
+    }
+    renderPendingRequests();
+  }
+  function renderPendingRequests() {
+    var tb = $('pendingRequestsBody');
+    if (!tb) return;
+    var list = DB.pendingRequests || [];
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="8" class="empty-state">No pending staff requests</td></tr>';
+      return;
+    }
+    tb.innerHTML = list.map(function(r) {
+      var reqDate = r.requested_at ? String(r.requested_at).replace('T', ' ').slice(0, 16) : '-';
+      return '<tr>' +
+        '<td><strong>' + esc(r.full_name || '-') + '</strong></td>' +
+        '<td>' + esc(r.username) + '</td>' +
+        '<td><span class="badge badge-info">' + esc(r.role) + '</span></td>' +
+        '<td>' + esc(r.email || '-') + '</td>' +
+        '<td>' + esc(r.phone || '-') + '</td>' +
+        '<td>' + reqDate + '</td>' +
+        '<td class="actions-cell">' +
+        '<button class="btn btn-primary btn-sm" onclick="approveRequest(' + r.id + ',\'' + esc(r.role) + '\')"><i class="fas fa-check"></i> Approve</button> ' +
+        '<button class="btn btn-danger btn-sm" onclick="rejectRequest(' + r.id + ')"><i class="fas fa-times"></i> Reject</button>' +
+        '</td></tr>';
+    }).join('');
+  }
+  async function approveRequest(reqId, role) {
+    if (!confirm('Approve this staff account request?')) return;
+    try {
+      await API.approveAccountRequest(reqId, { role: role, reviewed_by: API.getUserName ? API.getUserName() : 'admin' });
+      showToast('Staff account approved');
+      await loadPendingRequests();
+      await loadUsers();
+    } catch (e) { showToast(e.message || 'Approve failed', true); }
+  }
+  async function rejectRequest(reqId) {
+    if (!confirm('Reject this staff account request?')) return;
+    try {
+      await API.rejectAccountRequest(reqId, { reviewed_by: API.getUserName ? API.getUserName() : 'admin' });
+      showToast('Staff request rejected');
+      await loadPendingRequests();
+    } catch (e) { showToast(e.message || 'Reject failed', true); }
+  }
   async function createUser() {
     var list = collectSlots();
     if (!list) return;
@@ -1407,7 +1467,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
     await loadRoles();
     await loadPresets();
     renderAccountSlots();
-    await Promise.all([loadOverview(), loadUsers(), loadPages(), loadBusinessProfile()]);
+    await Promise.all([loadOverview(), loadUsers(), loadPages(), loadBusinessProfile(), loadPendingRequests()]);
     setPageMode('store');
     } catch (e) {
       showToast('Could not load the admin panel: ' + (e && e.message ? e.message : e), true);
@@ -1433,6 +1493,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
   window.reloadPages = reloadPages;
   window.loadOverview = loadOverview;
   window.loadBusinessProfile = loadBusinessProfile;
+  window.loadPendingRequests = loadPendingRequests;
+  window.approveRequest = approveRequest;
+  window.rejectRequest = rejectRequest;
   window.saveBusinessProfile = saveBusinessProfile;
   window.applyBusinessTypeModules = applyBusinessTypeModules;
   window.setAllModules = setAllModules;

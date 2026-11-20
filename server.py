@@ -1436,6 +1436,103 @@ def request_staff_account():
         'message': 'Account request submitted. An administrator must approve it before you can log in.'
     }), 201
 
+# --- List pending account requests (admin only) ---
+@app.route('/api/auth/requests', methods=['GET'])
+@require_auth
+def list_account_requests():
+    db = get_db()
+    db.execute(f'''
+        CREATE TABLE IF NOT EXISTS account_requests (
+            id {id_col()},
+            pharmacy_id INTEGER DEFAULT 0,
+            full_name TEXT NOT NULL,
+            username TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            phone TEXT DEFAULT '',
+            email TEXT DEFAULT '',
+            role TEXT DEFAULT 'cashier',
+            notes TEXT DEFAULT '',
+            status TEXT DEFAULT 'pending',
+            requested_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            reviewed_at TEXT,
+            reviewed_by TEXT
+        )
+    ''')
+    rows = db.execute(
+        'SELECT * FROM account_requests WHERE status = ? ORDER BY requested_at DESC',
+        ('pending',)).fetchall()
+    result = []
+    for r in rows:
+        result.append({
+            'id': r['id'],
+            'full_name': r['full_name'],
+            'username': r['username'],
+            'phone': r['phone'] or '',
+            'email': r['email'] or '',
+            'role': r['role'] or 'cashier',
+            'notes': r['notes'] or '',
+            'status': r['status'],
+            'requested_at': r['requested_at']
+        })
+    return jsonify(result)
+
+# --- Approve a staff account request ---
+@app.route('/api/auth/approve-request/<int:req_id>', methods=['POST'])
+def approve_account_request(req_id):
+    data = request.get_json(silent=True) or {}
+    role = str(data.get('role') or 'cashier').strip().lower()
+    pages = data.get('page_access') or None
+
+    db = get_db()
+    req = db.execute(
+        'SELECT * FROM account_requests WHERE id = ? AND status = ?',
+        (req_id, 'pending')).fetchone()
+    if not req:
+        return jsonify({'error': 'Request not found or already processed'}), 404
+
+    pharmacy_id = int(req['pharmacy_id']) if req['pharmacy_id'] else 0
+    if pharmacy_id == 0:
+        return jsonify({'error': 'Request is not assigned to a store. Please assign a pharmacy first.'}), 400
+
+    # Check username clash
+    clash = db.execute(
+        'SELECT id FROM users WHERE username = ? LIMIT 1',
+        (req['username'],)).fetchone()
+    if clash:
+        return jsonify({'error': 'Username already exists'}), 400
+
+    db.execute(
+        'INSERT INTO users (pharmacy_id, username, password, name, role, store, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        (pharmacy_id, req['username'], req['password_hash'], req['full_name'], role, 'main', req['phone'] or '', req['email'] or ''))
+    db.execute(
+        'UPDATE account_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?',
+        ('approved', datetime.now().isoformat(), data.get('reviewed_by', 'admin'), req_id))
+    db.commit()
+
+    return jsonify({
+        'id': req_id,
+        'username': req['username'],
+        'role': role,
+        'status': 'approved',
+        'message': 'Account approved and created.'
+    }), 201
+
+# --- Reject a staff account request ---
+@app.route('/api/auth/reject-request/<int:req_id>', methods=['POST'])
+def reject_account_request(req_id):
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    req = db.execute(
+        'SELECT * FROM account_requests WHERE id = ? AND status = ?',
+        (req_id, 'pending')).fetchone()
+    if not req:
+        return jsonify({'error': 'Request not found or already processed'}), 404
+    db.execute(
+        'UPDATE account_requests SET status = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?',
+        ('rejected', datetime.now().isoformat(), data.get('reviewed_by', 'admin'), req_id))
+    db.commit()
+    return jsonify({'id': req_id, 'status': 'rejected', 'message': 'Request rejected.'})
+
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.get_json()
