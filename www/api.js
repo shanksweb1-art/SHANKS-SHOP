@@ -206,6 +206,14 @@ var API = (function() {
             }).then(function(res) { return res.json(); });
         },
 
+        requestAccount: function(data) {
+            return fetch(BASE_URL + '/auth/request-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(function(res) { return res.json(); });
+        },
+
         // Products
         getProducts: function() { return this.get('/products'); },
         saveProduct: function(data) { return this.post('/products', data); },

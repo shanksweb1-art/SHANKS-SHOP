@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -30,8 +30,6 @@
     .note { background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px; border-radius: 5px; margin-bottom: 1rem; font-size: 0.85rem; color: #1e40af; text-align: center; }
     .required-star { color: #ef4444; }
 </style>
-  <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="login-container">
@@ -86,12 +84,14 @@
 <label>Notes (optional)</label>
 <input type="text" id="notes" placeholder="Any message for the admin">
 </div>
-<button type="submit" class="login-btn"><i class="fas fa-user-plus"></i> Submit Request</button>
+<button type="submit" class="login-btn" id="createAccountBtn"><i class="fas fa-user-plus"></i> Submit Request</button>
 </form>
 <a class="back-link" onclick="window.location.href='login.html'"><i class="fas fa-arrow-left"></i> Back to Login</a>
 </div>
 </div>
 <div class="notification-toast" id="toast"></div>
+<script src="api.js"></script>
+<script src="common.js"></script>
 <script>
 function $(id){return document.getElementById(id);}
 function showToast(msg, isError){
@@ -101,8 +101,10 @@ function showToast(msg, isError){
     t.style.display='block';
     setTimeout(function(){t.style.display='none';},4000);
 }
-function createAccount(e){
+async function createAccount(e){
     e.preventDefault();
+    var btn=$('createAccountBtn') || document.querySelector('button[type="submit"]');
+    var originalHtml = btn.innerHTML;
     var fullName=$('fullName').value.trim();
     var username=$('username').value.trim();
     var password=$('password').value;
@@ -114,19 +116,39 @@ function createAccount(e){
     if(!fullName||!username||!password){showToast('Name, username and password are required',true);return;}
     if(password!==confirm){showToast('Passwords do not match',true);return;}
     if(password.length<6){showToast('Password must be at least 6 characters',true);return;}
-    var pending=[];
-    try{var raw=localStorage.getItem('danzona_pending_accounts');pending=raw?JSON.parse(raw):[];if(!Array.isArray(pending))pending=[];}catch(e){pending=[];}
-    if(pending.find(function(a){return a.username===username;})){showToast('This username is already pending approval',true);return;}
-    var record={id:'REQ-'+Date.now(),fullName:fullName,username:username,password:password,phone:phone,email:email,role:role||'cashier',notes:notes,requestedAt:new Date().toISOString(),status:'pending'};
-    pending.push(record);
-    try{localStorage.setItem('danzona_pending_accounts',JSON.stringify(pending));}catch(e){showToast('Storage error. Try again.',true);return;}
-    showToast('Account request submitted! Ask your admin to approve it at User Roles > Pending Requests.');
-    $('fullName').value='';$('username').value='';$('password').value='';$('confirmPassword').value='';
-    $('phone').value='';$('email').value='';$('role').value='';$('notes').value='';
-    setTimeout(function(){window.location.href='login.html';},2500);
+    if(!role){showToast('Please select a role',true);return;}
+
+    btn.disabled=true;
+    btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+    try {
+        var res = await API.requestAccount({
+            fullName: fullName,
+            username: username,
+            password: password,
+            phone: phone,
+            email: email,
+            role: role,
+            notes: notes
+        });
+        if (res.error) {
+            showToast(res.error, true);
+            btn.disabled=false;
+            btn.innerHTML=originalHtml;
+            return;
+        }
+        showToast('Account request submitted! Ask your admin to approve it at User Roles > Pending Requests.');
+        $('fullName').value='';$('username').value='';$('password').value='';$('confirmPassword').value='';
+        $('phone').value='';$('email').value='';$('role').value='';$('notes').value='';
+        setTimeout(function(){window.location.href='login.html';},2500);
+    } catch (err) {
+        showToast('Failed to submit request: '+(err.message||'server error'), true);
+        console.error(err);
+        btn.disabled=false;
+        btn.innerHTML=originalHtml;
+    }
 }
 </script>
-  <script src="/offline.js"></script>
 </body>
 </html>
 

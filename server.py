@@ -1376,6 +1376,66 @@ def complete_store_setup():
         'message': 'Store account created. Welcome to SHANKS SHOP MANAGEMENT.'
     }), 201
 
+# --- Staff account request endpoint ---
+@app.route('/api/auth/request-account', methods=['POST'])
+def request_staff_account():
+    """Allow a staff member to request an account. Pending approval by admin."""
+    data = request.get_json(silent=True) or {}
+    full_name = str(data.get('fullName') or data.get('full_name') or '').strip()
+    username = str(data.get('username') or '').strip()
+    password = str(data.get('password') or '')
+    phone = str(data.get('phone') or '').strip()
+    email = str(data.get('email') or '').strip()
+    role = str(data.get('role') or 'cashier').strip().lower()
+    notes = str(data.get('notes') or '').strip()
+
+    if not full_name or not username or not password:
+        return jsonify({'error': 'Full name, username and password are required'}), 400
+    if len(password) < 6:
+        return jsonify({'error': 'Password must be at least 6 characters'}), 400
+    valid_roles = {'admin', 'manager', 'cashier', 'staff', 'pharmacist', 'supervisor', 'accountant'}
+    if role not in valid_roles:
+        role = 'cashier'
+
+    db = get_db()
+    # Ensure table exists
+    db.execute(f'''
+        CREATE TABLE IF NOT EXISTS account_requests (
+            id {id_col()},
+            pharmacy_id INTEGER DEFAULT 0,
+            full_name TEXT NOT NULL,
+            username TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            phone TEXT DEFAULT '',
+            email TEXT DEFAULT '',
+            role TEXT DEFAULT 'cashier',
+            notes TEXT DEFAULT '',
+            status TEXT DEFAULT 'pending',
+            requested_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            reviewed_at TEXT,
+            reviewed_by TEXT
+        )
+    ''')
+    # Check duplicate pending username (per pharmacy context - pharmacy_id 0 = unassigned)
+    existing = db.execute(
+        'SELECT id FROM account_requests WHERE username = ? AND status = ? AND pharmacy_id = 0',
+        (username, 'pending')).fetchone()
+    if existing:
+        return jsonify({'error': 'This username is already pending approval'}), 400
+
+    db.execute(
+        'INSERT INTO account_requests (pharmacy_id, full_name, username, password_hash, phone, email, role, notes, status, requested_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
+        (0, full_name, username, _hash_secret(password), phone, email, role, notes, 'pending', datetime.now().isoformat()))
+    db.commit()
+
+    return jsonify({
+        'id': db.execute('SELECT last_insert_rowid()').fetchone()[0],
+        'username': username,
+        'role': role,
+        'status': 'pending',
+        'message': 'Account request submitted. An administrator must approve it before you can log in.'
+    }), 201
+
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.get_json()
