@@ -797,7 +797,7 @@ function renderSubWarning(sub) {
     }
     return {
         $: $, esc: esc, navigateTo: navigateTo, formatCurrency: formatCurrency, formatNumber: formatNumber, formatDate: formatDate, today: today, getQueryParameter: getQueryParameter, showToast: showToast, openModal: openModal, closeModal: closeModal, exportCSV: exportCSV, printTable: printTable, renderSidebar: renderSidebar, renderUserMenu: renderUserMenu, switchToAdmin: switchToAdmin, logout: logout, statusBadge: statusBadge, debounce: debounce, initCommon: initCommon, requireAuth: requireAuth, getPrinterType: getPrinterType, buildSmallReceipt: buildSmallReceipt, buildLargeReceipt: buildLargeReceipt, fmt: fmt, startClock: startClock, loadPageConfig: loadPageConfig, loadUserAccess: loadUserAccess, checkPageAccess: checkPageAccess, isAdminRole: isAdminRole, canAccessPage: canAccessPage, getPageConfig: function() { return pageConfig; }, getUserAccess: function() { return userAccess; },
-        pkgTypesOf: pkgTypesOf, pkgTypeOf: pkgTypeOf, pkgCost: pkgCost, findProduct: findProduct, lineCost: lineCost, lineRevenue: lineRevenue, profitSummary: profitSummary, printBluetooth: printBluetooth, escPosReceipt: escPosReceipt
+        pkgTypesOf: pkgTypesOf, pkgTypeOf: pkgTypeOf, pkgCost: pkgCost, findProduct: findProduct, lineCost: lineCost, lineRevenue: lineRevenue, profitSummary: profitSummary, printBluetooth: printBluetooth, escPosReceipt: escPosReceipt, getReceiptConfig: getReceiptConfig
     };
 })();
 window.POS = POS;
