@@ -14,68 +14,86 @@
 <script src="api.js"></script>
 <script src="common.js"></script>
 <style>
-:root{--primary:#10b981;--primary-hover:#059669;--primary-soft:#ecfdf5;--primary-ring:rgba(16,185,129,0.1);--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;--dark:#1f2937;--border:#e5e7eb;--light:#f9fafb;--text:#1f2937;--text-soft:#6b7280;--success:#10b981;}
+:root{--primary:#10b981;--primary-hover:#059669;--primary-soft:#ecfdf5;--primary-ring:rgba(16,185,129,0.1);--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;--dark:#111827;--dark-2:#1f2937;--border:#e5e7eb;--light:#f9fafb;--text:#111827;--text-soft:#64748b;--success:#10b981;}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',Arial,sans-serif;}
-body{background:#f3f4f6;min-height:100vh;display:flex;}
+body{background:#f3f4f6;min-height:100vh;}
 .sidebar{width:260px;background:var(--dark);color:#fff;height:100vh;overflow-y:auto;flex-shrink:0;transition:all 0.3s;}
-.sidebar-header{padding:20px;background:#111827;border-bottom:1px solid #374151;}
-.sidebar-header h1{font-size:22px;color:var(--primary);margin:0;font-weight:600;}
-.sidebar-header p{font-size:12px;color:#9ca3af;margin-top:4px;}
+.sidebar-header{padding:20px;background:#020617;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar-header h1{font-size:20px;color:var(--primary);margin:0;font-weight:900;}
+.sidebar-header p{font-size:12px;color:#94a3b8;margin-top:4px;}
 .sidebar ul{list-style:none;padding:12px 0;}
 .sidebar ul li{padding:12px 22px;display:flex;align-items:center;gap:12px;cursor:pointer;border-left:3px solid transparent;transition:all 0.2s;font-size:14px;}
-.sidebar ul li:hover{background:#374151;color:#fff;border-left-color:var(--primary);}
-.sidebar ul li.active{background:#374151;color:#fff;border-left-color:var(--primary);}
-.main{flex:1;padding:20px;overflow-y:auto;min-width:0;}
-.header{background:var(--primary);color:#fff;padding:16px 22px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
-.header h2{font-size:20px;font-weight:700;margin:0;}
-.header-actions{display:flex;gap:10px;align-items:center;}
-.header-clock{font-size:13px;font-weight:600;opacity:.95;white-space:nowrap;}
-.header-clock i{margin-right:6px;}
-.user-menu{position:relative;cursor:pointer;padding:8px 12px;border-radius:6px;background:rgba(255,255,255,0.15);display:flex;align-items:center;gap:8px;}
-.user-dropdown{position:absolute;top:100%;right:0;margin-top:8px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);min-width:220px;z-index:1000;display:none;padding:8px;}
-.user-dropdown.show{display:block;animation:fadeIn 0.2s;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:translateY(0);}}
-.user-info{padding:6px 0 10px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.sidebar ul li:hover{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--primary);}
+.sidebar ul li.active{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--primary);}
+.main{flex:1;padding:24px;overflow-y:auto;min-width:0;}
+.header{background:#fff;color:var(--text);padding:16px 24px;border-radius:12px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid var(--border);}
+.header h2{font-size:18px;font-weight:800;margin:0;display:flex;align-items:center;gap:8px;}
+.header h2 i{color:var(--primary);}
+.header-actions{display:flex;gap:8px;align-items:center;}
+.header-clock{font-size:13px;font-weight:600;color:var(--text-soft);white-space:nowrap;}
+.user-menu{position:relative;cursor:pointer;padding:7px 12px;border-radius:8px;background:var(--light);display:flex;align-items:center;gap:6px;}
+.user-dropdown{position:absolute;top:100%;right:0;margin-top:6px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.12);min-width:220px;z-index:1000;display:none;padding:6px;}
+.user-dropdown.show{display:block;}
+.user-info{padding:6px 0 10px;border-bottom:1px solid var(--border);margin-bottom:4px;}
 .user-info strong{color:var(--text);}
-.user-dropdown a{display:flex;align-items:center;gap:10px;padding:10px 12px;color:var(--text-soft);text-decoration:none;border-radius:4px;transition:background 0.2s;font-size:14px;}
-.user-dropdown a:hover{background:var(--primary-soft);color:var(--dark);}
-.receipt-container{max-width:800px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
-.receipt-paper{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);overflow:hidden;}
-  .receipt-header{background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:24px;text-align:center;}
-  .receipt-logo{width:62px;height:62px;object-fit:contain;display:block;margin:0 auto 10px;background:#fff;border-radius:16px;padding:7px;box-shadow:0 8px 18px rgba(0,0,0,.18);}
-.receipt-header h1{font-size:24px;font-weight:800;margin:0;letter-spacing:0.5px;}
-.receipt-header p{margin:4px 0 0;opacity:0.9;font-size:14px;}
+.user-dropdown a{display:flex;align-items:center;gap:10px;padding:9px 12px;color:var(--text-soft);text-decoration:none;border-radius:8px;transition:background .2s;font-size:13px;}
+.user-dropdown a:hover{background:var(--primary-soft);color:var(--primary-dark,#059669);}
+.receipt-container{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
+.page-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.page-title i{color:var(--primary);}
+.receipt-card{background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid var(--border);overflow:hidden;}
+.receipt-header{background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:24px;text-align:center;}
+.receipt-logo{width:52px;height:52px;object-fit:contain;display:block;margin:0 auto 12px;background:#fff;border-radius:14px;padding:6px;box-shadow:0 8px 18px rgba(0,0,0,.2);}
+.receipt-header h1{font-size:22px;font-weight:900;margin:0;letter-spacing:.5px;}
+.receipt-header p{margin:4px 0 0;opacity:.95;font-size:14px;}
 .receipt-body{padding:24px;}
-.receipt-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
-.receipt-meta-box{background:var(--light);border:1px solid var(--border);border-radius:10px;padding:14px;}
-.receipt-meta-box .label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-soft);margin-bottom:4px;}
-.receipt-meta-box .value{font-size:15px;font-weight:600;color:var(--text);word-break:break-word;}
+.receipt-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.receipt-meta-box{background:var(--light);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.receipt-meta-box .label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-soft);margin-bottom:4px;}
+.receipt-meta-box .value{font-size:14px;font-weight:700;color:var(--text);word-break:break-word;}
 .receipt-items{margin-bottom:20px;}
-.receipt-items h3{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-soft);margin-bottom:10px;}
+.receipt-items h3{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-soft);margin-bottom:10px;}
 .items-table{width:100%;border-collapse:collapse;}
-.items-table th{background:#f8fafc;text-align:left;padding:10px 12px;font-size:12px;font-weight:700;text-transform:uppercase;color:#334155;border-bottom:2px solid var(--border);}
-.items-table td{padding:12px;font-size:14px;border-bottom:1px solid var(--border);}
+.items-table th{background:#f8fafc;text-align:left;padding:12px 14px;font-size:12px;font-weight:800;text-transform:uppercase;color:#334155;border-bottom:2px solid var(--border);}
+.items-table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);}
 .items-table tr:last-child td{border-bottom:none;}
-.items-table .col-name{font-weight:500;}
-.items-table .col-qty{text-align:center;color:var(--text-soft);}
-.items-table .col-price{text-align:right;font-weight:600;}
-.items-table .col-total{text-align:right;font-weight:700;color:var(--text);}
-.receipt-totals{background:var(--light);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;}
-.total-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;}
-.total-row.grand-total{font-size:18px;font-weight:800;color:var(--text);border-top:2px solid var(--border);padding-top:12px;margin-top:8px;}
-.total-row .label{color:var(--text-soft);}
-.total-row .value{font-weight:600;}
+.items-table tr:hover td{background:var(--light);}
+.items-table .col-name{font-weight:600;color:var(--text);}
+.items-table .col-qty{text-align:center;color:var(--text-soft);font-variant-numeric:tabular-nums;}
+.items-table .col-price{text-align:right;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;}
+.items-table .col-total{text-align:right;font-weight:800;color:var(--text);}
+.receipt-totals{background:var(--light);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+.total-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:var(--text);}
+.total-row.grand-total{font-size:17px;font-weight:900;color:var(--text);border-top:2px solid var(--border);padding-top:12px;margin-top:8px;}
+.total-row .label{color:var(--text-soft);font-weight:600;}
+.total-row .value{font-weight:700;}
 .total-row.grand-total .value{color:#10b981;}
+.total-row.payment{color:var(--info);}
+.total-row.cash{color:var(--primary);}
+.total-row.account{color:#dc2626;}
+.total-row.change{color:var(--warning);}
 .receipt-footer{border-top:2px dashed var(--border);padding-top:16px;text-align:center;}
-.receipt-footer .footer-text{font-size:13px;color:var(--text-soft);line-height:1.6;}
+.receipt-footer .footer-text{font-size:13px;color:var(--text-soft);line-height:1.6;font-weight:600;}
 .receipt-footer .footer-notes{font-size:12px;color:#94a3b8;margin-top:8px;}
-.actions-bar{display:flex;gap:10px;flex-wrap:wrap;}
-.actions-bar .btn{flex:1;min-width:140px;}
-.no-receipt{text-align:center;padding:60px 20px;color:var(--text-soft);}
-.no-receipt i{font-size:48px;color:#d1d5db;margin-bottom:16px;display:block;}
-.no-receipt h3{font-size:18px;margin-bottom:8px;color:var(--text);}
-@media(max-width:768px){.sidebar{position:fixed;top:0;left:0;z-index:2500;height:100%;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.45)}.sidebar.open{transform:translateX(0)}.sidebar-toggle{display:inline-flex}.receipt-meta{grid-template-columns:1fr;}.actions-bar{flex-direction:column;}.actions-bar .btn{min-width:auto;}}
-@media print{body{background:#fff;}.sidebar,.header,.actions-bar,.no-receipt-actions{display:none!important;}.main{padding:0;margin:0;}.receipt-container{max-width:100%;}.receipt-paper{border-radius:0;box-shadow:none;}}
+.actions-bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.actions-bar .btn{flex:1;min-width:160px;padding:12px 16px;border:none;border-radius:10px;color:#fff;cursor:pointer;font-size:14px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;}
+.btn-primary{background:var(--primary);}
+.btn-primary:hover{background:var(--primary-hover);transform:translateY(-1px);box-shadow:0 8px 20px rgba(16,185,129,.3);}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border);}
+.btn-outline:hover{background:var(--light);transform:translateY(-1px);}
+.btn-danger{background:var(--danger);}
+.btn-danger:hover{background:#dc2626;transform:translateY(-1px);box-shadow:0 8px 20px rgba(239,68,68,.3);}
+.btn-edit{background:var(--info);}
+.btn-edit:hover{background:#2563eb;transform:translateY(-1px);}
+.no-receipt{text-align:center;padding:80px 20px;color:var(--text-soft);}
+.no-receipt i{font-size:56px;color:#d1d5db;margin-bottom:20px;display:block;}
+.no-receipt h3{font-size:20px;margin-bottom:8px;color:var(--text);}
+.no-receipt p{font-size:14px;max-width:400px;margin:0 auto 24px;}
+.no-receipt-actions{margin-top:24px;}
+.void-badge{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:12px;padding:14px;margin-bottom:16px;text-align:center;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;}
+.section-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-soft);margin-bottom:8px;}
+@media(max-width:768px){.sidebar{position:fixed;top:0;left:0;z-index:2500;height:100%;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.45)}.sidebar.open{transform:translateX(0)}.sidebar-toggle{display:inline-flex}.receipt-meta{grid-template-columns:1fr;}.actions-bar{flex-direction:column;}.actions-bar .btn{min-width:auto;width:100%;}.header{flex-direction:column;gap:12px;align-items:flex-start;}.header-actions{width:100%;justify-content:flex-end;}}
+@media print{body{background:#fff;}.sidebar,.header,.actions-bar,.no-receipt-actions,.no-receipt{display:none!important;}.main{padding:0;margin:0;}.receipt-container{max-width:100%;}.receipt-card{border:none;box-shadow:none;border-radius:0;}.receipt-header{background:#10b981;-webkit-print-color-adjust:exact;color-adjust:exact;}}
 </style>
 </head>
 <body>
@@ -88,7 +106,7 @@ body{background:#f3f4f6;min-height:100vh;display:flex;}
     <div id="userMenu"></div>
   </div>
 </div>
-<div class="content">
+<div class="main">
   <div class="receipt-container" id="receiptContainer"></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -108,11 +126,11 @@ function getPaymentLabel(m){if(!m)return 'Cash';var map={cash:'Cash',store_accou
 function renderReceipt(r){
   currentSaleId = (r && r.sale_id != null && /^\d+$/.test(String(r.sale_id))) ? String(r.sale_id) : null;
   if(!r){
-    $('receiptContainer').innerHTML='<div class="no-receipt"><i class="fas fa-file-invoice"></i><h3>No Receipt Found</h3><p>There is no recent receipt to display. Complete a sale to generate a receipt.</p><div class="no-receipt-actions" style="margin-top:20px;"><button class="btn btn-primary" onclick="navigateTo(\'sales.html\')" style="padding:12px 24px;"><i class="fas fa-shopping-cart"></i> Go to Sales</button></div></div>';
+    $('receiptContainer').innerHTML='<div class="no-receipt"><i class="fas fa-file-invoice"></i><h3>No Receipt Found</h3><p>There is no recent receipt to display. Complete a sale to generate a receipt.</p><div class="no-receipt-actions"><button class="btn btn-primary" onclick="navigateTo(\'sales.html\')" style="padding:12px 24px;"><i class="fas fa-shopping-cart"></i> Go to Sales</button></div></div>';
     return;
   }
   try {
-    var voidBadge = (r && r.status==='void') ? '<div style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:10px;padding:10px;margin-bottom:14px;text-align:center;font-weight:800;"><i class="fas fa-ban"></i> THIS INVOICE HAS BEEN VOIDED</div>' : '';
+    var voidBadge = (r && r.status==='void') ? '<div class="void-badge"><i class="fas fa-ban"></i> THIS INVOICE HAS BEEN VOIDED</div>' : '';
     var storeName=esc(r.business_name||StoreConfig.getPharmacyName()||'Shanks Shop Management');
     var storeAddress=esc(r.business_address||StoreConfig.get('storeAddress')||'');
     var storePhone=esc(StoreConfig.get('phoneNumber')||'');
@@ -131,7 +149,7 @@ function renderReceipt(r){
     var items=r.items||[];
     var comments=esc(r.comments||r.notes||'');
 
-    var html=voidBadge+'<div class="receipt-paper" id="receiptPaper">';
+    var html=voidBadge+'<div class="receipt-card">';
     html+='<div class="receipt-header"><img class="receipt-logo" src="brand-logo.png" alt="logo"><h1>'+storeName+'</h1>';
     if(storeAddress)html+='<p>'+storeAddress+'</p>';
     if(storePhone)html+='<p><i class="fas fa-phone" style="margin-right:6px;"></i>'+storePhone+'</p>';
@@ -143,33 +161,34 @@ function renderReceipt(r){
     html+='<div class="receipt-meta-box"><div class="label">Cashier</div><div class="value">'+cashier+'</div></div>';
     html+='<div class="receipt-meta-box"><div class="label">Customer</div><div class="value">'+customer+'</div></div>';
     html+='</div>';
-    html+='<div class="receipt-items"><h3>Items Purchased</h3>';
-    html+='<table class="items-table"><thead><tr><th style="width:45%">Item</th><th style="width:12%" class="col-qty">Qty</th><th style="width:22%" class="col-price">Price</th><th style="width:21%" class="col-total">Total</th></tr></thead><tbody>';
+    html+='<div class="receipt-items"><div class="section-label">Items Purchased</div><h3 style="margin-bottom:8px;">Items Purchased</h3>';
+    html+='<table class="items-table"><thead><tr><th style="width:42%">Item</th><th style="width:10%" class="col-qty">Qty</th><th style="width:18%" class="col-price">Unit Price</th><th style="width:20%" class="col-total">Total</th><th style="width:10%">Pkg</th></tr></thead><tbody>';
     items.forEach(function(it){
       var qty=parseFloat(it.qty)||0;
       var price=parseFloat(it.unit_price)||0;
       var disc=parseFloat(it.discount)||0;
       var lineTotal=(price*qty)-disc;
-      html+='<tr><td class="col-name">'+esc(it.name||'Product')+'</td><td class="col-qty">'+qty+'</td><td class="col-price">'+fmt(price)+'</td><td class="col-total">'+fmt(lineTotal)+'</td></tr>';
+      var pkg=esc(it.pkg_type||it.pkgType||'pkt');
+      html+='<tr><td class="col-name">'+esc(it.name||'Product')+'</td><td class="col-qty">'+qty+'</td><td class="col-price">'+fmt(price)+'</td><td class="col-total">'+fmt(lineTotal)+'</td><td class="col-qty">'+pkg+'</td></tr>';
     });
     html+='</tbody></table></div>';
     html+='<div class="receipt-totals">';
     html+='<div class="total-row"><span class="label">Subtotal</span><span class="value">'+fmt(subtotal)+'</span></div>';
     if(tax>0)html+='<div class="total-row"><span class="label">Tax</span><span class="value">'+fmt(tax)+'</span></div>';
     html+='<div class="total-row grand-total"><span class="label">Total</span><span class="value">'+fmt(total)+'</span></div>';
-    html+='<div class="total-row"><span class="label">Payment Method</span><span class="value">'+pm+'</span></div>';
-    html+='<div class="total-row"><span class="label">Cash Received</span><span class="value">'+fmt(cashReceived)+'</span></div>';
-    if(accountAmount>0)html+='<div class="total-row"><span class="label">Store Account</span><span class="value">'+fmt(accountAmount)+'</span></div>';
-    if(changeDue>0)html+='<div class="total-row"><span class="label">Change</span><span class="value">'+fmt(changeDue)+'</span></div>';
+    html+='<div class="total-row payment"><span class="label">Payment Method</span><span class="value">'+pm+'</span></div>';
+    html+='<div class="total-row cash"><span class="label">Cash Received</span><span class="value">'+fmt(cashReceived)+'</span></div>';
+    if(accountAmount>0)html+='<div class="total-row account"><span class="label">Store Account</span><span class="value">'+fmt(accountAmount)+'</span></div>';
+    if(changeDue>0)html+='<div class="total-row change"><span class="label">Change</span><span class="value">'+fmt(changeDue)+'</span></div>';
     html+='</div>';
-    if(comments)html+='<div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:#92400e;"><i class="fas fa-comment-dots" style="margin-right:6px;"></i>'+comments+'</div>';
+    if(comments)html+='<div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:10px;padding:14px;margin-top:16px;font-size:13px;color:#92400e;"><i class="fas fa-comment-dots" style="margin-right:6px;"></i><strong>Notes:</strong> '+comments+'</div>';
     html+='<div class="receipt-footer"><div class="footer-text">'+footerText+'</div>';
     html+='<div class="footer-notes"><i class="fas fa-redo" style="margin-right:4px;"></i> Keep this receipt for returns and exchanges</div>';
     html+='</div>';
     html+='</div></div>';
     html+='<div class="actions-bar">';
     html+='<button class="btn btn-primary" onclick="printCurrentReceipt()"><i class="fas fa-print"></i> Print Receipt</button>';
-    html+='<button class="btn btn-outline" onclick="editInvoice()"><i class="fas fa-edit"></i> Edit Invoice</button>';
+    html+='<button class="btn btn-edit" onclick="editInvoice()"><i class="fas fa-edit"></i> Edit Invoice</button>';
     html+='<button class="btn btn-danger" onclick="voidInvoice()"><i class="fas fa-ban"></i> Void Invoice</button>';
     html+='<button class="btn btn-outline" onclick="navigateTo(\'sales.html\')"><i class="fas fa-shopping-cart"></i> New Sale</button>';
     html+='</div>';
@@ -203,8 +222,8 @@ function printCurrentReceipt(){
     var total=parseFloat(currentReceipt.total)||0;
     var items=currentReceipt.items||[];
     var comments=currentReceipt.comments||currentReceipt.notes||'';
-    var printHtml='<!DOCTYPE html><html><head><title>Receipt - '+esc(storeName)+'</title><style>body{font-family:Inter,Arial,sans-serif;margin:0;padding:0;color:#000;background:#fff;}*{box-sizing:border-box;}@page{size:80mm auto;margin:0;}@media print{body{margin:0;padding:0;}}.r-wrap{max-width:380px;margin:0 auto;padding:16px;}.r-header{text-align:center;padding-bottom:12px;border-bottom:2px dashed #000;margin-bottom:12px;}.r-header h1{font-size:18px;font-weight:800;margin:0;}.r-header p{margin:2px 0;font-size:11px;}.r-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:12px;font-size:12px;}.r-meta div{padding:2px 0;}.r-section{margin-bottom:14px;}.r-section h3{font-size:12px;font-weight:700;text-transform:uppercase;border-bottom:1px dashed #000;padding-bottom:4px;margin-bottom:6px;}table{width:100%;border-collapse:collapse;font-size:12px;}th{text-align:left;padding:4px 0;border-bottom:1px solid #eee;}td{padding:4px 0;border-bottom:1px solid #f5f5f5;}.r-totals{border-top:2px dashed #000;padding-top:8px;margin-top:8px;}.r-total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}.r-total-row.grand{font-size:16px;font-weight:800;border-top:1px solid #000;padding-top:6px;margin-top:4px;}.r-footer{text-align:center;margin-top:16px;padding-top:12px;border-top:2px dashed #000;font-size:11px;color:#555;}</style></head><body><div class="r-wrap">';
-    printHtml+='<div class="r-header"><img src="'+logoUrl+'" alt="logo" style="width:56px;height:56px;object-fit:contain;background:#fff;border-radius:14px;padding:6px;margin-bottom:6px;"><h1>'+esc(storeName)+'</h1>';
+    var printHtml='<!DOCTYPE html><html><head><title>Receipt - '+esc(storeName)+'</title><style>body{font-family:Inter,Arial,sans-serif;margin:0;padding:0;color:#000;background:#fff;}*{box-sizing:border-box;}@page{size:80mm auto;margin:0;}@media print{body{margin:0;padding:0;}}.r-wrap{max-width:380px;margin:0 auto;padding:16px;}.r-header{text-align:center;padding-bottom:12px;border-bottom:2px dashed #000;margin-bottom:12px;}.r-header h1{font-size:18px;font-weight:900;margin:0;}.r-header p{margin:2px 0;font-size:11px;}.r-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:12px;font-size:12px;}.r-meta div{padding:2px 0;}.r-section{margin-bottom:14px;}.r-section h3{font-size:12px;font-weight:900;text-transform:uppercase;border-bottom:1px dashed #000;padding-bottom:4px;margin-bottom:6px;}table{width:100%;border-collapse:collapse;font-size:12px;}th{text-align:left;padding:4px 0;border-bottom:1px solid #eee;}td{padding:4px 0;border-bottom:1px solid #f5f5f5;}.r-totals{border-top:2px dashed #000;padding-top:8px;margin-top:8px;}.r-total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}.r-total-row.grand{font-size:16px;font-weight:900;border-top:1px solid #000;padding-top:6px;margin-top:4px;}.r-footer{text-align:center;margin-top:16px;padding-top:12px;border-top:2px dashed #000;font-size:11px;color:#555;}</style></head><body><div class="r-wrap">';
+    printHtml+='<div class="r-header"><img src="'+logoUrl+'" alt="logo" style="width:48px;height:48px;object-fit:contain;background:#fff;border-radius:10px;padding:4px;margin-bottom:8px;"><h1>'+esc(storeName)+'</h1>';
     if(storeAddress)printHtml+='<p>'+esc(storeAddress)+'</p>';
     if(storePhone)printHtml+='<p>Phone: '+esc(storePhone)+'</p>';
     printHtml+='</div>';
