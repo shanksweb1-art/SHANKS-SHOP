@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Receipt Lookup - SHANKS SHOP MANAGEMENT</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<script src="api.js"></script>
+<script src="common.js"></script>
+<style>
+:root{--primary:#10b981;--primary-hover:#059669;--primary-soft:#ecfdf5;--primary-ring:rgba(16,185,129,0.1);--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;--dark:#111827;--dark-2:#1f2937;--border:#e5e7eb;--light:#f9fafb;--text:#111827;--text-soft:#64748b;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',Arial,sans-serif;}
+body{background:#f3f4f6;min-height:100vh;}
+.sidebar{width:260px;background:var(--dark);color:#fff;height:100vh;overflow-y:auto;flex-shrink:0;transition:all 0.3s;}
+.sidebar-header{padding:20px;background:#020617;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar-header h1{font-size:20px;color:var(--primary);margin:0;font-weight:900;}
+.sidebar-header p{font-size:12px;color:#94a3b8;margin-top:4px;}
+.sidebar ul{list-style:none;padding:12px 0;}
+.sidebar ul li{padding:12px 22px;display:flex;align-items:center;gap:12px;cursor:pointer;border-left:3px solid transparent;transition:all 0.2s;font-size:14px;}
+.sidebar ul li:hover{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--primary);}
+.sidebar ul li.active{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--primary);}
+.main{flex:1;padding:24px;overflow-y:auto;min-width:0;}
+.header{background:#fff;color:var(--text);padding:16px 24px;border-radius:12px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid var(--border);}
+.header h2{font-size:18px;font-weight:800;margin:0;display:flex;align-items:center;gap:8px;}
+.header h2 i{color:var(--primary);}
+.search-card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.search-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end;}
+.search-grid input,.search-grid select{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fff;}
+.btn-search{background:var(--primary);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:700;cursor:pointer;}
+.btn-search:hover{background:var(--primary-hover);}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-soft);}
+.empty-state i{font-size:48px;color:#d1d5db;margin-bottom:16px;display:block;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;}
+th{background:#f8fafc;text-align:left;padding:12px 14px;font-size:12px;font-weight:800;text-transform:uppercase;color:#334155;border-bottom:1px solid var(--border);}
+td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text);}
+tr:hover td{background:var(--light);}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;}
+.status-completed{background:#dcfce7;color:#15803d;}
+.status-void{background:#fef2f2;color:#991b1b;}
+.status-returned{background:#fffbeb;color:#92400e;}
+.action-btns{display:flex;gap:6px;}
+.action-btn{padding:6px 10px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;}
+.action-btn.print{background:var(--primary);}
+.action-btn.print:hover{background:var(--primary-hover);}
+.action-btn.return{background:var(--warning);}
+.action-btn.return:hover{background:#d97706;}
+.action-btn.void{background:var(--danger);}
+.action-btn.void:hover{background:#dc2626;}
+.toast{position:fixed;top:20px;right:20px;background:var(--primary);color:#fff;padding:12px 16px;border-radius:8px;display:none;z-index:3000;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+@media(max-width:768px){.sidebar{position:fixed;top:0;left:0;z-index:2500;height:100%;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.45)}.sidebar.open{transform:translateX(0)}}
+</style>
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+<div class="header">
+  <h2><i class="fas fa-search"></i> Receipt Lookup</h2>
+</div>
+<div class="main">
+  <div class="search-card">
+    <div class="search-grid">
+      <input type="text" id="q" placeholder="Receipt #, customer, or sale ID">
+      <input type="date" id="from">
+      <input type="date" id="to">
+      <input type="text" id="customer" placeholder="Customer name">
+      <select id="status"><option value="">All status</option><option value="completed">Completed</option><option value="void">Voided</option><option value="returned">Returned</option></select>
+      <button class="btn-search" onclick="searchReceipts()"><i class="fas fa-search"></i> Search</button>
+    </div>
+  </div>
+  <div id="results"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+function fmt(n){try{return StoreConfig.formatCurrency(n);}catch(e){return '₦'+(parseFloat(n)||0).toLocaleString('en-NG',{minimumFractionDigits:2});}}
+function formatDate(d){if(!d)return '-';try{return new Date(d).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch(e){return d;}}
+function showToast(m,err){var t=$('toast');t.textContent=m;t.className='toast'+(err?' error':'');t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
+function navigateTo(p){window.location.href=p;}
+
+function statusBadge(s){
+  var cls='status-completed',label='Completed';
+  if(s==='void'){cls='status-void';label='Voided';}
+  if(s==='returned'){cls='status-returned';label='Returned';}
+  return '<span class="status-badge '+cls+'">'+label+'</span>';
+}
+
+function searchReceipts(){
+  var q=$('q').value,from=$('from').value,to=$('to').value,customer=$('customer').value,status=$('status').value;
+  var url='/api/sales/lookup?q='+encodeURIComponent(q)+'&from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to)+'&customer='+encodeURIComponent(customer)+'&status='+encodeURIComponent(status);
+  fetch(url,{headers:{'X-Username':localStorage.getItem('username')||''}}).then(function(res){return res.json();}).then(function(data){
+    var box=$('results');
+    if(!data||!data.length){box.innerHTML='<div class="empty-state"><i class="fas fa-inbox"></i><h3>No receipts found</h3><p>Try adjusting your search filters.</p></div>';return;}
+    var html='<table><thead><tr><th style="width:16%">Receipt #</th><th style="width:20%">Customer</th><th style="width:16%">Date</th><th style="width:12%">Total</th><th style="width:14%">Payment</th><th style="width:10%">Status</th><th style="width:12%">Actions</th></tr></thead><tbody>';
+    data.forEach(function(s){
+      var rid=s.receipt_number||s.id;
+      var total=parseFloat(s.total)||0;
+      html+='<tr><td><strong>'+esc(rid)+'</strong></td><td>'+esc(s.customer_name||'Walk-in')+'</td><td>'+formatDate(s.created_at)+'</td><td>'+fmt(total)+'</td><td>'+esc(getPaymentLabel(s.payment_method))+'</td><td>'+statusBadge(s.status)+'</td><td class="action-btns"><button class="action-btn print" onclick="openReceipt('+s.id+')" title="View/Print"><i class="fas fa-receipt"></i></button><button class="action-btn print" onclick="printReceipt('+s.id+')" title="Print"><i class="fas fa-print"></i></button>';
+      if(s.status!=='void'&&s.status!=='returned'){html+='<button class="action-btn return" onclick="returnReceipt('+s.id+')" title="Return"><i class="fas fa-rotate-left"></i></button>';}
+      html+='</td></tr>';
+    });
+    html+='</tbody></table>';
+    box.innerHTML=html;
+  }).catch(function(e){showToast('Search failed: '+(e.message||'error'),true);});
+}
+
+function getPaymentLabel(m){if(!m)return 'Cash';var map={cash:'Cash',store_account:'Store Account',card:'Card',pos:'POS',bank_transfer:'Bank Transfer',giftcard:'Gift Card'};return map[m]||m;}
+
+function openReceipt(id){navigateTo('receipt.html?id='+id);}
+function printReceipt(id){navigateTo('receipt.html?id='+id+'&print=1');}
+function returnReceipt(id){var r=confirm('Return this sale? Stock and balance will be reversed.');if(!r)return;API.post('/sales/'+id+'/return',{reason:'Customer return from lookup'}).then(function(){showToast('Sale returned');searchReceipts();}).catch(function(e){showToast('Return failed: '+(e.message||'error'),true);});}
+
+document.addEventListener('DOMContentLoaded',function(){
+  POS.initCommon();
+  var today=new Date().toISOString().split('T')[0];
+  $('from').value=today;$('to').value=today;
+  searchReceipts();
+});
+</script>
+</body>
+</html>

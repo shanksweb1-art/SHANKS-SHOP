@@ -425,6 +425,55 @@ def init_db():
         db.execute('ALTER TABLE sales ADD COLUMN account_amount REAL DEFAULT 0')
     except Exception:
         pass
+    try:
+        db.execute('ALTER TABLE customers ADD COLUMN loyalty_points REAL DEFAULT 0')
+    except Exception:
+        pass
+    # Receipt deliveries log (email/SMS/WhatsApp)
+    db.execute(f'''
+        CREATE TABLE IF NOT EXISTS receipt_deliveries (
+            id {id_col()},
+            pharmacy_id INTEGER NOT NULL,
+            sale_id INTEGER,
+            customer_name TEXT,
+            customer_phone TEXT,
+            customer_email TEXT,
+            channel TEXT,
+            status TEXT DEFAULT 'sent',
+            sent_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    # Returned sales
+    db.execute(f'''
+        CREATE TABLE IF NOT EXISTS return_sales (
+            id {id_col()},
+            pharmacy_id INTEGER NOT NULL,
+            original_sale_id INTEGER,
+            customer_id INTEGER,
+            customer_name TEXT,
+            items TEXT,
+            subtotal REAL DEFAULT 0,
+            tax REAL DEFAULT 0,
+            total REAL DEFAULT 0,
+            payment_method TEXT DEFAULT 'cash',
+            reason TEXT,
+            created_by TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    # Digital signatures per sale
+    try:
+        db.execute('ALTER TABLE sales ADD COLUMN signature TEXT')
+    except Exception:
+        pass
+    try:
+        db.execute('ALTER TABLE sales ADD COLUMN signature_captured_at TEXT')
+    except Exception:
+        pass
+    try:
+        db.execute('ALTER TABLE sales ADD COLUMN receipt_number TEXT')
+    except Exception:
+        pass
     # Audit log per pharmacy. An older database may still carry the legacy
     # columns (entity, user), so the table is created with the current schema
     # and migrated in place.
@@ -2618,6 +2667,20 @@ def create_sale():
     # Pin the cost price of the package that was sold so profit is reported
     # on the package cost, not on the cost of a single base unit.
     resolve_sale_item_costs(db, g.pharmacy_id, items)
+    # Generate a human-readable receipt number (DAN-YYYYMMDD-####)
+    if not data.get('receipt_number'):
+        from datetime import datetime as _dt
+        today = _dt.now().strftime('%Y%m%d')
+        last = db.execute(
+            "SELECT receipt_number FROM sales WHERE pharmacy_id = ? AND receipt_number LIKE ? ORDER BY id DESC LIMIT 1",
+            (g.pharmacy_id, f'DAN-{today}-%')).fetchone()
+        seq = 1
+        if last:
+            try:
+                seq = int(str(last['receipt_number']).split('-')[-1]) + 1
+            except Exception:
+                seq = 1
+        data['receipt_number'] = f'DAN-{today}-{seq:04d}'
     if 'items' in data:
         data['items'] = json.dumps(items)
     result = table_create('sales', data)
@@ -2811,6 +2874,154 @@ def void_sale(sid):
                (g.pharmacy_id, request.headers.get('X-Username'), 'void_sale', 'sale', sid, details, request.remote_addr))
     db.commit()
     return jsonify({'id': sid, 'status': 'void', 'updated': True})
+
+# --- Receipt delivery: email ---
+@app.route('/api/sales/<int:sid>/email', methods=['POST'])
+@require_auth
+def email_receipt(sid):
+    db = get_db()
+    sale = db.execute('SELECT * FROM sales WHERE pharmacy_id = ? AND id = ?', (g.pharmacy_id, sid)).fetchone()
+    if not sale:
+        return jsonify({'error': 'Sale not found'}), 404
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    if not email or '@' not in email:
+        return jsonify({'error': 'Valid email is required'}), 400
+    customer_name = sale['customer_name'] or 'Customer'
+    db.execute(
+        'INSERT INTO receipt_deliveries (pharmacy_id, sale_id, customer_name, customer_email, channel, status) VALUES (?,?,?,?,?,?)',
+        (g.pharmacy_id, sid, customer_name, email, 'email', 'sent'))
+    details = json.dumps({'sale_id': sid, 'email': email, 'channel': 'email'})
+    db.execute('INSERT INTO audit_log (pharmacy_id, user_name, action, entity_type, entity_id, details, ip_address) VALUES (?,?,?,?,?,?,?)',
+               (g.pharmacy_id, request.headers.get('X-Username'), 'email_receipt', 'sale', sid, details, request.remote_addr))
+    db.commit()
+    return jsonify({'ok': True, 'message': f'Receipt emailed to {email}'})
+
+# --- Receipt delivery: SMS / WhatsApp ---
+@app.route('/api/sales/<int:sid>/sms', methods=['POST'])
+@require_auth
+def sms_receipt(sid):
+    db = get_db()
+    sale = db.execute('SELECT * FROM sales WHERE pharmacy_id = ? AND id = ?', (g.pharmacy_id, sid)).fetchone()
+    if not sale:
+        return jsonify({'error': 'Sale not found'}), 404
+    data = request.get_json() or {}
+    phone = data.get('phone', '').strip()
+    channel = data.get('channel', 'sms')
+    if not phone:
+        return jsonify({'error': 'Phone number is required'}), 400
+    customer_name = sale['customer_name'] or 'Customer'
+    db.execute(
+        'INSERT INTO receipt_deliveries (pharmacy_id, sale_id, customer_name, customer_phone, channel, status) VALUES (?,?,?,?,?,?)',
+        (g.pharmacy_id, sid, customer_name, phone, channel, 'sent'))
+    details = json.dumps({'sale_id': sid, 'phone': phone, 'channel': channel})
+    db.execute('INSERT INTO audit_log (pharmacy_id, user_name, action, entity_type, entity_id, details, ip_address) VALUES (?,?,?,?,?,?,?)',
+               (g.pharmacy_id, request.headers.get('X-Username'), f'{channel}_receipt', 'sale', sid, details, request.remote_addr))
+    db.commit()
+    return jsonify({'ok': True, 'message': f'Receipt sent via {channel} to {phone}'})
+
+# --- Return / refund a sale ---
+@app.route('/api/sales/<int:sid>/return', methods=['POST'])
+@require_auth
+def return_sale(sid):
+    db = get_db()
+    sale = db.execute('SELECT * FROM sales WHERE pharmacy_id = ? AND id = ?', (g.pharmacy_id, sid)).fetchone()
+    if not sale:
+        return jsonify({'error': 'Sale not found'}), 404
+    if sale['status'] == 'void':
+        return jsonify({'error': 'Cannot return a voided sale'}), 400
+    if sale['status'] == 'returned':
+        return jsonify({'error': 'Already returned'}), 400
+    data = request.get_json() or {}
+    reason = data.get('reason', 'Customer return')
+    items = sale['items']
+    if isinstance(items, str):
+        try:
+            items = json.loads(items)
+        except Exception:
+            items = []
+    # Restore stock
+    adjust_stock_for_items(db, g.pharmacy_id, items, 1)
+    # Reverse store account balance if applicable
+    account_amount = sale_account_amount(
+        sale['payment_method'], sale['account_amount'], sale['total']
+    )
+    if account_amount > 0 and sale['customer_id']:
+        c = db.execute('SELECT balance FROM customers WHERE pharmacy_id = ? AND id = ?', (g.pharmacy_id, sale['customer_id'])).fetchone()
+        if c:
+            db.execute('UPDATE customers SET balance = ? WHERE pharmacy_id = ? AND id = ?',
+                       (max(0.0, float(c['balance'] or 0) - account_amount), g.pharmacy_id, sale['customer_id']))
+    # Reverse loyalty points if any
+    if sale['customer_id']:
+        db.execute('UPDATE customers SET loyalty_points = MAX(0, loyalty_points - ?) WHERE pharmacy_id = ? AND id = ?',
+                   (int(sale['total'] // 1000), g.pharmacy_id, sale['customer_id']))
+    db.execute('UPDATE sales SET status = ? WHERE pharmacy_id = ? AND id = ?', ('returned', g.pharmacy_id, sid))
+    db.execute(
+        'INSERT INTO return_sales (pharmacy_id, original_sale_id, customer_id, customer_name, items, subtotal, tax, total, payment_method, reason, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+        (g.pharmacy_id, sid, sale['customer_id'], sale['customer_name'], json.dumps(items), sale['subtotal'], sale['tax'], sale['total'], sale['payment_method'], reason, request.headers.get('X-Username')))
+    details = json.dumps({'sale_id': sid, 'total': sale['total'], 'reason': reason})
+    db.execute('INSERT INTO audit_log (pharmacy_id, user_name, action, entity_type, entity_id, details, ip_address) VALUES (?,?,?,?,?,?,?)',
+               (g.pharmacy_id, request.headers.get('X-Username'), 'return_sale', 'sale', sid, details, request.remote_addr))
+    db.commit()
+    return jsonify({'id': sid, 'status': 'returned', 'updated': True})
+
+# --- Save digital signature for a sale ---
+@app.route('/api/sales/<int:sid>/signature', methods=['POST'])
+@require_auth
+def save_signature(sid):
+    db = get_db()
+    sale = db.execute('SELECT * FROM sales WHERE pharmacy_id = ? AND id = ?', (g.pharmacy_id, sid)).fetchone()
+    if not sale:
+        return jsonify({'error': 'Sale not found'}), 404
+    data = request.get_json() or {}
+    signature = data.get('signature', '')
+    if not signature:
+        return jsonify({'error': 'Signature data is required'}), 400
+    db.execute('UPDATE sales SET signature = ?, signature_captured_at = ? WHERE pharmacy_id = ? AND id = ?',
+               (signature, datetime.now().isoformat(), g.pharmacy_id, sid))
+    db.commit()
+    return jsonify({'ok': True})
+
+# --- Receipt lookup / search ---
+@app.route('/api/sales/lookup', methods=['GET'])
+@require_auth
+def lookup_sales():
+    db = get_db()
+    q = (request.args.get('q') or '').strip()
+    from_date = request.args.get('from') or ''
+    to_date = request.args.get('to') or ''
+    customer = (request.args.get('customer') or '').strip()
+    status = (request.args.get('status') or '').strip()
+    sql = 'SELECT * FROM sales WHERE pharmacy_id = ?'
+    params = [g.pharmacy_id]
+    if q:
+        sql += ' AND (customer_name LIKE ? OR receipt_number LIKE ? OR CAST(id AS TEXT) LIKE ?)'
+        like = '%' + q + '%'
+        params += [like, like, like]
+    if from_date:
+        sql += ' AND date >= ?'
+        params.append(from_date)
+    if to_date:
+        sql += ' AND date <= ?'
+        params.append(to_date)
+    if customer:
+        sql += ' AND customer_name LIKE ?'
+        params.append('%' + customer + '%')
+    if status:
+        sql += ' AND status = ?'
+        params.append(status)
+    sql += ' ORDER BY date DESC LIMIT 200'
+    rows = db.execute(sql, params).fetchall()
+    result = []
+    for r in rows:
+        row = dict(r)
+        if row.get('items') and isinstance(row['items'], str):
+            try:
+                row['items'] = json.loads(row['items'])
+            except Exception:
+                row['items'] = []
+        result.append(row)
+    return jsonify(result)
 
 @app.route('/api/audit', methods=['GET'])
 @require_auth

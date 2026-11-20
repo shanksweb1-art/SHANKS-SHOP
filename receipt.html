@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="common.css">
 <script src="api.js"></script>
 <script src="common.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
 :root{--primary:#10b981;--primary-hover:#059669;--primary-soft:#ecfdf5;--primary-ring:rgba(16,185,129,0.1);--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;--dark:#111827;--dark-2:#1f2937;--border:#e5e7eb;--light:#f9fafb;--text:#111827;--text-soft:#64748b;--success:#10b981;}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',Arial,sans-serif;}
@@ -38,19 +39,24 @@ body{background:#f3f4f6;min-height:100vh;}
 .user-info strong{color:var(--text);}
 .user-dropdown a{display:flex;align-items:center;gap:10px;padding:9px 12px;color:var(--text-soft);text-decoration:none;border-radius:8px;transition:background .2s;font-size:13px;}
 .user-dropdown a:hover{background:var(--primary-soft);color:var(--primary-dark,#059669);}
-.receipt-container{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
-.page-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.page-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
 .page-title i{color:var(--primary);}
+.receipt-container{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
 .receipt-card{background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid var(--border);overflow:hidden;}
-.receipt-header{background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:24px;text-align:center;}
+.receipt-header{background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:24px;text-align:center;position:relative;}
 .receipt-logo{width:52px;height:52px;object-fit:contain;display:block;margin:0 auto 12px;background:#fff;border-radius:14px;padding:6px;box-shadow:0 8px 18px rgba(0,0,0,.2);}
 .receipt-header h1{font-size:22px;font-weight:900;margin:0;letter-spacing:.5px;}
 .receipt-header p{margin:4px 0 0;opacity:.95;font-size:14px;}
+.qr-code{position:absolute;top:20px;right:20px;width:90px;height:90px;background:#fff;border-radius:10px;padding:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.qr-code canvas{width:100%;height:100%;}
+.qr-label{font-size:10px;color:var(--text-soft);text-align:center;margin-top:6px;}
 .receipt-body{padding:24px;}
 .receipt-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
 .receipt-meta-box{background:var(--light);border:1px solid var(--border);border-radius:12px;padding:14px;}
 .receipt-meta-box .label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-soft);margin-bottom:4px;}
 .receipt-meta-box .value{font-size:14px;font-weight:700;color:var(--text);word-break:break-word;}
+.loyalty-badge{display:inline-flex;align-items:center;gap:6px;background:#dcfce7;border:1px solid #86efac;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;color:#15803d;}
+.loyalty-badge .pts{font-weight:900;color:#16a34a;}
 .receipt-items{margin-bottom:20px;}
 .receipt-items h3{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-soft);margin-bottom:10px;}
 .items-table{width:100%;border-collapse:collapse;}
@@ -62,6 +68,7 @@ body{background:#f3f4f6;min-height:100vh;}
 .items-table .col-qty{text-align:center;color:var(--text-soft);font-variant-numeric:tabular-nums;}
 .items-table .col-price{text-align:right;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;}
 .items-table .col-total{text-align:right;font-weight:800;color:var(--text);}
+.items-table .col-pkg{text-align:center;color:var(--text-soft);font-size:11px;}
 .receipt-totals{background:var(--light);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
 .total-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:var(--text);}
 .total-row.grand-total{font-size:17px;font-weight:900;color:var(--text);border-top:2px solid var(--border);padding-top:12px;margin-top:8px;}
@@ -72,11 +79,14 @@ body{background:#f3f4f6;min-height:100vh;}
 .total-row.cash{color:var(--primary);}
 .total-row.account{color:#dc2626;}
 .total-row.change{color:var(--warning);}
+.split-payments{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.split-payments .label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-soft);margin-bottom:6px;}
+.split-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:13px;}
 .receipt-footer{border-top:2px dashed var(--border);padding-top:16px;text-align:center;}
 .receipt-footer .footer-text{font-size:13px;color:var(--text-soft);line-height:1.6;font-weight:600;}
 .receipt-footer .footer-notes{font-size:12px;color:#94a3b8;margin-top:8px;}
 .actions-bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
-.actions-bar .btn{flex:1;min-width:160px;padding:12px 16px;border:none;border-radius:10px;color:#fff;cursor:pointer;font-size:14px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;}
+.actions-bar .btn{flex:1;min-width:150px;padding:12px 16px;border:none;border-radius:10px;color:#fff;cursor:pointer;font-size:14px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;}
 .btn-primary{background:var(--primary);}
 .btn-primary:hover{background:var(--primary-hover);transform:translateY(-1px);box-shadow:0 8px 20px rgba(16,185,129,.3);}
 .btn-outline{background:#fff;color:var(--text);border:1px solid var(--border);}
@@ -84,16 +94,31 @@ body{background:#f3f4f6;min-height:100vh;}
 .btn-danger{background:var(--danger);}
 .btn-danger:hover{background:#dc2626;transform:translateY(-1px);box-shadow:0 8px 20px rgba(239,68,68,.3);}
 .btn-edit{background:var(--info);}
-.btn-edit:hover{background:#2563eb;transform:translateY(-1px);}
+.btn-edit:hover{background:#2563eb;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,130,246,.3);}
+.btn-warning{background:var(--warning);}
+.btn-warning:hover{background:#d97706;transform:translateY(-1px);box-shadow:0 8px 20px rgba(245,158,11,.3);}
+.btn-return{background:#7c3aed;}
+.btn-return:hover{background:#6b21a8;transform:translateY(-1px);box-shadow:0 8px 20px rgba(124,58,237,.3);}
 .no-receipt{text-align:center;padding:80px 20px;color:var(--text-soft);}
 .no-receipt i{font-size:56px;color:#d1d5db;margin-bottom:20px;display:block;}
 .no-receipt h3{font-size:20px;margin-bottom:8px;color:var(--text);}
 .no-receipt p{font-size:14px;max-width:400px;margin:0 auto 24px;}
 .no-receipt-actions{margin-top:24px;}
 .void-badge{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:12px;padding:14px;margin-bottom:16px;text-align:center;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;}
+.signature-section{margin-top:16px;padding:16px;background:#f8fafc;border:1px solid var(--border);border-radius:12px;}
+.signature-section .label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-soft);margin-bottom:8px;}
+.signature-canvas{border:2px dashed var(--border);border-radius:10px;background:#fff;width:100%;height:140px;cursor:crosshair;position:relative;}
+.signature-canvas canvas{width:100%;height:100%;border-radius:8px;cursor:crosshair;}
+.signature-canvas .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-soft);font-size:14px;pointer-events:none;}
+.signature-actions{display:flex;gap:8px;margin-top:10px;}
+.templates-bar{margin-bottom:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.template-btn{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:12px;cursor:pointer;color:var(--text-soft);}
+.template-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.template-btn:hover{background:var(--light);}
+.comment-box{background:#fffbeb;border:1px solid #fef3c7;border-radius:10px;padding:14px;margin-top:16px;font-size:13px;color:#92400e;}
 .section-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-soft);margin-bottom:8px;}
-@media(max-width:768px){.sidebar{position:fixed;top:0;left:0;z-index:2500;height:100%;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.45)}.sidebar.open{transform:translateX(0)}.sidebar-toggle{display:inline-flex}.receipt-meta{grid-template-columns:1fr;}.actions-bar{flex-direction:column;}.actions-bar .btn{min-width:auto;width:100%;}.header{flex-direction:column;gap:12px;align-items:flex-start;}.header-actions{width:100%;justify-content:flex-end;}}
-@media print{body{background:#fff;}.sidebar,.header,.actions-bar,.no-receipt-actions,.no-receipt{display:none!important;}.main{padding:0;margin:0;}.receipt-container{max-width:100%;}.receipt-card{border:none;box-shadow:none;border-radius:0;}.receipt-header{background:#10b981;-webkit-print-color-adjust:exact;color-adjust:exact;}}
+@media(max-width:768px){.sidebar{position:fixed;top:0;left:0;z-index:2500;height:100%;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.45)}.sidebar.open{transform:translateX(0)}.sidebar-toggle{display:inline-flex}.receipt-meta{grid-template-columns:1fr;}.actions-bar{flex-direction:column;}.actions-bar .btn{min-width:auto;width:100%;}.header{flex-direction:column;gap:12px;align-items:flex-start;}.header-actions{width:100%;justify-content:flex-end;}.qr-code{position:static;width:100px;height:100px;margin:0 auto 12px;}}
+@media print{body{background:#fff;}.sidebar,.header,.actions-bar,.templates-bar,.no-receipt-actions,.no-receipt{display:none!important;}.main{padding:0;margin:0;}.receipt-container{max-width:100%;}.receipt-card{border:none;box-shadow:none;border-radius:0;}.receipt-header{background:#10b981;-webkit-print-color-adjust:exact;color-adjust:exact;}.signature-section,.actions-bar,.templates-bar{display:none!important;}}
 </style>
 </head>
 <body>
@@ -114,6 +139,10 @@ body{background:#f3f4f6;min-height:100vh;}
 <script>
 var currentReceipt = null;
 var currentSaleId = null;
+var signatureData = null;
+var canvas = null;
+var ctx = null;
+var isDrawing = false;
 function $(id){return document.getElementById(id);}
 function esc(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
 function fmt(n){try{return StoreConfig.formatCurrency(n);}catch(e){return '₦'+(parseFloat(n)||0).toLocaleString('en-NG',{minimumFractionDigits:2});}}
@@ -126,16 +155,17 @@ function getPaymentLabel(m){if(!m)return 'Cash';var map={cash:'Cash',store_accou
 function renderReceipt(r){
   currentSaleId = (r && r.sale_id != null && /^\d+$/.test(String(r.sale_id))) ? String(r.sale_id) : null;
   if(!r){
-    $('receiptContainer').innerHTML='<div class="no-receipt"><i class="fas fa-file-invoice"></i><h3>No Receipt Found</h3><p>There is no recent receipt to display. Complete a sale to generate a receipt.</p><div class="no-receipt-actions"><button class="btn btn-primary" onclick="navigateTo(\'sales.html\')" style="padding:12px 24px;"><i class="fas fa-shopping-cart"></i> Go to Sales</button></div></div>';
+    $('receiptContainer').innerHTML='<div class="no-receipt"><i class="fas fa-file-invoice"></i><h3>No Receipt Found</h3><p>There is no recent receipt to display. Complete a sale to generate a receipt.</p><div class="no-receipt-actions"><button class="btn btn-primary" onclick="navigateTo(\'sales.html\')" style="padding:12px 24px;"><i class="fas fa-shopping-cart"></i> Go to Sales</button><button class="btn btn-outline" onclick="navigateTo(\'receipts.html\')" style="padding:12px 24px;margin-left:10px;"><i class="fas fa-search"></i> Lookup Receipts</button></div></div>';
     return;
   }
   try {
     var voidBadge = (r && r.status==='void') ? '<div class="void-badge"><i class="fas fa-ban"></i> THIS INVOICE HAS BEEN VOIDED</div>' : '';
+    var returnedBadge = (r && r.status==='returned') ? '<div class="void-badge" style="background:#fffbeb;color:#92400e;border-color:#fde68a;"><i class="fas fa-rotate-left"></i> RETURNED / REFUNDED</div>' : '';
     var storeName=esc(r.business_name||StoreConfig.getPharmacyName()||'Shanks Shop Management');
     var storeAddress=esc(r.business_address||StoreConfig.get('storeAddress')||'');
     var storePhone=esc(StoreConfig.get('phoneNumber')||'');
     var footerText=esc(StoreConfig.get('footerText')||'Thank you for choosing Shanks Shop Management!');
-    var receiptId=esc(r.sale_id||'POS-'+Date.now().toString().slice(-6));
+    var receiptId=esc(r.receipt_number||r.sale_id||'POS-'+Date.now().toString().slice(-6));
     var date=formatDate(r.created_at);
     var cashier=esc(r.employee||'Cashier');
     var customer=esc(r.customer_name||'Walk-in');
@@ -144,15 +174,22 @@ function renderReceipt(r){
     var accountAmount=parseFloat(r.account_amount)||0;
     var changeDue=parseFloat(r.change_due)||0;
     var subtotal=parseFloat(r.subtotal)||0;
+    var discount=parseFloat(r.discount_amount)||0;
     var tax=parseFloat(r.tax_amount)||0;
     var total=parseFloat(r.total)||0;
     var items=r.items||[];
     var comments=esc(r.comments||r.notes||'');
+    var loyaltyEarned=Math.floor(total/1000);
+    var loyaltyHtml='';
+    if(r.customer_id && loyaltyEarned>0){
+      loyaltyHtml='<div class="loyalty-badge"><span class="pts">+'+loyaltyEarned+' pts</span> Loyalty earned for '+customer+'</div>';
+    }
 
-    var html=voidBadge+'<div class="receipt-card">';
+    var html=voidBadge+returnedBadge+'<div class="receipt-card">';
     html+='<div class="receipt-header"><img class="receipt-logo" src="brand-logo.png" alt="logo"><h1>'+storeName+'</h1>';
     if(storeAddress)html+='<p>'+storeAddress+'</p>';
     if(storePhone)html+='<p><i class="fas fa-phone" style="margin-right:6px;"></i>'+storePhone+'</p>';
+    html+='<div class="qr-code" id="qrCode"></div><div class="qr-label">Scan for digital receipt</div>';
     html+='</div>';
     html+='<div class="receipt-body">';
     html+='<div class="receipt-meta">';
@@ -161,42 +198,95 @@ function renderReceipt(r){
     html+='<div class="receipt-meta-box"><div class="label">Cashier</div><div class="value">'+cashier+'</div></div>';
     html+='<div class="receipt-meta-box"><div class="label">Customer</div><div class="value">'+customer+'</div></div>';
     html+='</div>';
+    if(loyaltyHtml)html+='<div style="margin-bottom:16px;">'+loyaltyHtml+'</div>';
     html+='<div class="receipt-items"><div class="section-label">Items Purchased</div><h3 style="margin-bottom:8px;">Items Purchased</h3>';
-    html+='<table class="items-table"><thead><tr><th style="width:42%">Item</th><th style="width:10%" class="col-qty">Qty</th><th style="width:18%" class="col-price">Unit Price</th><th style="width:20%" class="col-total">Total</th><th style="width:10%">Pkg</th></tr></thead><tbody>';
+    html+='<table class="items-table"><thead><tr><th style="width:40%">Item</th><th style="width:10%" class="col-qty">Qty</th><th style="width:16%" class="col-price">Unit Price</th><th style="width:20%" class="col-total">Total</th><th style="width:14%" class="col-pkg">Pkg</th></tr></thead><tbody>';
     items.forEach(function(it){
       var qty=parseFloat(it.qty)||0;
       var price=parseFloat(it.unit_price)||0;
       var disc=parseFloat(it.discount)||0;
       var lineTotal=(price*qty)-disc;
       var pkg=esc(it.pkg_type||it.pkgType||'pkt');
-      html+='<tr><td class="col-name">'+esc(it.name||'Product')+'</td><td class="col-qty">'+qty+'</td><td class="col-price">'+fmt(price)+'</td><td class="col-total">'+fmt(lineTotal)+'</td><td class="col-qty">'+pkg+'</td></tr>';
+      html+='<tr><td class="col-name">'+esc(it.name||'Product')+'</td><td class="col-qty">'+qty+'</td><td class="col-price">'+fmt(price)+'</td><td class="col-total">'+fmt(lineTotal)+'</td><td class="col-pkg">'+pkg+'</td></tr>';
     });
     html+='</tbody></table></div>';
     html+='<div class="receipt-totals">';
     html+='<div class="total-row"><span class="label">Subtotal</span><span class="value">'+fmt(subtotal)+'</span></div>';
+    if(discount>0)html+='<div class="total-row"><span class="label">Discount</span><span class="value">-'+fmt(discount)+'</span></div>';
     if(tax>0)html+='<div class="total-row"><span class="label">Tax</span><span class="value">'+fmt(tax)+'</span></div>';
     html+='<div class="total-row grand-total"><span class="label">Total</span><span class="value">'+fmt(total)+'</span></div>';
-    html+='<div class="total-row payment"><span class="label">Payment Method</span><span class="value">'+pm+'</span></div>';
-    html+='<div class="total-row cash"><span class="label">Cash Received</span><span class="value">'+fmt(cashReceived)+'</span></div>';
-    if(accountAmount>0)html+='<div class="total-row account"><span class="label">Store Account</span><span class="value">'+fmt(accountAmount)+'</span></div>';
-    if(changeDue>0)html+='<div class="total-row change"><span class="label">Change</span><span class="value">'+fmt(changeDue)+'</span></div>';
+    html+='<div class="split-payments"><div class="label">Payment Breakdown</div>';
+    html+='<div class="split-row"><span>Method</span><span>'+pm+'</span></div>';
+    html+='<div class="split-row cash"><span>Cash Received</span><span>'+fmt(cashReceived)+'</span></div>';
+    if(accountAmount>0)html+='<div class="split-row account"><span>Store Account</span><span>'+fmt(accountAmount)+'</span></div>';
+    if(changeDue>0)html+='<div class="split-row change"><span>Change Due</span><span>'+fmt(changeDue)+'</span></div>';
     html+='</div>';
-    if(comments)html+='<div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:10px;padding:14px;margin-top:16px;font-size:13px;color:#92400e;"><i class="fas fa-comment-dots" style="margin-right:6px;"></i><strong>Notes:</strong> '+comments+'</div>';
+    html+='</div>';
+    if(comments)html+='<div class="comment-box"><i class="fas fa-comment-dots" style="margin-right:6px;"></i><strong>Notes:</strong> '+comments+'</div>';
+    html+='<div class="signature-section"><div class="label">Customer Signature</div><div class="signature-canvas" id="sigCanvas"><canvas id="sigCanvasEl"></canvas><div class="empty">Sign here (touch or click to draw)</div></div><div class="signature-actions"><button class="btn btn-outline btn-sm" style="padding:8px 14px;font-size:12px;" onclick="clearSignature()"><i class="fas fa-eraser"></i> Clear</button><button class="btn btn-primary btn-sm" style="padding:8px 14px;font-size:12px;" onclick="saveSignature()"><i class="fas fa-save"></i> Save Signature</button></div></div>';
     html+='<div class="receipt-footer"><div class="footer-text">'+footerText+'</div>';
     html+='<div class="footer-notes"><i class="fas fa-redo" style="margin-right:4px;"></i> Keep this receipt for returns and exchanges</div>';
     html+='</div>';
     html+='</div></div>';
+    html+='<div class="templates-bar"><span class="section-label">Template:</span><button class="template-btn active" onclick="setTemplate(\'thermal\')">Thermal</button><button class="template-btn" onclick="setTemplate(\'invoice\')">Invoice</button><button class="template-btn" onclick="setTemplate(\'a4\')">A4</button></div>';
     html+='<div class="actions-bar">';
     html+='<button class="btn btn-primary" onclick="printCurrentReceipt()"><i class="fas fa-print"></i> Print Receipt</button>';
+    html+='<button class="btn btn-outline" onclick="downloadPDF()"><i class="fas fa-file-pdf"></i> Download PDF</button>';
     html+='<button class="btn btn-edit" onclick="editInvoice()"><i class="fas fa-edit"></i> Edit Invoice</button>';
-    html+='<button class="btn btn-danger" onclick="voidInvoice()"><i class="fas fa-ban"></i> Void Invoice</button>';
+    html+='<button class="btn btn-warning" onclick="emailReceipt()"><i class="fas fa-envelope"></i> Email Receipt</button>';
+    html+='<button class="btn btn-info" style="background:#25d366;color:#fff;" onclick="smsReceipt()"><i class="fab fa-whatsapp"></i> WhatsApp Receipt</button>';
+    html+='<button class="btn btn-return" onclick="returnReceipt()"><i class="fas fa-rotate-left"></i> Return / Refund</button>';
     html+='<button class="btn btn-outline" onclick="navigateTo(\'sales.html\')"><i class="fas fa-shopping-cart"></i> New Sale</button>';
     html+='</div>';
     $('receiptContainer').innerHTML=html;
+    setTimeout(initSignatureCanvas, 100);
+    setTimeout(renderQR, 200);
   } catch(e) {
     showToast('Error rendering receipt: '+(e.message||'unknown error'), true);
     console.error('Receipt render error:', e);
   }
+}
+
+function renderQR(){
+  try{
+    var el=document.getElementById('qrCode');
+    if(!el||!currentReceipt)return;
+    var url=window.location.origin+'/receipt.html?id='+(currentReceipt.sale_id||'');
+    QRCode.toCanvas(el, url, {width:90, margin:2, color:{dark:'#0f172a', light:'#fff'}}, function(err){
+      if(err)console.error('QR error', err);
+    });
+  }catch(e){console.error('QR render failed', e);}
+}
+
+function initSignatureCanvas(){
+  var c=document.getElementById('sigCanvasEl');
+  if(!c)return;
+  canvas=c;
+  ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth||300;
+  canvas.height=canvas.offsetHeight||140;
+  ctx.lineWidth=2;
+  ctx.lineCap='round';
+  ctx.strokeStyle='#000';
+  function start(e){isDrawing=true;var pos=getPos(e);ctx.beginPath();ctx.moveTo(pos.x,pos.y);}
+  function draw(e){if(!isDrawing)return;var pos=getPos(e);ctx.lineTo(pos.x,pos.y);ctx.stroke();}
+  function end(){isDrawing=false;signatureData=canvas.toDataURL();}
+  canvas.addEventListener('mousedown',start);
+  canvas.addEventListener('mousemove',draw);
+  canvas.addEventListener('mouseup',end);
+  canvas.addEventListener('mouseout',end);
+  canvas.addEventListener('touchstart',function(e){e.preventDefault();start(e.touches[0]);},{passive:false});
+  canvas.addEventListener('touchmove',function(e){e.preventDefault();draw(e.touches[0]);},{passive:false});
+  canvas.addEventListener('touchend',function(e){e.preventDefault();end();});
+}
+function getPos(e){var rect=canvas.getBoundingClientRect();return{x:e.clientX-rect.left,y:e.clientY-rect.top};}
+function clearSignature(){if(!ctx)return;ctx.clearRect(0,0,canvas.width,canvas.height);signatureData=null;}
+function saveSignature(){
+  if(!signatureData){showToast('Please draw a signature first',true);return;}
+  if(!currentSaleId){showToast('No sale ID to attach signature to',true);return;}
+  API.post('/sales/'+currentSaleId+'/signature',{signature:signatureData}).then(function(){
+    showToast('Signature saved');
+  }).catch(function(e){showToast('Failed to save signature: '+(e.message||'error'),true);});
 }
 
 function printCurrentReceipt(){
@@ -209,7 +299,7 @@ function printCurrentReceipt(){
     var storeAddress=currentReceipt.business_address||StoreConfig.get('storeAddress')||'';
     var storePhone=StoreConfig.get('phoneNumber')||'';
     var footerText=StoreConfig.get('footerText')||'Thank you for choosing Shanks Shop Management!';
-    var receiptId=currentReceipt.sale_id||'POS-'+Date.now().toString().slice(-6);
+    var receiptId=currentReceipt.receipt_number||currentReceipt.sale_id||'POS-'+Date.now().toString().slice(-6);
     var date=formatDate(currentReceipt.created_at);
     var cashier=currentReceipt.employee||'Cashier';
     var customer=currentReceipt.customer_name||'Walk-in';
@@ -218,6 +308,7 @@ function printCurrentReceipt(){
     var accountAmount=parseFloat(currentReceipt.account_amount)||0;
     var changeDue=parseFloat(currentReceipt.change_due)||0;
     var subtotal=parseFloat(currentReceipt.subtotal)||0;
+    var discount=parseFloat(currentReceipt.discount_amount)||0;
     var tax=parseFloat(currentReceipt.tax_amount)||0;
     var total=parseFloat(currentReceipt.total)||0;
     var items=currentReceipt.items||[];
@@ -238,6 +329,7 @@ function printCurrentReceipt(){
     });
     printHtml+='</tbody></table></div>';
     printHtml+='<div class="r-totals"><div class="r-total-row"><span>Subtotal</span><span>'+fmt(subtotal)+'</span></div>';
+    if(discount>0)printHtml+='<div class="r-total-row"><span>Discount</span><span>-'+fmt(discount)+'</span></div>';
     if(tax>0)printHtml+='<div class="r-total-row"><span>Tax</span><span>'+fmt(tax)+'</span></div>';
     printHtml+='<div class="r-total-row grand"><span>Total</span><span>'+fmt(total)+'</span></div>';
     printHtml+='<div class="r-total-row"><span>'+pm+'</span><span>'+fmt(cashReceived)+'</span></div>';
@@ -254,6 +346,42 @@ function printCurrentReceipt(){
     showToast('Print failed: '+(e.message||'unknown error'), true);
     console.error('Print error:', e);
   }
+}
+
+function downloadPDF(){
+  if(!currentReceipt){showToast('No receipt data to download.',true);return;}
+  showToast('PDF download requires browser print-to-PDF. Use Print Receipt then select "Save as PDF".',true);
+}
+
+function emailReceipt(){
+  if(!currentReceipt){showToast('No receipt data.',true);return;}
+  var email=prompt('Enter customer email address:');
+  if(!email)return;
+  API.post('/sales/'+currentSaleId+'/email',{email:email}).then(function(res){
+    showToast(res.message||'Receipt emailed');
+  }).catch(function(e){showToast('Email failed: '+(e.message||'error'),true);});
+}
+
+function smsReceipt(){
+  if(!currentReceipt){showToast('No receipt data.',true);return;}
+  var phone=prompt('Enter customer phone number (WhatsApp/SMS):');
+  if(!phone)return;
+  API.post('/sales/'+currentSaleId+'/sms',{phone:phone,channel:'whatsapp'}).then(function(res){
+    showToast(res.message||'Receipt sent via WhatsApp');
+  }).catch(function(e){showToast('Send failed: '+(e.message||'error'),true);});
+}
+
+function returnReceipt(){
+  if(!currentSaleId){showToast('No sale to return.',true);return;}
+  if(currentReceipt && currentReceipt.status==='returned'){showToast('Already returned',true);return;}
+  if(currentReceipt && currentReceipt.status==='void'){showToast('Cannot return a voided sale',true);return;}
+  var reason=prompt('Return reason:');
+  if(!reason)return;
+  API.post('/sales/'+currentSaleId+'/return',{reason:reason}).then(function(){
+    showToast('Sale returned / refunded');
+    currentReceipt.status='returned';
+    renderReceipt(currentReceipt);
+  }).catch(function(e){showToast('Return failed: '+(e.message||'error'),true);});
 }
 
 function editInvoice(){
@@ -278,11 +406,20 @@ function loadReceipt(){
   renderReceipt(currentReceipt);
 }
 
+function setTemplate(t){
+  // Template switching handled via CSS; stored for future print layout
+  showToast('Template set to '+t);
+}
+
 document.addEventListener('DOMContentLoaded',function(){
   POS.initCommon();
   loadReceipt();
   if(new URLSearchParams(window.location.search).get('print')==='1'){
     setTimeout(function(){ if(currentReceipt) printCurrentReceipt(); }, 400);
+  }
+  var idParam=new URLSearchParams(window.location.search).get('id');
+  if(idParam&&!currentReceipt){
+    API.get('/sales/'+idParam).then(function(s){currentReceipt=s;renderReceipt(s);}).catch(function(){});
   }
 });
 </script>
