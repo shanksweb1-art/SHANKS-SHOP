@@ -1264,6 +1264,7 @@ def complete_store_setup():
     admin_username = str(data.get('admin_username') or data.get('username') or '').strip()
     admin_password = str(data.get('admin_password') or data.get('password') or '')
     admin_name = str(data.get('admin_name') or admin_username).strip()
+    pending_from_client = data.get('pending_accounts') or []
 
     if not setup_token:
         return jsonify({'error': 'Setup link is missing. Please create the store account again.'}), 400
@@ -1291,6 +1292,21 @@ def complete_store_setup():
         pending_accounts = []
     if not isinstance(pending_accounts, list):
         pending_accounts = []
+    # Merge pending accounts sent from the frontend with any stored in the DB
+    if isinstance(pending_from_client, list):
+        for entry in pending_from_client:
+            if not isinstance(entry, dict):
+                continue
+            username = str(entry.get('username') or '').strip()
+            password = str(entry.get('password') or '')
+            if not username or not password:
+                continue
+            pending_accounts.append({
+                'username': username,
+                'password': password,
+                'name': str(entry.get('name') or username).strip(),
+                'role': str(entry.get('role') or 'staff').strip().lower()
+            })
     seen = {admin_username.lower()}
     for entry in pending_accounts:
         if not isinstance(entry, dict):
