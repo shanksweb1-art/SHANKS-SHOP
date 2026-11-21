@@ -14,6 +14,7 @@
 <script src="api.js"></script>
 <script src="common.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{--primary:#10b981;--primary-hover:#059669;--primary-soft:#ecfdf5;--primary-ring:rgba(16,185,129,0.1);--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;--dark:#111827;--dark-2:#1f2937;--border:#e5e7eb;--light:#f9fafb;--text:#111827;--text-soft:#64748b;--success:#10b981;}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',Arial,sans-serif;}
@@ -395,7 +396,89 @@ function printCurrentReceipt(){
 
 function downloadPDF(){
   if(!currentReceipt){showToast('No receipt data to download.',true);return;}
-  showToast('PDF download requires browser print-to-PDF. Use Print Receipt then select "Save as PDF".',true);
+  try {
+    var logoUrl = new URL('brand-logo.png', document.baseURI || window.location.href).href;
+    var storeName=currentReceipt.business_name||StoreConfig.getPharmacyName()||'Shanks Shop Management';
+    var storeAddress=currentReceipt.business_address||StoreConfig.get('storeAddress')||'';
+    var storePhone=StoreConfig.get('phoneNumber')||'';
+    var footerText=StoreConfig.get('footerText')||'Thank you for choosing Shanks Shop Management!';
+    var receiptId=currentReceipt.receipt_number||currentReceipt.sale_id||'POS-'+Date.now().toString().slice(-6);
+    var date=formatDate(currentReceipt.created_at);
+    var cashier=currentReceipt.employee||'Cashier';
+    var customer=currentReceipt.customer_name||'Walk-in';
+    var pm=getPaymentLabel(currentReceipt.payment_method);
+    var cashReceived=parseFloat(currentReceipt.cash_received)||0;
+    var accountAmount=parseFloat(currentReceipt.account_amount)||0;
+    var changeDue=parseFloat(currentReceipt.change_due)||0;
+    var subtotal=parseFloat(currentReceipt.subtotal)||0;
+    var discount=parseFloat(currentReceipt.discount_amount)||0;
+    var tax=parseFloat(currentReceipt.tax_amount)||0;
+    var total=parseFloat(currentReceipt.total)||0;
+    var items=currentReceipt.items||[];
+    var comments=currentReceipt.comments||currentReceipt.notes||'';
+
+    var { jsPDF } = window.jspdf || {};
+    if(!jsPDF){ showToast('PDF library not loaded.',true); return; }
+    var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:[80, 200] });
+    var pageWidth = doc.internal.pageSize.getWidth();
+    var x = 8;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(16);
+    doc.text(storeName.toUpperCase(), x, 12, { align:'center' });
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100,100,100);
+    if(storeAddress) doc.text(storeAddress, x, 17, { align:'center' });
+    if(storePhone) doc.text('Phone: '+storePhone, x, 22, { align:'center' });
+    doc.setTextColor(0,0,0);
+    doc.setLineWidth(0.5);
+    doc.line(x, 26, pageWidth-x, 26);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','bold');
+    doc.text('Receipt: '+receiptId, x, 32);
+    doc.text('Date: '+date, x, 38);
+    doc.text('Cashier: '+cashier, x, 44);
+    doc.text('Customer: '+customer, x, 50);
+    doc.line(x, 55, pageWidth-x, 55);
+    doc.setFont('helvetica','bold');
+    doc.text('Items Purchased', x, 61);
+    doc.setFont('helvetica','normal');
+    var y=67;
+    items.forEach(function(it){
+      var qty=parseFloat(it.qty)||0;
+      var price=parseFloat(it.unit_price)||0;
+      var disc=parseFloat(it.discount)||0;
+      var lt=(price*qty)-disc;
+      doc.text(esc(it.name||'Product').substring(0,22), x, y);
+      doc.text(qty+' x '+fmt(price), x+40, y, { align:'right' });
+      doc.text(fmt(lt), pageWidth-x, y, { align:'right' });
+      y+=6;
+      if(disc>0){ doc.setFontSize(8); doc.setTextColor(160,0,0); doc.text('Discount: -'+fmt(disc), x, y); doc.setTextColor(0,0,0); doc.setFontSize(9); y+=6; }
+    });
+    doc.line(x, y+2, pageWidth-x, y+2); y+=8;
+    doc.setFont('helvetica','bold');
+    doc.text('Subtotal', x, y); doc.text(fmt(subtotal), pageWidth-x, y, { align:'right' }); y+=6;
+    if(discount>0){ doc.setTextColor(160,0,0); doc.text('Discount', x, y); doc.text('-'+fmt(discount), pageWidth-x, y, { align:'right' }); doc.setTextColor(0,0,0); y+=6; }
+    if(tax>0){ doc.text('Tax', x, y); doc.text(fmt(tax), pageWidth-x, y, { align:'right' }); y+=6; }
+    doc.setFontSize(11); doc.text('Total', x, y); doc.text(fmt(total), pageWidth-x, y, { align:'right' }); doc.setFontSize(9); y+=8;
+    doc.line(x, y, pageWidth-x, y); y+=6;
+    doc.setFont('helvetica','bold');
+    doc.text('Payment Details', x, y); doc.setFont('helvetica','normal'); y+=6;
+    doc.text('Method: '+pm, x, y); y+=6;
+    doc.text('Amount Paid: '+fmt(pm==='Store Account'?total:cashReceived), x, y); y+=6;
+    if(changeDue>0){ doc.text('Change Due: '+fmt(changeDue), x, y); y+=6; }
+    if(accountAmount>0){ doc.text('Store Account: '+fmt(accountAmount), x, y); y+=6; }
+    if(comments){ doc.setFontSize(8); doc.text('Notes: '+comments, x, y); doc.setFontSize(9); y+=8; }
+    doc.setFontSize(8); doc.setTextColor(100,100,100);
+    doc.text(footerText, x, y+6, { align:'center' });
+    doc.text('Keep this receipt for returns and exchanges', x, y+12, { align:'center' });
+    var fileName = 'Receipt-'+receiptId+'.pdf';
+    doc.save(fileName);
+    showToast('PDF downloaded: '+fileName);
+  } catch(e) {
+    showToast('PDF download failed: '+(e.message||'error'),true);
+    console.error('PDF error:', e);
+  }
 }
 
 function emailReceipt(){
