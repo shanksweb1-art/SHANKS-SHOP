@@ -36,7 +36,7 @@
     </div>
     <div class="page-head">
       <div><h3>Stock Control Center</h3><p>Search by barcode, batch, category, expiry or location and manage stock movements.</p></div>
-      <div class="actions"><button class="btn btn-primary" onclick="POS.navigateTo('variations.html')"><i class="fas fa-plus"></i> Add Product</button><button class="btn btn-outline" onclick="quickStockAdjust()"><i class="fas fa-sliders"></i> Bulk Update</button></div>
+      <div class="actions"><button class="btn btn-primary" onclick="POS.navigateTo('variations.html')"><i class="fas fa-plus"></i> Add Product</button><button class="btn btn-outline" onclick="quickStockAdjust()"><i class="fas fa-sliders"></i> Bulk Update</button><button class="btn btn-info" onclick="showReorderReport()"><i class="fas fa-truck"></i> Reorder Report</button></div>
     </div>
     <div class="panel">
       <div class="toolbar">
@@ -84,6 +84,25 @@
     <div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal('bulkModal')">Cancel</button><button class="btn btn-warning" onclick="applyBulkUpdate()">Apply Update</button></div>
   </div>
 </div>
+<div class="modal-overlay" id="reorderModal">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-header"><h3><i class="fas fa-truck"></i> Reorder Report</h3><button class="modal-close" onclick="POS.closeModal('reorderModal')">&times;</button></div>
+    <div style="padding:16px;">
+      <p style="font-size:13px;color:#6b7280;margin-bottom:12px;">Items at or below reorder level with suggested reorder quantities.</p>
+      <div class="table-wrap" style="max-height:400px;overflow:auto;border:1px solid var(--border);border-radius:8px;">
+        <table>
+          <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>On Hand</th><th>Reorder Level</th><th>Suggested Qty</th><th>Est. Cost</th></tr></thead>
+          <tbody id="reorderBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;">
+        <button class="btn btn-secondary" onclick="POS.closeModal('reorderModal')">Close</button>
+        <button class="btn btn-primary" onclick="exportReorderCSV()"><i class="fas fa-file-export"></i> Export CSV</button>
+      </div>
+    </div>
+  </div>
+</div>
+</script>
 <script>
 var products=[],filtered=[];
 function $(id){return document.getElementById(id);}
@@ -104,6 +123,8 @@ function printInventory(){var rows=filtered.length?filtered:products;if(!rows.le
 function initInlineEdit(){var body=$('inventoryBody');if(!body)return;body.removeEventListener('click',handleInlineEdit);body.addEventListener('click',handleInlineEdit);}
 function handleInlineEdit(e){var cell=e.target.closest('.editable');if(!cell)return;if(cell.querySelector('input')||cell.querySelector('select'))return;var field=cell.dataset.field;var id=cell.dataset.id;var p=products.find(function(x){return String(x.id)===String(id);});if(!p)return;var current=field==='stock'?num(p.stock):field==='reorder'?num(p.reorder_level,10):field==='expiry'?(p.expiry||p.expiry_date||''):p[field]||'';var input=field==='expiry'?'<input type="date" value="'+POS.esc(current)+'">':field==='stock'||field==='reorder'?'<input type="number" value="'+POS.esc(current)+'" step="1">':'<input type="text" value="'+POS.esc(current)+'">';cell.innerHTML=input;var inp=cell.querySelector('input');inp.focus();inp.select();inp.addEventListener('blur',function(){saveInlineEdit(id,field,inp.value);});inp.addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();inp.blur();}if(ev.key==='Escape'){cell.innerHTML=field==='expiry'?POS.formatDate(p.expiry||p.expiry_date):field==='stock'?POS.formatNumber(num(p.stock)):field==='reorder'?POS.formatNumber(num(p.reorder_level,10)):POS.esc(p[field]||'-');}});}
 async function saveInlineEdit(id,field,value){var p=products.find(function(x){return String(x.id)===String(id)});if(!p)return;var updates={};if(field==='stock'){updates.stock=parseFloat(value)||0;}else if(field==='reorder'){updates.reorder_level=parseFloat(value)||0;}else if(field==='expiry'){updates.expiry=value;}else{updates[field]=value;}try{await API.updateProduct(id,updates);POS.showToast('Updated '+field);await loadProducts();}catch(e){POS.showToast('Update failed: '+(e.message||'API error'),true);}}
+function showReorderReport(){var now=new Date();var low=products.filter(function(p){var s=num(p.stock);var r=num(p.reorder_level,10);return s>0&&s<=r;});var body=$('reorderBody');if(!low.length){body.innerHTML='<tr><td colspan="7" class="empty-state">All items are above reorder level.</td></tr>';}else{body.innerHTML=low.map(function(p){var s=num(p.stock);var r=num(p.reorder_level,10);var suggested=Math.max(r*2-s, r-s+1);var cost=num(p.cost_price||p.costPrice);return '<tr><td>'+POS.esc(p.sku||p.barcode||'-')+'</td><td>'+POS.esc(p.name||'-')+'</td><td>'+POS.esc(p.category_name||p.category||'Uncategorized')+'</td><td>'+POS.formatNumber(s)+'</td><td>'+POS.formatNumber(r)+'</td><td><strong>'+POS.formatNumber(suggested)+'</strong></td><td>'+POS.formatCurrency(suggested*cost)+'</td></tr>';}).join('');}POS.openModal('reorderModal');}
+function exportReorderCSV(){var rows=products.filter(function(p){var s=num(p.stock);var r=num(p.reorder_level,10);return s>0&&s<=r;});if(!rows.length){POS.showToast('No low-stock items to export',true);return;}POS.exportCSV('reorder_report_'+POS.today()+'.csv',['SKU','Product','Category','On Hand','Reorder Level','Suggested Qty','Est. Cost'],rows.map(function(p){var s=num(p.stock);var r=num(p.reorder_level,10);var suggested=Math.max(r*2-s, r-s+1);var cost=num(p.cost_price||p.costPrice);return {SKU:p.sku||'',Product:p.name||'',Category:p.category_name||p.category||'',OnHand:s,ReorderLevel:r,SuggestedQty:suggested,EstCost:(suggested*cost).toFixed(2)}}));}
 document.addEventListener('DOMContentLoaded',function(){if(!POS.requireAuth())return;loadProducts();});
 </script>
   <script src="/offline.js"></script>
