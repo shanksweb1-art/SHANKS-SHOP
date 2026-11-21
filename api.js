@@ -284,6 +284,8 @@ var API = (function() {
         // Deliveries
         getDeliveries: function() { return this.get('/deliveries'); },
         saveDelivery: function(data) { return this.post('/deliveries', data); },
+        updateDelivery: function(id, data) { return this.put('/deliveries/' + id, data); },
+        deleteDelivery: function(id) { return this.delete('/deliveries/' + id); },
 
         // Invoices
         getInvoices: function() { return this.get('/invoices'); },

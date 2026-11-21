@@ -664,6 +664,42 @@ def init_db():
             notes TEXT
         )
     ''')
+    try:
+        db.execute("ALTER TABLE deliveries ADD COLUMN delivery_id TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE deliveries ADD COLUMN customer TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE deliveries ADD COLUMN date TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE deliveries ADD COLUMN time TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE deliveries ADD COLUMN signature TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE deliveries ADD COLUMN signature_captured_at TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE deliveries ADD COLUMN proof_image TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE deliveries ADD COLUMN pod_signed_at TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE deliveries ADD COLUMN pod_signed_by TEXT")
+    except Exception:
+        pass
     # Invoices per pharmacy
     db.execute(f'''
         CREATE TABLE IF NOT EXISTS invoices (
@@ -3452,6 +3488,12 @@ def create_delivery():
     data = request.get_json()
     data['pharmacy_id'] = g.pharmacy_id
     return table_create('deliveries', data)
+
+@app.route('/api/deliveries/<int:did>', methods=['PUT'])
+@require_auth
+def update_delivery(did):
+    data = request.get_json()
+    return table_update('deliveries', did, data)
 
 # --- Invoices ---
 @app.route('/api/invoices', methods=['GET'])

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="common.css">
     <script src="api.js"></script>
     <script src="common.js"></script>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -205,11 +207,62 @@ async function renderDeliveries() {
 function viewDelivery(id) {
     var d = deliveries.find(function(del) { return del.id == id; });
     if (!d) return;
+    var status = d.status || 'pending';
+    var isDelivered = status === 'delivered';
+    var podHtml = '';
+    if (isDelivered) {
+        podHtml = '<div class="form-group"><label>Proof of Delivery</div>' +
+            (d.signature ? '<img src="'+POS.esc(d.signature)+'" class="pod-signature" alt="Signature" style="max-width:200px;border:1px solid #ddd;margin-top:8px;">' : '<span style="color:#6b7280;">No signature captured</span>') +
+            (d.proof_image ? '<img src="'+POS.esc(d.proof_image)+'" class="pod-proof" alt="Proof" style="max-width:200px;border:1px solid #ddd;margin-top:8px;">' : '') +
+            '<div style="margin-top:8px;font-size:13px;color:#6b7280;">Signed: ' + POS.esc(d.pod_signed_by||'-') + ' at ' + POS.formatDate(d.pod_signed_at||'') + '</div></div>';
+    }
+    var podButton = (status === 'pending' || status === 'in_transit')
+        ? '<button class="btn btn-success" onclick="captureSignature(' + d.id + ')"><i class="fas fa-signature"></i> Capture Signature &amp; Mark Delivered</button>'
+        : '<button class="btn btn-secondary" onclick="captureSignature(' + d.id + ')"><i class="fas fa-signature"></i> Update Signature</button>';
     var modalHtml = '<div class="modal-overlay open" id="viewModal"><div class="modal"><div class="modal-header"><h3>Delivery Details</h3><button class="modal-close" onclick="POS.closeModal(\'viewModal\')">&times;</button></div>' +
-        '<div class="kpi-grid"><div class="kpi-card"><div class="kpi-label">Delivery ID</div><div class="kpi-value">' + POS.esc(d.deliveryId) + '</div></div><div class="kpi-card"><div class="kpi-label">Customer</div><div class="kpi-value">' + POS.esc(d.customer) + '</div></div></div>' +
-        '<div class="form-row" style="margin-top:15px;"><div class="form-group"><label>Date</label><span>' + POS.formatDate(d.date) + '</span></div><div class="form-group"><label>Address</label><span>' + POS.esc(d.address || '-') + '</span></div></div>' +
-        '<div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal(\'viewModal\')">Close</button></div></div></div>';
+        '<div class="kpi-grid"><div class="kpi-card"><div class="kpi-label">Delivery ID</div><div class="kpi-value">' + POS.esc(d.deliveryId || d.id) + '</div></div><div class="kpi-card"><div class="kpi-label">Customer</div><div class="kpi-value">' + POS.esc(d.customer || d.customer_name || '') + '</div></div><div class="kpi-card"><div class="kpi-label">Status</div><div class="kpi-value">' + POS.statusBadge(status) + '</div></div></div>' +
+        '<div class="form-row" style="margin-top:15px;"><div class="form-group"><label>Date</label><span>' + POS.formatDate(d.date || d.delivery_date) + '</span></div><div class="form-group"><label>Time</label><span>' + POS.esc(d.time || '') + '</span></div><div class="form-group"><label>Address</label><span>' + POS.esc(d.address || '-') + '</span></div><div class="form-group"><label>Contact</label><span>' + POS.esc(d.contact || d.phone || '-') + '</span></div></div>' +
+        podHtml +
+        '<div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal(\'viewModal\')">Close</button> ' + podButton + '</div></div></div>';
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+async function captureSignature(id) {
+    var d = deliveries.find(function(del) { return del.id == id; });
+    if (!d) return;
+    POS.closeModal('viewModal');
+    var sig = '';
+    var modalHtml = '<div class="modal-overlay open" id="sigModal"><div class="modal" style="max-width:520px;"><div class="modal-header"><h3>Capture Signature</h3><button class="modal-close" onclick="POS.closeModal(\'sigModal\')">&times;</button></div>' +
+        '<div style="padding:16px;"><div style="font-size:13px;color:#6b7280;margin-bottom:10px;">Customer signs here, then click Save to mark delivered.</div>' +
+        '<canvas id="sigCanvas" width="480" height="180" style="border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:crosshair;display:block;margin:0 auto 12px auto;"></canvas>' +
+        '<div style="text-align:center;margin-bottom:12px;"><button class="btn btn-secondary" style="margin-right:8px;" onclick="clearSignature()">Clear</button><button class="btn btn-secondary" onclick="doneSignature()">Use Existing</button></div>' +
+        '<input type="hidden" id="sigData"></div>' +
+        '<div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal(\'sigModal\')">Cancel</button><button class="btn btn-success" onclick="saveSignature(' + d.id + ')">Save &amp; Mark Delivered</button></div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    var canvas = $id('sigCanvas');
+    var ctx = canvas.getContext('2d');
+    var drawing = false;
+    function start(e){drawing=true;ctx.lineWidth=2;ctx.lineCap='round';var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);}
+    function move(e){if(!drawing)return;var p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();sig=canvas.toDataURL();}
+    function end(){drawing=false;sig=canvas.toDataURL();}
+    function getPos(e){var r=canvas.getBoundingClientRect();var x=e.clientX||(e.touches&&e.touches[0].clientX);var y=e.clientY||(e.touches&&e.touches[0].clientY);return{x:x-r.left,y:y-r.top};}
+    canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',move);canvas.addEventListener('mouseup',end);canvas.addEventListener('mouseleave',end);
+    canvas.addEventListener('touchstart',function(e){e.preventDefault();start(e);},{passive:false});
+    canvas.addEventListener('touchmove',function(e){e.preventDefault();move(e);}, {passive:false});
+    canvas.addEventListener('touchend',function(e){e.preventDefault();end(e);});
+    $id('sigData').value=sig;
+}
+function clearSignature(){var c=$id('sigCanvas');var ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);$id('sigData').value='';}
+function doneSignature(){POS.closeModal('sigModal');}
+async function saveSignature(id){
+    var sig=$id('sigData').value;
+    if(!sig){POS.showToast('Please capture a signature first',true);return;}
+    try {
+        await API.updateDelivery(id, { status:'delivered', signature:sig, pod_signed_at:new Date().toISOString(), pod_signed_by:API.getUserName()||'Staff' });
+        POS.showToast('Delivery marked delivered with proof of signature.');
+        POS.closeModal('sigModal');
+        renderDeliveries();
+    } catch(err){POS.showToast('Failed to save signature: '+(err.message||'API error'),true);}
 }
 function editDelivery(id) {
     var d = deliveries.find(function(del) { return del.id == id; });
@@ -256,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderDeliveries();
 });
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 

@@ -214,29 +214,6 @@ var API = (function() {
             }).then(function(res) { return res.json(); });
         },
 
-        listAccountRequests: function() {
-            return fetch(BASE_URL + '/auth/requests', {
-                method: 'GET',
-                headers: headers()
-            }).then(function(res) { return res.json(); });
-        },
-
-        approveAccountRequest: function(id, data) {
-            return fetch(BASE_URL + '/auth/approve-request/' + id, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            }).then(function(res) { return res.json(); });
-        },
-
-        rejectAccountRequest: function(id, data) {
-            return fetch(BASE_URL + '/auth/reject-request/' + id, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            }).then(function(res) { return res.json(); });
-        },
-
         // Products
         getProducts: function() { return this.get('/products'); },
         saveProduct: function(data) { return this.post('/products', data); },
@@ -307,6 +284,8 @@ var API = (function() {
         // Deliveries
         getDeliveries: function() { return this.get('/deliveries'); },
         saveDelivery: function(data) { return this.post('/deliveries', data); },
+        updateDelivery: function(id, data) { return this.put('/deliveries/' + id, data); },
+        deleteDelivery: function(id) { return this.delete('/deliveries/' + id); },
 
         // Invoices
         getInvoices: function() { return this.get('/invoices'); },
