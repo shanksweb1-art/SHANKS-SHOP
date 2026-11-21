@@ -11,7 +11,7 @@ import hmac
 import base64
 import time
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, g, send_file
 from functools import wraps
 
@@ -649,6 +649,10 @@ def init_db():
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    try:
+        db.execute("ALTER TABLE messages ADD COLUMN expires_at TEXT")
+    except Exception:
+        pass
     # Deliveries per pharmacy
     db.execute(f'''
         CREATE TABLE IF NOT EXISTS deliveries (
@@ -3506,13 +3510,21 @@ def delete_giftcard(gid):
 @app.route('/api/messages', methods=['GET'])
 @require_auth
 def get_messages():
-    return table_response('messages', ' ORDER BY created_at DESC')
+    db = get_db()
+    now = datetime.now().isoformat()
+    rows = db.execute(
+        f"SELECT * FROM messages WHERE pharmacy_id = ? AND (expires_at IS NULL OR expires_at > ?) ORDER BY created_at DESC",
+        (g.pharmacy_id, now)
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
 
 @app.route('/api/messages', methods=['POST'])
 @require_auth
 def create_message():
     data = request.get_json()
     data['pharmacy_id'] = g.pharmacy_id
+    # Admin notifications expire after 5 days
+    data['expires_at'] = (datetime.now() + timedelta(days=5)).isoformat()
     return table_create('messages', data)
 
 @app.route('/api/messages/<int:mid>', methods=['DELETE'])
