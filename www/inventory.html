@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -19,6 +19,8 @@
 .icon-btn.delete{background:#fff;color:#ef4444;border:1px solid #fecaca}
 .icon-btn.delete:hover{background:#fef2f2;border-color:#ef4444}
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -65,6 +67,7 @@
       <div class="form-group"><label>Product</label><input id="stockProductName" class="form-control" readonly></div>
       <div class="form-group"><label>Current Stock</label><input id="stockCurrent" class="form-control" readonly></div>
       <div class="form-group"><label>New Stock Qty</label><input id="stockNewQty" class="form-control" type="number" min="0" placeholder="Enter new quantity"></div>
+      <div class="form-group"><label>Reason</label><select id="stockReason" class="form-control"><option value="correction">Stock Correction</option><option value="damaged">Damaged / Expired</option><option value="theft">Theft / Loss</option><option value="returned">Customer Return</option><option value="found">Stock Found</option><option value="other">Other</option></select></div>
     </div>
     <div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal('stockModal')">Cancel</button><button class="btn btn-success" onclick="saveStockAdjust()">Save Adjustment</button></div>
   </div>
@@ -92,10 +95,10 @@ function render(){fillCategories();var q=$('searchInput').value.toLowerCase();va
 function applyFilters(){render();initInlineEdit();}
 async function loadProducts(){try{products=await API.getProducts()||[];}catch(e){POS.showToast('Failed to load products: '+(e.message||'API error'),true);products=[];}updateKPIs();render();initInlineEdit();}
 function openStockModal(id){var p=products.find(function(x){return String(x.id)===String(id)});if(!p)return;$('stockProductId').value=p.id;$('stockProductName').value=p.name;$('stockCurrent').value=num(p.stock);$('stockNewQty').value=num(p.stock);POS.openModal('stockModal');}
-async function saveStockAdjust(){var id=$('stockProductId').value;var qty=parseInt($('stockNewQty').value)||0;try{await API.updateProduct(id,{stock:qty});POS.showToast('Stock adjusted');await loadProducts();POS.closeModal('stockModal');}catch(e){POS.showToast('Stock update failed: '+(e.message||'API error'),true);}}
+async function saveStockAdjust(){var id=$('stockProductId').value;var p=products.find(function(x){return String(x.id)===String(id);});var oldQty=num(p?p.stock:0);var qty=parseInt($('stockNewQty').value)||0;var reason=$('stockReason').value;try{await API.updateProduct(id,{stock:qty});try{API.post('/audit-log',{action:'stock_adjust',entity:'product',entity_id:String(id),details:'Stock adjusted '+oldQty+' -> '+qty+' | Reason: '+reason,user:API.getUserName?API.getUserName():'System'}).catch(function(){});}catch(e){}POS.showToast('Stock adjusted');await loadProducts();POS.closeModal('stockModal');}catch(e){POS.showToast('Stock update failed: '+(e.message||'API error'),true);}}
 async function deleteProduct(id){if(!confirm('Delete this product permanently?'))return;try{await API.deleteProduct(id);POS.showToast('Product deleted');await loadProducts();}catch(e){POS.showToast('Delete failed: '+(e.message||'API error'),true);}}
 function quickStockAdjust(){POS.openModal('bulkModal');}
-async function applyBulkUpdate(){var action=$('bulkAction').value;var qty=parseInt($('bulkQty').value)||0;var scope=$('bulkScope').value;var items=scope==='visible'?filtered.slice():scope==='low'?products.filter(function(p){return num(p.stock)>0&&num(p.stock)<=num(p.reorder_level,10)}):products.slice();if(!items.length){POS.showToast('No items to update',true);return;}if(!confirm('Apply stock update to '+items.length+' items?'))return;try{for(var p of items){var next=action==='set'?qty:action==='add'?num(p.stock)+qty:num(p.stock)-qty;if(next<0)next=0;await API.updateProduct(p.id,{stock:next});}POS.showToast('Bulk update completed ('+items.length+' items)');await loadProducts();POS.closeModal('bulkModal');}catch(e){POS.showToast('Bulk update failed: '+(e.message||'API error'),true);}}
+async function applyBulkUpdate(){var action=$('bulkAction').value;var qty=parseInt($('bulkQty').value)||0;var scope=$('bulkScope').value;var items=scope==='visible'?filtered.slice():scope==='low'?products.filter(function(p){return num(p.stock)>0&&num(p.stock)<=num(p.reorder_level,10)}):products.slice();if(!items.length){POS.showToast('No items to update',true);return;}if(!confirm('Apply stock update to '+items.length+' items?'))return;try{for(var p of items){var oldQ=num(p.stock);var next=action==='set'?qty:action==='add'?oldQ+qty:oldQ-qty;if(next<0)next=0;await API.updateProduct(p.id,{stock:next});try{API.post('/audit-log',{action:'stock_adjust',entity:'product',entity_id:String(p.id),details:'Bulk '+action+' '+oldQ+' -> '+next+' | Scope: '+scope,user:API.getUserName?API.getUserName():'System'}).catch(function(){});}catch(e){}}POS.showToast('Bulk update completed ('+items.length+' items)');await loadProducts();POS.closeModal('bulkModal');}catch(e){POS.showToast('Bulk update failed: '+(e.message||'API error'),true);}}
 function exportInventory(){var rows=filtered.length?filtered:products;if(!rows.length){POS.showToast('No inventory to export',true);return;}POS.exportCSV('Shanks_Shop_Management_inventory_'+POS.today()+'.csv',['SKU','Product','Category','Stock','Reorder','Expiry','Cost','Value','Status'],rows.map(function(p){var s=statusFor(p);return {SKU:p.sku||'',Product:p.name||'',Category:p.category_name||p.category||'',Stock:num(p.stock),Reorder:num(p.reorder_level,10),Expiry:p.expiry||p.expiry_date||'',Cost:num(p.cost_price||p.costPrice),Value:(num(p.stock)*num(p.cost_price||p.costPrice)).toFixed(2),Status:s.label}}));}
 function printInventory(){var rows=filtered.length?filtered:products;if(!rows.length){POS.showToast('No inventory to export',true);return;}POS.printTable('SHANKS SHOP MANAGEMENT Inventory Report',['SKU','Product','Category','Stock','Reorder','Expiry','Value','Status'],rows.map(function(p){var s=statusFor(p);return {SKU:p.sku||'',Product:p.name||'',Category:p.category_name||p.category||'',Stock:num(p.stock),Reorder:num(p.reorder_level,10),Expiry:p.expiry||p.expiry_date||'',Value:POS.formatCurrency(num(p.stock)*num(p.cost_price||p.costPrice)),Status:s.label}}));}
 function initInlineEdit(){var body=$('inventoryBody');if(!body)return;body.removeEventListener('click',handleInlineEdit);body.addEventListener('click',handleInlineEdit);}
@@ -103,6 +106,7 @@ function handleInlineEdit(e){var cell=e.target.closest('.editable');if(!cell)ret
 async function saveInlineEdit(id,field,value){var p=products.find(function(x){return String(x.id)===String(id)});if(!p)return;var updates={};if(field==='stock'){updates.stock=parseFloat(value)||0;}else if(field==='reorder'){updates.reorder_level=parseFloat(value)||0;}else if(field==='expiry'){updates.expiry=value;}else{updates[field]=value;}try{await API.updateProduct(id,updates);POS.showToast('Updated '+field);await loadProducts();}catch(e){POS.showToast('Update failed: '+(e.message||'API error'),true);}}
 document.addEventListener('DOMContentLoaded',function(){if(!POS.requireAuth())return;loadProducts();});
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 
