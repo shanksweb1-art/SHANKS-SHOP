@@ -150,6 +150,7 @@ body{background:#f3f4f6;min-height:100vh;}
 <script>
 var currentReceipt = null;
 var currentSaleId = null;
+var currentTemplate = 'thermal';
 var signatureData = null;
 var canvas = null;
 var ctx = null;
@@ -324,32 +325,65 @@ function printCurrentReceipt(){
     var total=parseFloat(currentReceipt.total)||0;
     var items=currentReceipt.items||[];
     var comments=currentReceipt.comments||currentReceipt.notes||'';
-    var printHtml='<!DOCTYPE html><html><head><title>Receipt - '+esc(storeName)+'</title><style>body{font-family:Inter,Arial,sans-serif;margin:0;padding:0;color:#000;background:#fff;}*{box-sizing:border-box;}@page{size:80mm auto;margin:0;}@media print{body{margin:0;padding:0;}}.r-wrap{max-width:380px;margin:0 auto;padding:16px;}.r-header{text-align:center;padding-bottom:12px;border-bottom:2px dashed #000;margin-bottom:12px;}.r-header h1{font-size:18px;font-weight:900;margin:0;}.r-header p{margin:2px 0;font-size:11px;}.r-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:12px;font-size:12px;}.r-meta div{padding:2px 0;}.r-section{margin-bottom:14px;}.r-section h3{font-size:12px;font-weight:900;text-transform:uppercase;border-bottom:1px dashed #000;padding-bottom:4px;margin-bottom:6px;}table{width:100%;border-collapse:collapse;font-size:12px;}th{text-align:left;padding:4px 0;border-bottom:1px solid #eee;}td{padding:4px 0;border-bottom:1px solid #f5f5f5;}.r-totals{border-top:2px dashed #000;padding-top:8px;margin-top:8px;}.r-total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}.r-total-row.grand{font-size:16px;font-weight:900;border-top:1px solid #000;padding-top:6px;margin-top:4px;}.r-footer{text-align:center;margin-top:16px;padding-top:12px;border-top:2px dashed #000;font-size:11px;color:#555;}</style></head><body><div class="r-wrap">';
-    printHtml+='<div class="r-header"><img src="'+logoUrl+'" alt="logo" style="width:48px;height:48px;object-fit:contain;background:#fff;border-radius:10px;padding:4px;margin-bottom:8px;"><h1>'+esc(storeName)+'</h1>';
-    if(storeAddress)printHtml+='<p>'+esc(storeAddress)+'</p>';
-    if(storePhone)printHtml+='<p>Phone: '+esc(storePhone)+'</p>';
-    printHtml+='</div>';
-    printHtml+='<div class="r-meta"><div><strong>Receipt:</strong> '+receiptId+'</div><div><strong>Date:</strong> '+date+'</div><div><strong>Cashier:</strong> '+esc(cashier)+'</div><div><strong>Customer:</strong> '+esc(customer)+'</div></div>';
-    printHtml+='<div class="r-section"><h3>Items</h3><table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead><tbody>';
-    items.forEach(function(it){
-      var qty=parseFloat(it.qty)||0;
-      var price=parseFloat(it.unit_price)||0;
-      var disc=parseFloat(it.discount)||0;
-      var lineTotal=(price*qty)-disc;
-      printHtml+='<tr><td>'+esc(it.name||'Product')+'</td><td style="text-align:center">'+qty+'</td><td style="text-align:right">'+fmt(price)+'</td><td style="text-align:right">'+fmt(lineTotal)+'</td></tr>';
-    });
-    printHtml+='</tbody></table></div>';
-    printHtml+='<div class="r-totals"><div class="r-total-row"><span>Subtotal</span><span>'+fmt(subtotal)+'</span></div>';
-    if(discount>0)printHtml+='<div class="r-total-row"><span>Discount</span><span>-'+fmt(discount)+'</span></div>';
-    if(tax>0)printHtml+='<div class="r-total-row"><span>Tax</span><span>'+fmt(tax)+'</span></div>';
-    printHtml+='<div class="r-total-row grand"><span>Total</span><span>'+fmt(total)+'</span></div>';
-    printHtml+='<div class="r-total-row"><span>'+pm+'</span><span>'+fmt(cashReceived)+'</span></div>';
-    if(accountAmount>0)printHtml+='<div class="r-total-row"><span>Store Account</span><span>'+fmt(accountAmount)+'</span></div>';
-    if(changeDue>0)printHtml+='<div class="r-total-row"><span>Change</span><span>'+fmt(changeDue)+'</span></div>';
-    printHtml+='</div>';
-    if(comments)printHtml+='<div style="margin-top:10px;font-size:11px;color:#555;border-top:1px dashed #ccc;padding-top:8px;"><strong>Notes:</strong> '+esc(comments)+'</div>';
-    printHtml+='<div class="r-footer"><p>'+footerText+'</p><p style="margin-top:6px;font-size:10px;">Keep this receipt for returns and exchanges</p></div>';
-    printHtml+='</div></body></html>';
+        var printCss = (currentTemplate==='a4') ? 'body{font-family:Inter,Arial,sans-serif;margin:0;padding:0;color:#000;background:#fff;}*{box-sizing:border-box;}@page{size:A4;margin:14mm;}@media print{body{margin:0;padding:0;}}.r-wrap{max-width:210mm;margin:0 auto;padding:10px;}.r-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:30px 34px;box-shadow:0 24px 80px rgba(0,0,0,.12);}.r-brand{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:20px;border-bottom:4px double #10b981;margin-bottom:24px;}.r-brand-left{display:flex;align-items:center;gap:14px;}.r-brand-left img{width:52px;height:52px;border-radius:12px;object-fit:contain;background:#fff;border:1px solid #e5e7eb;padding:6px;box-shadow:0 6px 16px rgba(0,0,0,.12);}.r-brand-text h1{font-size:22px;font-weight:900;margin:0;text-transform:uppercase;letter-spacing:.05em;color:#111827;}.r-brand-text p{margin:2px 0 0;font-size:12px;color:#4b5563;line-height:1.5;}.r-brand-badge{margin-left:auto;padding:8px 12px;background:#ecfdf5;border:1px solid #10b981;border-radius:10px;color:#059669;font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;}.r-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 18px;margin-bottom:24px;font-size:12px;color:#4b5563;}.r-meta-box{border:1px solid #f3f4f6;border-radius:10px;padding:12px 14px;background:#fafafa;}.r-meta-box .k{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:4px;display:block;}.r-meta-box .v{font-weight:800;color:#111827;word-break:break-word;}.r-section{margin-bottom:24px;}.r-section h3{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#374151;border-bottom:2px solid #10b981;padding-bottom:7px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}.r-section h3 i{color:#10b981;font-size:13px;}table{width:100%;border-collapse:collapse;font-size:12.5px;}th{text-align:left;padding:11px 8px;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b7280;border-bottom:3px solid #e5e7eb;}td{padding:18px 8px;border-bottom:1px solid #f3f4f6;vertical-align:middle;}tr:last-child td{border-bottom:none;}tr:hover td{background:#f8fafc;}.td-name{font-weight:700;color:#111827;}.td-meta{font-size:10.5px;color:#6b7280;display:block;margin-top:2px;}.td-qty{text-align:center;font-variant-numeric:tabular-nums;font-weight:700;color:#4b5563;}.td-price,.td-total{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:#111827;}.r-totals{border:1px solid #e5e7eb;border-radius:12px;padding:18px 20px;margin-bottom:24px;background:#fafafa;}.r-total-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;color:#374151;border-bottom:1px solid #e5e7eb;}.r-total-row:last-child{border-bottom:none;}.r-total-row.grand{font-size:18px;font-weight:900;color:#10b981;border-top:2px solid #10b981;padding-top:13px;margin-top:10px;border-bottom:none;}.r-discount{color:#b91c1c;font-size:11.5px;font-weight:700;}.r-payment{border:1px solid #e5e7eb;border-radius:12px;padding:18px 20px;background:#fff;}.r-payment h4{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#374151;margin-bottom:10px;border-bottom:1px solid #f3f4f6;padding-bottom:6px;display:flex;align-items:center;gap:8px;}.r-payment h4 i{color:#10b981;}.r-payment-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px;color:#374151;}.r-payment-row strong{color:#111827;font-weight:800;}.r-notes{margin-top:20px;padding:14px;background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;font-size:11.5px;color:#92400e;}.r-notes strong{color:#a16207;}.r-footer{text-align:center;margin-top:26px;padding-top:14px;border-top:2px dashed #e5e7eb;font-size:10.5px;color:#6b7280;line-height:1.7;}' : 'body{font-family:Inter,Arial,sans-serif;margin:0;padding:0;color:#000;background:#fff;}*{box-sizing:border-box;}@page{size:80mm auto;margin:0;}@media print{body{margin:0;padding:0;}}.r-wrap{max-width:380px;margin:0 auto;padding:16px;}.r-header{text-align:center;padding-bottom:12px;border-bottom:2px dashed #000;margin-bottom:12px;}.r-header h1{font-size:18px;font-weight:900;margin:0;}.r-header p{margin:2px 0;font-size:11px;}.r-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:12px;font-size:12px;}.r-meta div{padding:2px 0;}.r-section{margin-bottom:14px;}.r-section h3{font-size:12px;font-weight:900;text-transform:uppercase;border-bottom:1px dashed #000;padding-bottom:4px;margin-bottom:6px;}table{width:100%;border-collapse:collapse;font-size:12px;}th{text-align:left;padding:4px 0;border-bottom:1px solid #eee;}td{padding:4px 0;border-bottom:1px solid #f5f5f5;}.r-totals{border-top:2px dashed #000;padding-top:8px;margin-top:8px;}.r-total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;}.r-total-row.grand{font-size:16px;font-weight:900;border-top:1px solid #000;padding-top:6px;margin-top:4px;}.r-footer{text-align:center;margin-top:16px;padding-top:12px;border-top:2px dashed #000;font-size:11px;color:#555;}';
+    var printHtml='<!DOCTYPE html><html><head><title>Receipt - '+esc(storeName)+'</title><style>'+printCss+'</style></head><body>';
+    if(currentTemplate==='a4'){
+      printHtml+='<div class="r-wrap"><div class="r-card"><div class="r-brand"><div class="r-brand-left"><img src="'+logoUrl+'" alt="logo"><div class="r-brand-text"><h1>'+esc(storeName)+'</h1>';
+      if(storeAddress)printHtml+='<p>'+esc(storeAddress)+'</p>';
+      if(storePhone)printHtml+='<p><strong>Phone:</strong> '+esc(storePhone)+'</p>';
+      printHtml+='</div></div><div class="r-brand-badge">TAX INVOICE</div></div>';
+      printHtml+='<div class="r-meta"><div class="r-meta-box"><span class="k">Receipt No.</span><span class="v">'+receiptId+'</span></div><div class="r-meta-box"><span class="k">Date &amp; Time</span><span class="v">'+date+'</span></div><div class="r-meta-box"><span class="k">Cashier</span><span class="v">'+esc(cashier)+'</span></div><div class="r-meta-box"><span class="k">Customer</span><span class="v">'+esc(customer)+'</span></div></div>';
+      printHtml+='<div class="r-section"><h3><i class="fas fa-shopping-basket"></i> Items Purchased</h3><table><thead><tr><th style="width:48%">Item</th><th style="width:10%">Qty</th><th style="width:16%">Unit Price</th><th style="width:26%">Total</th></tr></thead><tbody>';
+      items.forEach(function(it){
+        var qty=parseFloat(it.qty)||0;
+        var price=parseFloat(it.unit_price)||0;
+        var disc=parseFloat(it.discount)||0;
+        var lineTotal=(price*qty)-disc;
+        printHtml+='<tr><td class="td-name">'+esc(it.name||'Product')+'<span class="td-meta">'+qty+' x '+fmt(price)+'</span></td><td class="td-qty">'+qty+'</td><td class="td-price">'+fmt(price)+'</td><td class="td-total">'+fmt(lineTotal)+'</td></tr>';
+        if(disc>0){printHtml+='<tr><td colspan="4" style="padding:3px 0;font-size:10px;color:#b91c1c;font-weight:700;">Discount: -'+fmt(disc)+'</td></tr>';}
+      });
+      printHtml+='</tbody></table></div>';
+      printHtml+='<div class="r-totals"><div class="r-total-row"><span>Subtotal</span><span>'+fmt(subtotal)+'</span></div>';
+      if(discount>0)printHtml+='<div class="r-total-row r-discount"><span>Discount</span><span>-'+fmt(discount)+'</span></div>';
+      if(tax>0)printHtml+='<div class="r-total-row"><span>Tax</span><span>'+fmt(tax)+'</span></div>';
+      printHtml+='<div class="r-total-row grand"><span>Total</span><span>'+fmt(total)+'</span></div>';
+      printHtml+='</div>';
+      printHtml+='<div class="r-payment"><h4><i class="fas fa-wallet"></i> Payment Details</h4><div class="r-payment-row"><strong>Method</strong><span>'+pm+'</span></div><div class="r-payment-row"><strong>Amount Paid</strong><span>'+fmt(pm==='Store Account'?total:cashReceived)+'</span></div>';
+      if(changeDue>0)printHtml+='<div class="r-payment-row"><strong>Change Due</strong><span>'+fmt(changeDue)+'</span></div>';
+      if(accountAmount>0)printHtml+='<div class="r-payment-row"><strong>Store Account</strong><span>'+fmt(accountAmount)+'</span></div>';
+      printHtml+='</div>';
+      if(comments)printHtml+='<div class="r-notes"><strong>Notes:</strong> '+esc(comments)+'</div>';
+      printHtml+='<div class="r-footer"><p><strong>'+esc(storeName)+'</strong></p><p>'+esc(footerText)+'</p><p style="margin-top:6px;font-size:9px;">Keep this receipt for returns and exchanges</p></div>';
+      printHtml+='</div></div>';
+    } else {
+      printHtml+='<div class="r-wrap">';
+      printHtml+='<div class="r-header"><img src="'+logoUrl+'" alt="logo" style="width:48px;height:48px;object-fit:contain;background:#fff;border-radius:10px;padding:4px;margin-bottom:8px;"><h1>'+esc(storeName)+'</h1>';
+      if(storeAddress)printHtml+='<p>'+esc(storeAddress)+'</p>';
+      if(storePhone)printHtml+='<p>Phone: '+esc(storePhone)+'</p>';
+      printHtml+='</div>';
+      printHtml+='<div class="r-meta"><div><strong>Receipt:</strong> '+receiptId+'</div><div><strong>Date:</strong> '+date+'</div><div><strong>Cashier:</strong> '+esc(cashier)+'</div><div><strong>Customer:</strong> '+esc(customer)+'</div></div>';
+      printHtml+='<div class="r-section"><h3>Items</h3><table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead><tbody>';
+      items.forEach(function(it){
+        var qty=parseFloat(it.qty)||0;
+        var price=parseFloat(it.unit_price)||0;
+        var disc=parseFloat(it.discount)||0;
+        var lineTotal=(price*qty)-disc;
+        printHtml+='<tr><td>'+esc(it.name||'Product')+'</td><td style="text-align:center">'+qty+'</td><td style="text-align:right">'+fmt(price)+'</td><td style="text-align:right">'+fmt(lineTotal)+'</td></tr>';
+      });
+      printHtml+='</tbody></table></div>';
+      printHtml+='<div class="r-totals"><div class="r-total-row"><span>Subtotal</span><span>'+fmt(subtotal)+'</span></div>';
+      if(discount>0)printHtml+='<div class="r-total-row"><span>Discount</span><span>-'+fmt(discount)+'</span></div>';
+      if(tax>0)printHtml+='<div class="r-total-row"><span>Tax</span><span>'+fmt(tax)+'</span></div>';
+      printHtml+='<div class="r-total-row grand"><span>Total</span><span>'+fmt(total)+'</span></div>';
+      printHtml+='<div class="r-total-row"><span>'+pm+'</span><span>'+fmt(cashReceived)+'</span></div>';
+      if(accountAmount>0)printHtml+='<div class="r-total-row"><span>Store Account</span><span>'+fmt(accountAmount)+'</span></div>';
+      if(changeDue>0)printHtml+='<div class="r-total-row"><span>Change</span><span>'+fmt(changeDue)+'</span></div>';
+      printHtml+='</div>';
+      if(comments)printHtml+='<div style="margin-top:10px;font-size:11px;color:#555;border-top:1px dashed #ccc;padding-top:8px;"><strong>Notes:</strong> '+esc(comments)+'</div>';
+      printHtml+='<div class="r-footer"><p>'+footerText+'</p><p style="margin-top:6px;font-size:10px;">Keep this receipt for returns and exchanges</p></div>';
+      printHtml+='</div>';
+    }
+    printHtml+='</body></html>';
     w.document.write(printHtml);
     w.document.close();
     setTimeout(function(){try{w.focus();w.print();setTimeout(function(){try{w.close();}catch(e){}},1000);}catch(e){showToast('Print dialog blocked by browser. Use Ctrl+P instead.',true);}},300);
@@ -418,6 +452,7 @@ function loadReceipt(){
 }
 
 function setTemplate(t){
+  currentTemplate=t;
   var card=document.getElementById('receiptCard');
   if(card){
     card.className='receipt-card template-'+t;
