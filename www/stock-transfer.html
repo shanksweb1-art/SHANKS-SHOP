@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -24,6 +24,7 @@
         .btn-primary:hover{background:#059669}
         .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
         .btn-danger{background:#ef4444;color:#fff}
+        .btn-sm{padding:6px 10px;font-size:12px}
         table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
         th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
         th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
@@ -33,7 +34,19 @@
         .badge-shipped{background:#eff6ff;color:#1e40af}
         .badge-received{background:#ecfdf5;color:#065f46}
         .badge-cancelled{background:#fef2f2;color:#991b1b}
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+        .kpi-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px}
+        .kpi-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:6px}
+        .kpi-value{font-size:20px;font-weight:900;color:var(--text)}
+        .item-row{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+        .item-row .item-info{flex:1;min-width:200px}
+        .item-row .item-name{font-weight:700;color:var(--text)}
+        .item-row .item-sku{font-size:12px;color:#64748b}
+        .item-row input{width:110px}
+        .empty-state{text-align:center;color:#6b7280;padding:30px;font-style:italic}
     </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -44,6 +57,12 @@
         <div class="header-clock" id="topClock"></div>
     </div>
     <div class="content">
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-label">Total Transfers</div><div class="kpi-value" id="kpiTotal">0</div></div>
+            <div class="kpi-card"><div class="kpi-label">Pending</div><div class="kpi-value" style="color:#92400e" id="kpiPending">0</div></div>
+            <div class="kpi-card"><div class="kpi-label">Shipped</div><div class="kpi-value" style="color:#1e40af" id="kpiShipped">0</div></div>
+            <div class="kpi-card"><div class="kpi-label">Received</div><div class="kpi-value" style="color:#065f46" id="kpiReceived">0</div></div>
+        </div>
         <div class="panel">
             <h3><i class="fas fa-plus"></i> New Transfer</h3>
             <div class="form-row">
@@ -55,16 +74,14 @@
                     <label>Destination Location</label>
                     <select id="toLocation" class="form-control"></select>
                 </div>
-                <div class="form-group">
-                    <label>Product</label>
-                    <input type="text" id="transferProduct" class="form-control" placeholder="Search product name / SKU">
-                </div>
+            </div>
+            <div style="margin-bottom:10px;"><strong style="font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:#374151;">Items</strong></div>
+            <div id="transferItems" style="margin-bottom:10px;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="btn btn-outline btn-sm" type="button" onclick="addTransferItem()"><i class="fas fa-plus"></i> Add Item</button>
+                <button class="btn btn-primary btn-sm" type="button" onclick="quickAddFromInventory()"><i class="fas fa-boxes"></i> From Inventory</button>
             </div>
             <div class="form-row">
-                <div class="form-group">
-                    <label>Quantity</label>
-                    <input type="number" id="transferQty" class="form-control" min="1" value="1">
-                </div>
                 <div class="form-group">
                     <label>Reference Note</label>
                     <input type="text" id="transferNote" class="form-control" placeholder="Optional note">
@@ -77,10 +94,21 @@
         </div>
         <div class="panel">
             <h3><i class="fas fa-list"></i> Recent Transfers</h3>
+            <div class="toolbar" style="margin-bottom:10px;">
+                <input type="text" id="transferSearch" class="search-input" placeholder="Search transfers..." oninput="renderTransfers()">
+                <select id="transferStatusFilter" class="form-select" onchange="renderTransfers()" style="margin-left:8px;">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="received">Received</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <button class="btn btn-info btn-sm" onclick="exportTransfers()"><i class="fas fa-file-export"></i> Export CSV</button>
+            </div>
             <div class="table-wrap">
                 <table>
                     <thead>
-                        <tr><th>Date</th><th>From</th><th>To</th><th>Product</th><th>Qty</th><th>Note</th><th>Status</th></tr>
+                        <tr><th>Date</th><th>From</th><th>To</th><th>Items</th><th>Note</th><th>Status</th><th>Actions</th></tr>
                     </thead>
                     <tbody id="transfersBody">
                         <tr><td colspan="7" class="empty-state">No transfers yet</td></tr>
@@ -91,35 +119,161 @@
     </div>
 </div>
 <div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="itemModal">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header"><h3>Select Product</h3><button class="modal-close" onclick="POS.closeModal('itemModal')">&times;</button></div>
+    <div style="padding:16px;">
+      <input type="text" id="itemSearch" class="form-control" placeholder="Search product name or SKU..." oninput="filterItems()" style="margin-bottom:12px;width:100%">
+      <div id="itemList" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal('itemModal')">Cancel</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="statusModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header"><h3>Update Status</h3><button class="modal-close" onclick="POS.closeModal('statusModal')">&times;</button></div>
+    <div style="padding:16px;">
+      <input type="hidden" id="statusTransferId">
+      <div class="form-group"><label>New Status</label><select id="statusNewValue" class="form-select"><option value="pending">Pending</option><option value="shipped">Shipped</option><option value="received">Received</option><option value="cancelled">Cancelled</option></select></div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal('statusModal')">Cancel</button><button class="btn btn-primary" onclick="saveTransferStatus()">Save</button></div>
+  </div>
+</div>
+
 <script>
 function $(id){return document.getElementById(id);}
-var transfers = [];
+var locations=[];
+var transfers=[];
+var transferItems=[]; // {product_id, product_name, sku, qty}
+var allProducts=[];
+
 function fmt(n){ try { return StoreConfig.formatCurrency(n); } catch(e) { return '₦' + (parseFloat(n) || 0).toLocaleString('en-NG', {minimumFractionDigits:2, maximumFractionDigits:2}); } }
 function esc(s){ return String(s||'').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
 function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){ t.style.display='none'; },3000); }
-function submitTransfer(){
+
+async function loadLocations(){
+    try{ locations = await API.getLocations() || []; }catch(e){ locations=[]; POS.showToast('Failed to load locations',true); }
+    var opts = locations.map(function(l){ return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; }).join('');
+    var defaultOpt = '<option value="">-- Select Location --</option>';
+    $('fromLocation').innerHTML = defaultOpt + opts;
+    $('toLocation').innerHTML = defaultOpt + opts;
+}
+
+async function loadProducts(){
+    try{ allProducts = await API.getProducts() || []; }catch(e){ allProducts=[]; }
+}
+
+async function loadTransfers(){
+    try{ transfers = await API.getStockTransfers() || []; }catch(e){ transfers=[]; POS.showToast('Failed to load transfers',true); }
+    updateKPIs();
+    renderTransfers();
+}
+
+function updateKPIs(){
+    $('kpiTotal').textContent = transfers.length;
+    $('kpiPending').textContent = transfers.filter(function(t){return t.status==='pending';}).length;
+    $('kpiShipped').textContent = transfers.filter(function(t){return t.status==='shipped';}).length;
+    $('kpiReceived').textContent = transfers.filter(function(t){return t.status==='received';}).length;
+}
+
+function locationName(id){
+    var l = locations.find(function(x){return String(x.id)===String(id);});
+    return l ? l.name : (id||'');
+}
+
+function addTransferItem(){
+    var name = prompt('Enter product name or SKU:');
+    if(!name) return;
+    var p = allProducts.find(function(x){
+        return (x.name||'').toLowerCase().indexOf(name.toLowerCase()) > -1 ||
+               (x.sku||'').toLowerCase().indexOf(name.toLowerCase()) > -1 ||
+               (x.barcode||'').toLowerCase().indexOf(name.toLowerCase()) > -1;
+    });
+    if(p){
+        transferItems.push({product_id: p.id, product_name: p.name, sku: p.sku||'', qty: 1});
+    } else {
+        transferItems.push({product_id: '', product_name: name, sku: '', qty: 1});
+    }
+    renderTransferItems();
+}
+
+async function quickAddFromInventory(){
+    filterItems();
+    POS.openModal('itemModal');
+}
+
+function filterItems(){
+    var q = $('itemSearch').value.toLowerCase();
+    var list = $('itemList');
+    var matched = allProducts.filter(function(p){
+        var text = [(p.name||''), (p.sku||''), (p.barcode||'')].join(' ').toLowerCase();
+        return !q || text.indexOf(q) > -1;
+    }).slice(0,50);
+    if(!matched.length){ list.innerHTML = '<div style="padding:10px;color:#6b7280;">No products found</div>'; return; }
+    list.innerHTML = matched.map(function(p){
+        return '<div class="item-row" style="cursor:pointer;" onclick="pickItem(\''+p.id+'\',\''+esc(p.name||'')+'\',\''+esc(p.sku||'')+'\')">' +
+            '<div class="item-info"><div class="item-name">'+esc(p.name||'-')+'</div><div class="item-sku">SKU: '+esc(p.sku||'-')+' | Stock: '+POS.formatNumber(p.stock||0)+'</div></div>' +
+            '<button class="btn btn-sm btn-primary" onclick="event.stopForegroundPropagation&&event.stopForegroundPropagation();pickItem(\''+p.id+'\',\''+esc(p.name||'')+'\',\''+esc(p.sku||'')+'\')">Add</button></div>';
+    }).join('');
+}
+
+function pickItem(id, name, sku){
+    transferItems.push({product_id: id, product_name: name, sku: sku, qty: 1});
+    renderTransferItems();
+    POS.closeModal('itemModal');
+}
+
+function removeTransferItem(idx){
+    transferItems.splice(idx,1);
+    renderTransferItems();
+}
+
+function renderTransferItems(){
+    var container = $('transferItems');
+    if(!transferItems.length){ container.innerHTML = '<div style="padding:10px;color:#6b7280;font-size:13px;">No items added yet.</div>'; return; }
+    container.innerHTML = transferItems.map(function(it,idx){
+        return '<div class="item-row"><div class="item-info"><div class="item-name">'+esc(it.product_name)+'</div><div class="item-sku">SKU: '+esc(it.sku||'-')+'</div></div>' +
+            '<input type="number" value="'+it.qty+'" min="1" onchange="transferItems['+idx+'].qty=parseInt(this.value)||1" class="form-control" style="width:100px">' +
+            '<button class="btn btn-danger btn-sm" onclick="removeTransferItem('+idx+')"><i class="fas fa-trash"></i></button></div>';
+    }).join('');
+}
+
+function clearTransfer(){
+    $('fromLocation').value='';
+    $('toLocation').value='';
+    transferItems=[];
+    renderTransferItems();
+    $('transferNote').value='';
+}
+
+async function submitTransfer(){
     var from = $('fromLocation').value;
     var to = $('toLocation').value;
-    var product = $('transferProduct').value.trim();
-    var qty = parseInt($('transferQty').value) || 0;
     var note = $('transferNote').value.trim();
     if(!from || !to || from === to){ showToast('Select different source and destination', true); return; }
-    if(!product || qty <= 0){ showToast('Enter product and valid quantity', true); return; }
-    var record = { date: new Date().toISOString(), from: from, to: to, product: product, qty: qty, note: note, status: 'pending' };
-    transfers.unshift(record);
-    try { localStorage.setItem('SHEDS_transfers', JSON.stringify(transfers)); } catch(e){}
-    showToast('Transfer submitted');
-    clearTransfer();
-    renderTransfers();
-    logAction('transfer', product, qty + ' units from ' + from + ' to ' + to);
+    if(!transferItems.length){ showToast('Add at least one item', true); return; }
+    var payload = {
+        from_location_id: parseInt(from),
+        to_location_id: parseInt(to),
+        from_location_name: locationName(from),
+        to_location_name: locationName(to),
+        items: transferItems,
+        status: 'pending',
+        notes: note,
+        created_by: API.getUserName ? API.getUserName() : 'Staff',
+        date: new Date().toISOString()
+    };
+    try{
+        var res = await API.saveStockTransfer(payload);
+        POS.showToast('Transfer created');
+        clearTransfer();
+        loadTransfers();
+        try{ API.post('/audit-log',{action:'stock_transfer_create',entity:'stock_transfer',entity_id:String(res.id||''),details:'Transfer '+transferItems.length+' items '+locationName(from)+' -> '+locationName(to),user:API.getUserName?API.getUserName():'System'}).catch(function(){});}catch(e){}
+    }catch(e){ POS.showToast('Transfer failed: '+(e.message||'API error'),true); }
 }
-function clearTransfer(){
-    $('fromLocation').value = $('fromLocation').options[0] ? $('fromLocation').options[0].value : '';
-    $('toLocation').value = '';
-    $('transferProduct').value = '';
-    $('transferQty').value = 1;
-    $('transferNote').value = '';
-}
+
 function badgeFor(s){
     if(s==='pending') return '<span class="badge badge-pending">Pending</span>';
     if(s==='shipped') return '<span class="badge badge-shipped">Shipped</span>';
@@ -127,41 +281,86 @@ function badgeFor(s){
     if(s==='cancelled') return '<span class="badge badge-cancelled">Cancelled</span>';
     return '<span class="badge badge-pending">' + esc(s) + '</span>';
 }
+
 function renderTransfers(){
+    var q = $('transferSearch').value.toLowerCase();
+    var st = $('transferStatusFilter').value;
+    var filtered = transfers.filter(function(t){
+        var text = [(t.from_location_name||''),(t.to_location_name||''),(t.notes||''),(t.items||[]).map(function(i){return i.product_name||'';}).join(' ')].join(' ').toLowerCase();
+        var ok = !q || text.indexOf(q) > -1;
+        ok = ok && (st==='all' || t.status===st);
+        return ok;
+    });
     var tbody = $('transfersBody');
-    if(!transfers.length){ tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No transfers yet</td></tr>'; return; }
-    tbody.innerHTML = transfers.map(function(t){
-        return '<tr><td>' + esc(new Date(t.date).toLocaleString('en-NG')) + '</td><td>' + esc(fromLocationName(t.from)) + '</td><td>' + esc(toLocationName(t.to)) + '</td><td>' + esc(t.product) + '</td><td>' + esc(t.qty) + '</td><td>' + esc(t.note || '-') + '</td><td>' + badgeFor(t.status) + '</td></tr>';
+    if(!filtered.length){ tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No transfers found</td></tr>'; return; }
+    tbody.innerHTML = filtered.map(function(t){
+        var itemSummary = (t.items||[]).map(function(i){return (i.product_name||'Item')+' x'+(i.qty||1);}).join(', ');
+        var actions = '';
+        if(t.status==='pending') actions += '<button class="icon-btn edit" onclick="openStatusModal('+t.id+',\'shipped\')"><i class="fas fa-truck"></i></button> ';
+        if(t.status==='shipped') actions += '<button class="icon-btn view" onclick="openStatusModal('+t.id+',\'received\')"><i class="fas fa-check-double"></i></button> ';
+        actions += '<button class="icon-btn delete" onclick="deleteTransfer('+t.id+')"><i class="fas fa-trash"></i></button>';
+        return '<tr><td>'+POS.formatDate(t.date)+'</td><td>'+esc(t.from_location_name||'-')+'</td><td>'+esc(t.to_location_name||'-')+'</td><td>'+esc(itemSummary)+'</td><td>'+esc(t.notes||'-')+'</td><td>'+badgeFor(t.status)+'</td><td class="action-btns">'+actions+'</td></tr>';
     }).join('');
 }
-function fromLocationName(v){ return v; }
-function toLocationName(v){ return v; }
-function loadLocations(){
-    var locations = [];
-    try { locations = JSON.parse(localStorage.getItem('SHEDS_locations') || '[]'); if(!Array.isArray(locations)) locations = []; } catch(e){}
-    var opts = locations.map(function(l){ return '<option value="' + esc(l.id || l.name) + '">' + esc(l.name) + '</option>'; }).join('');
-    var defaultOpt = '<option value="">-- Select --</option>';
-    $('fromLocation').innerHTML = defaultOpt + opts;
-    $('toLocation').innerHTML = defaultOpt + opts;
+
+function openStatusModal(id, newStatus){
+    $('statusTransferId').value = id;
+    $('statusNewValue').value = newStatus;
+    POS.openModal('statusModal');
 }
-function loadTransfers(){
-    try { transfers = JSON.parse(localStorage.getItem('SHEDS_transfers') || '[]'); if(!Array.isArray(transfers)) transfers = []; } catch(e){ transfers = []; }
-    renderTransfers();
+
+async function saveTransferStatus(){
+    var id = $('statusTransferId').value;
+    var newStatus = $('statusNewValue').value;
+    try{
+        await API.updateStockTransfer(id, {status: newStatus});
+        POS.showToast('Transfer status updated to '+newStatus);
+        POS.closeModal('statusModal');
+        loadTransfers();
+        try{ API.post('/audit-log',{action:'stock_transfer_status',entity:'stock_transfer',entity_id:String(id),details:'Status -> '+newStatus,user:API.getUserName?API.getUserName():'System'}).catch(function(){});}catch(e){}
+    }catch(e){ POS.showToast('Update failed: '+(e.message||'API error'),true); }
 }
-function logAction(action, ref, note){
-    var user = API.getUserName ? API.getUserName() : 'System';
-    API.post('/audit-log', {action: action, entity: 'stock_transfer', entity_id: String(ref || ''), details: note || '', user: user}).catch(function(){});
+
+async function deleteTransfer(id){
+    if(!confirm('Delete this transfer?')) return;
+    try{
+        await API.deleteStockTransfer(id);
+        POS.showToast('Transfer deleted');
+        loadTransfers();
+    }catch(e){ POS.showToast('Delete failed: '+(e.message||'API error'),true); }
 }
-document.addEventListener('DOMContentLoaded', function(){
+
+function exportTransfers(){
+    var q = $('transferSearch').value.toLowerCase();
+    var st = $('transferStatusFilter').value;
+    var filtered = transfers.filter(function(t){
+        var text = [(t.from_location_name||''),(t.to_location_name||''),(t.notes||'')].join(' ').toLowerCase();
+        var ok = !q || text.indexOf(q) > -1;
+        ok = ok && (st==='all' || t.status===st);
+        return ok;
+    });
+    if(!filtered.length){ POS.showToast('No transfers to export',true); return; }
+    POS.exportCSV('stock_transfers_'+POS.today()+'.csv',['Date','From','To','Items','Note','Status'],filtered.map(function(t){
+        return {
+            'Date': t.date||'',
+            'From': t.from_location_name||'',
+            'To': t.to_location_name||'',
+            'Items': (t.items||[]).map(function(i){return (i.product_name||'')+' x'+(i.qty||1);}).join('; '),
+            'Note': t.notes||'',
+            'Status': t.status||''
+        };
+    }));
+}
+
+document.addEventListener('DOMContentLoaded',function(){
     if(!POS.requireAuth()) return;
+    POS.renderSidebar();
+    POS.renderUserMenu();
     loadLocations();
+    loadProducts();
     loadTransfers();
 });
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
-
-
-
-
-
