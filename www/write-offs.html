@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Write-offs - SHANKS SHOP MANAGEMENT</title>
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.png" type="image/png" sizes="512x512">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="common.css">
+    <script src="api.js"></script>
+    <script src="common.js"></script>
+    <style>
+        .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.04)}
+        .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.3px}
+        .form-control{padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff}
+        .form-control:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+        .btn{padding:10px 14px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.2s}
+        .btn-primary{background:#10b981;color:#fff}
+        .btn-primary:hover{background:#059669}
+        .btn-outline{background:#fff;color:#111827;border:1px solid #d1d5db}
+        .btn-danger{background:#ef4444;color:#fff}
+        .btn-danger:hover{background:#dc2626}
+        .btn-sm{padding:6px 10px;font-size:12px}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+        th{background:#f8fafc;color:#334155;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+        tr:last-child td{border-bottom:none}
+        .badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+        .badge-draft{background:#f1f5f9;color:#475568;border:1px solid #e2e8f0}
+        .badge-applied{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+        .badge-damaged{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+        .badge-expired{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+        .kpi-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px}
+        .kpi-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:6px}
+        .kpi-value{font-size:20px;font-weight:900;color:var(--text)}
+        .item-row{border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+        .item-row .item-info{flex:1;min-width:200px}
+        .item-row .item-name{font-weight:700;color:var(--text)}
+        .item-row .item-sku{font-size:12px;color:#64748b}
+        .item-row input,.item-row select{width:120px}
+        .empty-state{text-align:center;color:#6b7280;padding:30px;font-style:italic}
+        .reason-chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.2px}
+        .chip-damaged{background:#fecaca;color:#991b1b}
+        .chip-expired{background:#fde68a;color:#92400e}
+        .chip-other{background:#e2e8f0;color:#475568}
+    </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
+</head>
+<body>
+<div class="sidebar" id="sidebar"></div>
+<div class="main-content">
+    <div class="header">
+        <h2><i class="fas fa-trash"></i> Stock Write-offs</h2>
+        <div id="userMenu"></div>
+        <div class="header-clock" id="topClock"></div>
+    </div>
+    <div class="content">
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-label">Total Write-offs</div><div class="kpi-value" id="kpiTotal">0</div></div>
+            <div class="kpi-card"><div class="kpi-label">Total Value</div><div class="kpi-value" style="color:#991b1b" id="kpiValue">₦0.00</div></div>
+            <div class="kpi-card"><div class="kpi-label">Pending</div><div class="kpi-value" style="color:#92400e" id="kpiPending">0</div></div>
+            <div class="kpi-card"><div class="kpi-label">Applied</div><div class="kpi-value" style="color:#065f46" id="kpiApplied">0</div></div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-trash-alt"></i> New Write-off</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Reference</label>
+                    <input type="text" id="woRef" class="form-control" placeholder="Auto generated">
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <select id="woReason" class="form-select">
+                        <option value="damaged">Damaged</option>
+                        <option value="expired">Expired</option>
+                        <option value="shrinkage">Shrinkage / Loss</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Condition</label>
+                    <select id="woCondition" class="form-select">
+                        <option value="damaged">Damaged</option>
+                        <option value="expired">Expired</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <input type="text" id="woNotes" class="form-control" placeholder="Optional note">
+                </div>
+            </div>
+            <div style="margin-bottom:10px;"><strong style="font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:#374151;">Items to Write Off</strong></div>
+            <div id="writeOffItems" style="margin-bottom:10px;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="btn btn-outline btn-sm" type="button" onclick="addWriteOffItem()"><i class="fas fa-plus"></i> Add Item</button>
+                <button class="btn btn-primary btn-sm" type="button" onclick="quickAddFromInventory()"><i class="fas fa-boxes"></i> From Inventory</button>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="submitWriteOff()"><i class="fas fa-save"></i> Save Write-off</button>
+                <button class="btn btn-outline" onclick="clearWriteOff()"><i class="fas fa-eraser"></i> Clear</button>
+            </div>
+        </div>
+        <div class="panel">
+            <h3><i class="fas fa-list"></i> Write-off History</h3>
+            <div class="toolbar" style="margin-bottom:10px;">
+                <input type="text" id="woSearch" class="search-input" placeholder="Search write-offs..." oninput="renderHistory()">
+                <button class="btn btn-info btn-sm" onclick="exportWriteOffs()"><i class="fas fa-file-export"></i> Export CSV</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Reference</th><th>Date</th><th>Reason</th><th>Condition</th><th>Items</th><th>Qty</th><th>Value</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr><td colspan="9" class="empty-state">No write-offs recorded yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="itemModal">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header"><h3>Select Product</h3><button class="modal-close" onclick="POS.closeModal('itemModal')">&times;</button></div>
+    <div style="padding:16px;">
+      <input type="text" id="itemSearch" class="form-control" placeholder="Search product name or SKU..." oninput="filterItems()" style="margin-bottom:12px;width:100%">
+      <div id="itemList" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="POS.closeModal('itemModal')">Cancel</button></div>
+  </div>
+</div>
+
+<script>
+function $(id){return document.getElementById(id);}
+var allProducts=[];
+var writeOffItems=[]; // {product_id, product_name, sku, batch_number, expiry_date, qty, unit_cost, reason}
+var writeOffs=[];
+
+function fmtMoney(v){ return POS.formatCurrency(parseFloat(v)||0); }
+function esc(s){ return POS.esc(s); }
+function showToast(m,err){ var t=$('toast'); t.textContent=m; t.className='toast'+(err?' error':''); t.style.display='block'; setTimeout(function(){ t.style.display='none'; },3000); }
+
+async function loadProducts(){
+    try{ allProducts = await API.getProducts() || []; }catch(e){ allProducts=[]; POS.showToast('Failed to load products',true); }
+}
+
+async function loadWriteOffs(){
+    try{ writeOffs = await API.getWriteOffs() || []; }catch(e){ writeOffs=[]; POS.showToast('Failed to load write-offs',true); }
+    updateKPIs();
+    renderHistory();
+}
+
+function updateKPIs(){
+    var totalValue = writeOffs.reduce(function(s,w){return s+parseFloat(w.total_value||0);},0);
+    $('kpiTotal').textContent = writeOffs.length;
+    $('kpiValue').textContent = fmtMoney(totalValue);
+    $('kpiPending').textContent = writeOffs.filter(function(w){return w.applied==0||w.status==='draft';}).length;
+    $('kpiApplied').textContent = writeOffs.filter(function(w){return w.applied==1;}).length;
+}
+
+function reasonChip(reason){
+    var cls = reason==='damaged'?'chip-damaged':(reason==='expired'?'chip-expired':'chip-other');
+    return '<span class="reason-chip '+cls+'">'+esc(reason)+'</span>';
+}
+
+function statusBadge(w){
+    var cls = w.applied==1 ? 'badge-applied' : 'badge-draft';
+    var label = w.applied==1 ? 'Applied' : 'Draft';
+    return '<span class="badge '+cls+'">'+esc(label)+'</span>';
+}
+
+function renderHistory(){
+    var q = $('woSearch').value.toLowerCase();
+    var filtered = writeOffs.filter(function(w){
+        var text = [(w.reference||''),(w.reason||''),(w.notes||''),(w.items||[]).map(function(i){return i.product_name||'';}).join(' ')].join(' ').toLowerCase();
+        return !q || text.indexOf(q) > -1;
+    });
+    var body = $('historyBody');
+    if(!filtered.length){ body.innerHTML = '<tr><td colspan="9" class="empty-state">No write-offs found</td></tr>'; return; }
+    body.innerHTML = filtered.map(function(w){
+        var itemSummary = (w.items||[]).map(function(i){return (i.product_name||'Item')+' x'+(i.qty||1);}).join(', ');
+        var actions = '';
+        if(w.applied!=1){
+            actions += '<button class="icon-btn view" title="Open" onclick="openWriteOff('+w.id+')"><i class="fas fa-eye"></i></button> ';
+            actions += '<button class="icon-btn view" title="Apply to stock" onclick="applyWriteOff('+w.id+')"><i class="fas fa-check-double"></i></button> ';
+        }
+        actions += '<button class="icon-btn delete" title="Delete" onclick="deleteWriteOff('+w.id+')"><i class="fas fa-trash"></i></button>';
+        return '<tr><td><strong>'+esc(w.reference||'#'+w.id)+'</strong></td><td>'+esc(String(w.created_at||'').replace('T',' ').slice(0,16))+'</td><td>'+reasonChip(w.reason)+'</td><td>'+esc(w.condition_type||'-')+'</td><td>'+esc(itemSummary)+'</td><td>'+POS.formatNumber(w.total_qty||0)+'</td><td>'+fmtMoney(w.total_value||0)+'</td><td>'+statusBadge(w)+'</td><td class="action-btns">'+actions+'</td></tr>';
+    }).join('');
+}
+
+function addWriteOffItem(){
+    var name = prompt('Enter product name or SKU:');
+    if(!name) return;
+    var p = allProducts.find(function(x){
+        return (x.name||'').toLowerCase().indexOf(name.toLowerCase()) > -1 ||
+               (x.sku||'').toLowerCase().indexOf(name.toLowerCase()) > -1 ||
+               (x.barcode||'').toLowerCase().indexOf(name.toLowerCase()) > -1;
+    });
+    if(p){
+        writeOffItems.push({
+            product_id: p.id, product_name: p.name, sku: p.sku||'',
+            batch_number: p.batch_number||'', expiry_date: p.expiry||p.expiry_date||'',
+            qty: 1, unit_cost: num(p.cost_price), reason: $('woReason').value
+        });
+    } else {
+        writeOffItems.push({product_id:'', product_name:name, sku:'', batch_number:'', expiry_date:'', qty:1, unit_cost:0, reason: $('woReason').value});
+    }
+    renderWriteOffItems();
+}
+
+async function quickAddFromInventory(){
+    filterItems();
+    POS.openModal('itemModal');
+}
+
+function filterItems(){
+    var q = $('itemSearch').value.toLowerCase();
+    var list = $('itemList');
+    var matched = allProducts.filter(function(p){
+        var text = [(p.name||''), (p.sku||''), (p.barcode||'')].join(' ').toLowerCase();
+        return !q || text.indexOf(q) > -1;
+    }).slice(0,50);
+    if(!matched.length){ list.innerHTML = '<div style="padding:10px;color:#6b7280;">No products found</div>'; return; }
+    var rows = matched.map(function(p){
+        var onClick = "pickItem('"+esc(p.id)+"','"+esc(p.name||'')+"','"+esc(p.sku||'')+"',"+num(p.cost_price)+",'"+esc(p.batch_number||'')+"','"+esc(p.expiry||p.expiry_date||'')+"')";
+        return '<div class="item-row" style="cursor:pointer;" onclick="'+onClick+'">' +
+            '<div class="item-info"><div class="item-name">'+esc(p.name||'-')+'</div><div class="item-sku">SKU: '+esc(p.sku||'-')+' | Stock: '+POS.formatNumber(p.stock||0)+' | Cost: '+fmtMoney(p.cost_price)+'</div></div>' +
+            '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();'+onClick+'">Add</button></div>';
+    }).join('');
+    list.innerHTML = rows;
+}
+
+function pickItem(id, name, sku, cost, batch, expiry){
+    writeOffItems.push({
+        product_id: id, product_name: name, sku: sku,
+        batch_number: batch, expiry_date: expiry,
+        qty: 1, unit_cost: cost, reason: $('woReason').value
+    });
+    renderWriteOffItems();
+    POS.closeModal('itemModal');
+}
+
+function removeWriteOffItem(idx){
+    writeOffItems.splice(idx,1);
+    renderWriteOffItems();
+}
+
+function renderWriteOffItems(){
+    var container = $('writeOffItems');
+    if(!writeOffItems.length){ container.innerHTML = '<div style="padding:10px;color:#6b7280;font-size:13px;">No items added yet.</div>'; return; }
+    var totalValue = 0;
+    container.innerHTML = writeOffItems.map(function(it,idx){
+        var value = parseFloat(it.qty)*parseFloat(it.unit_cost);
+        totalValue += value;
+        return '<div class="item-row"><div class="item-info"><div class="item-name">'+esc(it.product_name)+'</div><div class="item-sku">SKU: '+esc(it.sku||'-')+' | Reason: '+esc(it.reason)+' | '+esc(it.batch_number||'No batch')+' | '+esc(it.expiry_date||'No expiry')+'</div></div>' +
+            '<input type="number" value="'+it.qty+'" min="0" step="1" onchange="writeOffItems['+idx+'].qty=parseFloat(this.value)||0" class="form-control" style="width:100px">' +
+            '<input type="number" value="'+it.unit_cost+'" min="0" step="any" onchange="writeOffItems['+idx+'].unit_cost=parseFloat(this.value)||0" class="form-control" style="width:110px" placeholder="Unit cost">' +
+            '<button class="btn btn-danger btn-sm" onclick="removeWriteOffItem('+idx+')"><i class="fas fa-trash"></i></button></div>';
+    }).join('');
+    container.innerHTML += '<div style="margin-top:8px;padding:8px;background:#fef2f2;border-radius:6px;font-weight:700;color:#991b1b;font-size:13px;">Total write-off value: '+fmtMoney(totalValue)+'</div>';
+}
+
+function clearWriteOff(){
+    $('woRef').value='';
+    $('woNotes').value='';
+    writeOffItems=[];
+    renderWriteOffItems();
+}
+
+function num(v,f){var n=parseFloat(v);return isNaN(n)?(f||0):n;}
+
+async function submitWriteOff(){
+    var reason = $('woReason').value;
+    var condition = $('woCondition').value;
+    var notes = $('woNotes').value.trim();
+    if(!writeOffItems.length){ showToast('Add at least one item', true); return; }
+    var items = writeOffItems.map(function(it){return {
+        product_id: it.product_id||'', product_name: it.product_name, sku: it.sku||'',
+        batch_number: it.batch_number||'', expiry_date: it.expiry_date||'',
+        qty: parseFloat(it.qty)||0, unit_cost: parseFloat(it.unit_cost)||0,
+        reason: it.reason||reason
+    }});
+    var payload = {
+        reference: ($('woRef').value||'').trim(),
+        reason: reason,
+        condition_type: condition,
+        notes: notes,
+        items: items
+    };
+    try{
+        var res = await API.saveWriteOff(payload);
+        POS.showToast('Write-off saved: '+res.reference);
+        clearWriteOff();
+        loadWriteOffs();
+    }catch(e){ POS.showToast('Save failed: '+(e.message||'API error'),true); }
+}
+
+async function openWriteOff(id){
+    var w = writeOffs.find(function(x){return String(x.id)===String(id);});
+    if(!w){ var c = await API.getWriteOffs? null : null; return; }
+    writeOffItems = (w.items||[]).map(function(i){return {
+        product_id: i.product_id, product_name: i.product_name, sku: i.sku||'',
+        batch_number: i.batch_number||'', expiry_date: i.expiry_date||'',
+        qty: i.qty, unit_cost: i.unit_cost, reason: i.reason||w.reason
+    }});
+    $('woRef').value = w.reference||'';
+    $('woReason').value = w.reason||'damaged';
+    $('woCondition').value = w.condition_type||w.reason||'damaged';
+    $('woNotes').value = w.notes||'';
+    renderWriteOffItems();
+    currentWriteOffId = w.id;
+    // scroll to form
+    document.querySelector('.panel').scrollIntoView({behavior:'smooth'});
+}
+
+var currentWriteOffId = null;
+
+async function applyWriteOff(id){
+    if(!confirm('Apply this write-off to stock? Quantities will be deducted.')) return;
+    try{
+        await API.applyWriteOff(id);
+        POS.showToast('Write-off applied to stock');
+        loadWriteOffs();
+    }catch(e){ POS.showToast('Apply failed: '+(e.message||'API error'),true); }
+}
+
+async function deleteWriteOff(id){
+    if(!confirm('Delete this write-off?')) return;
+    try{
+        await API.deleteWriteOff(id);
+        POS.showToast('Write-off deleted');
+        loadWriteOffs();
+    }catch(e){ POS.showToast('Delete failed: '+(e.message||'API error'),true); }
+}
+
+function exportWriteOffs(){
+    var q = $('woSearch').value.toLowerCase();
+    var filtered = writeOffs.filter(function(w){
+        var text = [(w.reference||''),(w.reason||''),(w.notes||'')].join(' ').toLowerCase();
+        return !q || text.indexOf(q) > -1;
+    });
+    if(!filtered.length){ POS.showToast('No write-offs to export',true); return; }
+    POS.exportCSV('write_offs_'+POS.today()+'.csv',['Reference','Date','Reason','Condition','Items','Qty','Value','Status'],filtered.map(function(w){
+        return {
+            'Reference': w.reference||'',
+            'Date': w.created_at||'',
+            'Reason': w.reason||'',
+            'Condition': w.condition_type||'',
+            'Items': (w.items||[]).map(function(i){return (i.product_name||'')+' x'+(i.qty||1);}).join('; '),
+            'Qty': w.total_qty||0,
+            'Value': w.total_value||0,
+            'Status': w.applied==1?'Applied':'Draft'
+        };
+    }));
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    if(!POS.requireAuth()) return;
+    POS.renderSidebar();
+    POS.renderUserMenu();
+    loadProducts();
+    loadWriteOffs();
+});
+</script>
+  <script src="/offline.js"></script>
+</body>
+</html>

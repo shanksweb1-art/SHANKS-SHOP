@@ -878,6 +878,22 @@ def init_db():
             completed_at TEXT
         )
     ''')
+    try:
+        db.execute("ALTER TABLE stock_counts ADD COLUMN approval_status TEXT DEFAULT 'none'")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE stock_counts ADD COLUMN approved_by TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE stock_counts ADD COLUMN approved_at TEXT")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE stock_counts ADD COLUMN approval_notes TEXT")
+    except Exception:
+        pass
     db.execute(f'''
         CREATE TABLE IF NOT EXISTS stock_count_items (
             id {id_col()},
@@ -893,6 +909,40 @@ def init_db():
             counted_qty REAL,
             variance REAL DEFAULT 0,
             unit_cost REAL DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    # Write-offs (damaged / expired / shrinkage) per pharmacy
+    db.execute(f'''
+        CREATE TABLE IF NOT EXISTS write_offs (
+            id {id_col()},
+            pharmacy_id INTEGER NOT NULL,
+            reference TEXT,
+            reason TEXT DEFAULT 'damaged',
+            condition_type TEXT DEFAULT 'damaged',
+            notes TEXT,
+            status TEXT DEFAULT 'draft',
+            total_qty REAL DEFAULT 0,
+            total_value REAL DEFAULT 0,
+            created_by TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            applied INTEGER DEFAULT 0,
+            applied_at TEXT
+        )
+    ''')
+    db.execute(f'''
+        CREATE TABLE IF NOT EXISTS write_off_items (
+            id {id_col()},
+            pharmacy_id INTEGER NOT NULL,
+            write_off_id INTEGER,
+            product_id INTEGER,
+            product_name TEXT,
+            sku TEXT,
+            batch_number TEXT,
+            expiry_date TEXT,
+            qty REAL DEFAULT 0,
+            unit_cost REAL DEFAULT 0,
+            value REAL DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -4220,6 +4270,8 @@ def apply_stock_count(cid):
         return jsonify({'error': 'Stock count not found'}), 404
     if count['applied']:
         return jsonify({'error': 'This count has already been applied to stock'}), 400
+    if count['approval_status'] != 'approved':
+        return jsonify({'error': 'This count must be approved before it can be applied to stock'}), 400
 
     items = _stock_count_items(db, cid)
     counted = [i for i in items if i.get('counted_qty') is not None]
@@ -4285,12 +4337,273 @@ def apply_stock_count(cid):
         return jsonify({'error': f'Could not apply the stock count: {str(e)}'}), 500
 
 
+@app.route('/api/stock-counts/<int:cid>/approve', methods=['POST'])
+@require_auth
+def approve_stock_count(cid):
+    """Approve a stock count so it can be applied to stock."""
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    count = db.execute(
+        'SELECT * FROM stock_counts WHERE pharmacy_id = ? AND id = ?',
+        (g.pharmacy_id, cid)
+    ).fetchone()
+    if not count:
+        return jsonify({'error': 'Stock count not found'}), 404
+    if count['applied']:
+        return jsonify({'error': 'This count has already been applied to stock'}), 400
+    if count['approval_status'] == 'approved':
+        return jsonify({'error': 'This count is already approved'}), 400
+    username = request.headers.get('X-Username', '')
+    db.execute(
+        'UPDATE stock_counts SET approval_status = ?, approved_by = ?, approved_at = ?, approval_notes = ?, status = ? WHERE pharmacy_id = ? AND id = ?',
+        ('approved', username, datetime.now().isoformat(), str(data.get('notes', '')).strip(), 'approved', g.pharmacy_id, cid)
+    )
+    db.execute(
+        'INSERT INTO audit_log (pharmacy_id, user_name, action, entity_type, entity_id, details, ip_address) VALUES (?,?,?,?,?,?,?)',
+        (g.pharmacy_id, username, 'stock_count_approved', 'stock_count', cid,
+         f'Approved count {cid} (variance {count["total_variance"]})', request.remote_addr)
+    )
+    db.commit()
+    return jsonify({'approved': True, 'id': cid})
+
+
+@app.route('/api/stock-counts/<int:cid>/reject', methods=['POST'])
+@require_auth
+def reject_stock_count(cid):
+    """Reject a stock count pending approval."""
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    count = db.execute(
+        'SELECT * FROM stock_counts WHERE pharmacy_id = ? AND id = ?',
+        (g.pharmacy_id, cid)
+    ).fetchone()
+    if not count:
+        return jsonify({'error': 'Stock count not found'}), 404
+    if count['applied']:
+        return jsonify({'error': 'This count has already been applied to stock'}), 400
+    username = request.headers.get('X-Username', '')
+    db.execute(
+        'UPDATE stock_counts SET approval_status = ?, approved_by = ?, approved_at = ?, approval_notes = ?, status = ? WHERE pharmacy_id = ? AND id = ?',
+        ('rejected', username, datetime.now().isoformat(), str(data.get('notes', '')).strip(), 'rejected', g.pharmacy_id, cid)
+    )
+    db.execute(
+        'INSERT INTO audit_log (pharmacy_id, user_name, action, entity_type, entity_id, details, ip_address) VALUES (?,?,?,?,?,?,?)',
+        (g.pharmacy_id, username, 'stock_count_rejected', 'stock_count', cid,
+         f'Rejected count {cid}: ' + str(data.get('notes', '')), request.remote_addr)
+    )
+    db.commit()
+    return jsonify({'rejected': True, 'id': cid})
+
+
 @app.route('/api/stock-counts/<int:cid>', methods=['DELETE'])
 @require_auth
 def delete_stock_count(cid):
     db = get_db()
     db.execute('DELETE FROM stock_count_items WHERE pharmacy_id = ? AND count_id = ?', (g.pharmacy_id, cid))
     db.execute('DELETE FROM stock_counts WHERE pharmacy_id = ? AND id = ?', (g.pharmacy_id, cid))
+    db.commit()
+    return jsonify({'deleted': True})
+
+
+# --- Write-offs (damaged / expired / shrinkage) ---
+def _write_off_items(db, wo_id):
+    rows = db.execute(
+        'SELECT * FROM write_off_items WHERE pharmacy_id = ? AND write_off_id = ? ORDER BY product_name',
+        (g.pharmacy_id, wo_id)
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.route('/api/write-offs', methods=['GET'])
+@require_auth
+def get_write_offs():
+    db = get_db()
+    rows = db.execute(
+        'SELECT * FROM write_offs WHERE pharmacy_id = ? ORDER BY id DESC LIMIT 100',
+        (g.pharmacy_id,)
+    ).fetchall()
+    result = []
+    for r in rows:
+        row = dict(r)
+        row['items'] = _write_off_items(db, row['id'])
+        result.append(row)
+    return jsonify(result)
+
+
+@app.route('/api/write-offs', methods=['POST'])
+@require_auth
+def create_write_off():
+    data = request.get_json(silent=True) or {}
+    items = data.get('items') if isinstance(data.get('items'), list) else []
+    db = get_db()
+    reference = str(data.get('reference', '')).strip()
+    if not reference:
+        stamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        reference = f'WO-{stamp}'
+    reason = str(data.get('reason', 'damaged')).strip()
+    condition_type = str(data.get('condition_type', reason)).strip()
+    notes = str(data.get('notes', '')).strip()
+    username = request.headers.get('X-Username', '')
+    total_qty = 0.0
+    total_value = 0.0
+    try:
+        cursor = db.execute(
+            'INSERT INTO write_offs (pharmacy_id, reference, reason, condition_type, notes, status, created_by, total_qty, total_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            (g.pharmacy_id, reference, reason, condition_type, notes, 'draft', username, 0, 0)
+        )
+        wo_id = cursor.lastrowid
+        for item in items:
+            qty = float(item.get('qty') or 0)
+            unit_cost = float(item.get('unit_cost') or 0)
+            value = round(qty * unit_cost, 2)
+            total_qty += qty
+            total_value += value
+            db.execute(
+                'INSERT INTO write_off_items (pharmacy_id, write_off_id, product_id, product_name, sku, batch_number, expiry_date, qty, unit_cost, value) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (
+                    g.pharmacy_id, wo_id,
+                    item.get('product_id'),
+                    str(item.get('product_name', '')),
+                    str(item.get('sku', '')),
+                    item.get('batch_number'),
+                    item.get('expiry_date'),
+                    qty,
+                    unit_cost,
+                    value
+                )
+            )
+        db.execute(
+            'UPDATE write_offs SET total_qty = ?, total_value = ? WHERE pharmacy_id = ? AND id = ?',
+            (round(total_qty, 3), round(total_value, 2), g.pharmacy_id, wo_id)
+        )
+        db.execute(
+            'INSERT INTO audit_log (pharmacy_id, user_name, action, entity_type, entity_id, details, ip_address) VALUES (?,?,?,?,?,?,?)',
+            (g.pharmacy_id, username, 'write_off_created', 'write_off', wo_id,
+             f'Created write-off {reference}: {reason}', request.remote_addr)
+        )
+        db.commit()
+        return jsonify({'created': True, 'id': wo_id, 'reference': reference}), 201
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'Could not create write-off: {str(e)}'}), 500
+
+
+@app.route('/api/write-offs/<int:wid>', methods=['PUT'])
+@require_auth
+def update_write_off(wid):
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    existing = db.execute(
+        'SELECT * FROM write_offs WHERE pharmacy_id = ? AND id = ?',
+        (g.pharmacy_id, wid)
+    ).fetchone()
+    if not existing:
+        return jsonify({'error': 'Write-off not found'}), 404
+    if existing['applied']:
+        return jsonify({'error': 'This write-off has already been applied to stock'}), 400
+    items = data.get('items') if isinstance(data.get('items'), list) else None
+    if items is not None:
+        db.execute('DELETE FROM write_off_items WHERE pharmacy_id = ? AND write_off_id = ?', (g.pharmacy_id, wid))
+        total_qty = 0.0
+        total_value = 0.0
+        for item in items:
+            qty = float(item.get('qty') or 0)
+            unit_cost = float(item.get('unit_cost') or 0)
+            value = round(qty * unit_cost, 2)
+            total_qty += qty
+            total_value += value
+            db.execute(
+                'INSERT INTO write_off_items (pharmacy_id, write_off_id, product_id, product_name, sku, batch_number, expiry_date, qty, unit_cost, value) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (
+                    g.pharmacy_id, wid,
+                    item.get('product_id'),
+                    str(item.get('product_name', '')),
+                    str(item.get('sku', '')),
+                    item.get('batch_number'),
+                    item.get('expiry_date'),
+                    qty,
+                    unit_cost,
+                    value
+                )
+            )
+        db.execute(
+            'UPDATE write_offs SET total_qty = ?, total_value = ? WHERE pharmacy_id = ? AND id = ?',
+            (round(total_qty, 3), round(total_value, 2), g.pharmacy_id, wid)
+        )
+    sets = []
+    values = []
+    for field in ('reference', 'reason', 'condition_type', 'notes', 'status'):
+        if field in data and data[field] is not None:
+            sets.append(f'{field} = ?')
+            values.append(str(data[field]).strip())
+    if sets:
+        db.execute(f"UPDATE write_offs SET {', '.join(sets)} WHERE pharmacy_id = ? AND id = ?", values + [g.pharmacy_id, wid])
+    db.commit()
+    result = dict(db.execute('SELECT * FROM write_offs WHERE pharmacy_id = ? AND id = ?', (g.pharmacy_id, wid)).fetchone())
+    result['items'] = _write_off_items(db, wid)
+    return jsonify({'updated': True, 'write_off': result})
+
+
+@app.route('/api/write-offs/<int:wid>/apply', methods=['POST'])
+@require_auth
+def apply_write_off(wid):
+    """Deduct written-off quantities from product stock."""
+    db = get_db()
+    wo = db.execute(
+        'SELECT * FROM write_offs WHERE pharmacy_id = ? AND id = ?',
+        (g.pharmacy_id, wid)
+    ).fetchone()
+    if not wo:
+        return jsonify({'error': 'Write-off not found'}), 404
+    if wo['applied']:
+        return jsonify({'error': 'This write-off has already been applied to stock'}), 400
+    items = _write_off_items(db, wid)
+    if not items:
+        return jsonify({'error': 'No items in this write-off'}), 400
+    username = request.headers.get('X-Username', '')
+    applied = 0
+    try:
+        for item in items:
+            product_id = item.get('product_id')
+            qty = float(item.get('qty') or 0)
+            if product_id and qty > 0:
+                db.execute(
+                    'UPDATE products SET stock = MAX(0, stock - ?) WHERE pharmacy_id = ? AND id = ?',
+                    (qty, g.pharmacy_id, product_id)
+                )
+                applied += 1
+        db.execute(
+            'UPDATE write_offs SET status = ?, applied = 1, applied_at = ? WHERE pharmacy_id = ? AND id = ?',
+            ('applied', datetime.now().isoformat(), g.pharmacy_id, wid)
+        )
+        db.execute(
+            'INSERT INTO audit_log (pharmacy_id, user_name, action, entity_type, entity_id, details, ip_address) VALUES (?,?,?,?,?,?,?)',
+            (g.pharmacy_id, username, 'write_off_applied', 'write_off', wid,
+             f'{applied} product(s) written off, value {wo["total_value"]}', request.remote_addr)
+        )
+        db.commit()
+        return jsonify({'applied': True, 'id': wid, 'products_updated': applied})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'Could not apply write-off: {str(e)}'}), 500
+
+
+@app.route('/api/write-offs/<int:wid>', methods=['DELETE'])
+@require_auth
+def delete_write_off(wid):
+    db = get_db()
+    wo = db.execute(
+        'SELECT * FROM write_offs WHERE pharmacy_id = ? AND id = ?',
+        (g.pharmacy_id, wid)
+    ).fetchone()
+    if not wo:
+        return jsonify({'error': 'Write-off not found'}), 404
+    if wo['applied']:
+        return jsonify({'error': 'Cannot delete an applied write-off'}), 400
+    db.execute('DELETE FROM write_off_items WHERE pharmacy_id = ? AND write_off_id = ?', (g.pharmacy_id, wid))
+    db.execute('DELETE FROM write_offs WHERE pharmacy_id = ? AND id = ?', (g.pharmacy_id, wid))
     db.commit()
     return jsonify({'deleted': True})
 

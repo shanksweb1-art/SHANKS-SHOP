@@ -356,7 +356,16 @@ var API = (function() {
         saveStockCount: function(data) { return this.post('/stock-counts', data); },
         updateStockCount: function(id, data) { return this.put('/stock-counts/' + id, data); },
         applyStockCount: function(id) { return this.post('/stock-counts/' + id + '/apply'); },
+        approveStockCount: function(id, data) { return this.post('/stock-counts/' + id + '/approve', data); },
+        rejectStockCount: function(id, data) { return this.post('/stock-counts/' + id + '/reject', data); },
         deleteStockCount: function(id) { return this.delete('/stock-counts/' + id); },
+
+        // Write-offs (damaged / expired / shrinkage)
+        getWriteOffs: function() { return this.get('/write-offs'); },
+        saveWriteOff: function(data) { return this.post('/write-offs', data); },
+        updateWriteOff: function(id, data) { return this.put('/write-offs/' + id, data); },
+        applyWriteOff: function(id) { return this.post('/write-offs/' + id + '/apply'); },
+        deleteWriteOff: function(id) { return this.delete('/write-offs/' + id); },
 
         // Tax Rules
         getTaxRules: function() { return this.get('/tax-rules'); },

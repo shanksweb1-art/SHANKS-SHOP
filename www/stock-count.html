@@ -29,6 +29,8 @@
     .count-sheet thead th { position: sticky; top: 0; background: #f8fafc; z-index: 1; }
     .history-row { cursor: pointer; }
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -48,6 +50,7 @@
       <div class="actions">
         <button class="btn btn-outline" onclick="loadProducts()"><i class="fas fa-sync-alt"></i> Reload Stock</button>
         <button class="btn btn-primary" id="btnSaveDraft" onclick="saveDraft()"><i class="fas fa-save"></i> Save Draft</button>
+        <button class="btn btn-info" id="btnSubmit" onclick="submitForApproval()"><i class="fas fa-paper-plane"></i> Submit for Approval</button>
         <button class="btn btn-success" id="btnApply" onclick="applyCount()"><i class="fas fa-check-double"></i> Apply to Stock</button>
       </div>
     </div>
@@ -234,6 +237,34 @@
         } catch (e) { toast(e.message || 'Could not save the stock count', true); }
     }
 
+    async function submitForApproval() {
+        var counted = countedRows();
+        if (!counted.length) { toast('Enter at least one counted quantity', true); return; }
+        var notes = prompt('Approval notes (optional):', '');
+        if (notes === null) return;
+        try {
+            if (!currentCountId) {
+                var res = await API.saveStockCount(payload());
+                currentCountId = res.id;
+                if (!($('countRef').value || '').trim()) $('countRef').value = res.reference || '';
+            } else {
+                await API.updateStockCount(currentCountId, payload());
+            }
+            await API.approveStockCount(currentCountId, { notes: notes || '' });
+            toast('Submitted for approval');
+            await loadHistory();
+        } catch (e) { toast(e.message || 'Could not submit for approval', true); }
+    }
+
+    async function rejectCount(id, reason) {
+        if (!confirm('Reject this stock count? It will not be applied to stock.')) return;
+        try {
+            await API.rejectStockCount(id, { notes: reason || '' });
+            toast('Count rejected');
+            await loadHistory();
+        } catch (e) { toast(e.message || 'Could not reject the count', true); }
+    }
+
     async function applyCount() {
         var counted = countedRows();
         if (!counted.length) { toast('Enter at least one counted quantity', true); return; }
@@ -255,7 +286,7 @@
             products.forEach(function (p) { delete p._counted; });
             await loadProducts();
             await loadHistory();
-        } catch (e) { toast(e.message || 'Could not apply the stock count', true); }
+        } catch (e) { toast(e.message || 'Could not apply the stock count (it may need approval first)', true); }
     }
 
     async function loadProducts() {
@@ -291,7 +322,21 @@
         if (!counts.length) { body.innerHTML = '<tr><td colspan="9" class="empty-state">No stock counts recorded yet</td></tr>'; return; }
         body.innerHTML = counts.map(function (c) {
             var status = c.applied ? 'Applied' : (c.status === 'draft' ? 'Draft' : (c.status || 'draft'));
+            var approval = c.approval_status || 'none';
             var cls = c.applied ? 'badge-success' : 'badge-warning';
+            var aCls = approval === 'approved' ? 'badge-success' : (approval === 'rejected' ? 'badge-danger' : (approval === 'none' ? 'badge-muted' : 'badge-warning'));
+            var actions = '';
+            if (!c.applied) {
+                if (approval === 'none') {
+                    actions += '<button class="icon-btn edit" title="Submit for approval" onclick="openCount(' + c.id + ')"><i class="fas fa-paper-plane"></i></button> ';
+                } else if (approval === 'approved') {
+                    actions += '<button class="icon-btn view" title="Apply to stock" onclick="openCount(' + c.id + ')"><i class="fas fa-check-double"></i></button> ';
+                    actions += '<button class="icon-btn delete" title="Reject" onclick="rejectCount(' + c.id + ', prompt(\'Rejection reason:\',\'\')||\'\')"><i class="fas fa-times"></i></button> ';
+                } else if (approval === 'rejected') {
+                    actions += '<button class="icon-btn edit" title="Revise and resubmit" onclick="openCount(' + c.id + ')"><i class="fas fa-edit"></i></button> ';
+                }
+                actions += '<button class="icon-btn delete" title="Delete" onclick="removeCount(' + c.id + ')"><i class="fas fa-trash"></i></button>';
+            }
             return '<tr>' +
                 '<td><strong>' + esc(c.reference || '#' + c.id) + '</strong></td>' +
                 '<td>' + esc(String(c.created_at || '').replace('T', ' ').slice(0, 16)) + '</td>' +
@@ -301,11 +346,8 @@
                 '<td class="' + (num(c.total_variance) > 0 ? 'variance-pos' : (num(c.total_variance) < 0 ? 'variance-neg' : '')) + '">' +
                     (num(c.total_variance) > 0 ? '+' : '') + POS.formatNumber(num(c.total_variance)) + '</td>' +
                 '<td>' + fmtMoney(c.value_variance) + '</td>' +
-                '<td><span class="badge ' + cls + '">' + esc(status) + '</span></td>' +
-                '<td class="action-btns">' +
-                    '<button class="icon-btn view" title="Open" onclick="openCount(' + c.id + ')"><i class="fas fa-eye"></i></button> ' +
-                    '<button class="icon-btn delete" title="Delete" onclick="removeCount(' + c.id + ')"><i class="fas fa-trash"></i></button>' +
-                '</td></tr>';
+                '<td><span class="badge ' + cls + '">' + esc(status) + '</span><br><span class="badge ' + aCls + '" style="font-size:10px">' + esc(approval) + '</span></td>' +
+                '<td class="action-btns">' + actions + '</td></tr>';
         }).join('');
     }
 
@@ -363,5 +405,6 @@
     });
 })();
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
