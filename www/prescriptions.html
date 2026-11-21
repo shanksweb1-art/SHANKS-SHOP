@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,6 +34,8 @@
         .badge-cancelled{background:#fef2f2;color:#991b1b}
         .empty-state{text-align:center;color:#64748b;padding:36px 16px;font-size:14px}
     </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#10b981">
 </head>
 <body>
 <div class="sidebar" id="sidebar"></div>
@@ -156,7 +158,7 @@ function renderRx(){
     if(!list.length){ tbody.innerHTML='<tr><td colspan="9" class="empty-state">No prescriptions match filter</td></tr>'; return; }
     tbody.innerHTML=list.map(function(r){
         var actions='';
-        if(r.status==='pending') actions+='<button class="btn btn-primary" style="padding:6px 10px;font-size:11px;" onclick="updateRxStatus(\''+r.id+'\',\'dispensed\')"><i class="fas fa-check"></i> Dispense</button> ';
+        if(r.status==='pending') actions+='<button class="btn btn-primary" style="padding:6px 10px;font-size:11px;" onclick="updateRxStatus(\''+r.id+'\',\'dispensed\')"><i class="fas fa-check"></i> Dispense</button> <button class="btn btn-success" style="padding:6px 10px;font-size:11px;" onclick="dispenseAndSell(\''+r.id+'\')"><i class="fas fa-shopping-cart"></i> Sell</button> ';
         if(r.status==='dispensed') actions+='<button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="updateRxStatus(\''+r.id+'\',\'collected\')"><i class="fas fa-box"></i> Collect</button> ';
         actions+='<button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="updateRxStatus(\''+r.id+'\',\'cancelled\')"><i class="fas fa-times"></i> Cancel</button>';
         return '<tr><td>'+esc(fmtDate(r.date))+'</td><td>'+esc(r.patient)+(r.phone?'<br><small>'+esc(r.phone)+'</small>':'')+'</td><td>'+esc(r.doctor||'-')+'</td><td>'+esc(r.drug)+'</td><td>'+esc(r.dosage)+'</td><td>'+esc(r.qty)+'</td><td>'+esc(r.refills)+'</td><td>'+badgeFor(r.status)+'</td><td style="display:flex;gap:6px;flex-wrap:wrap;">'+actions+'</td></tr>';
@@ -171,6 +173,16 @@ function updateRxStatus(id,status){
     showToast('Prescription marked as ' + status);
     logAction('edit', id, 'Rx status -> ' + status);
 }
+function dispenseAndSell(id){
+    var rx=prescriptions.find(function(r){return r.id===id;});
+    if(!rx) return;
+    rx.status='dispensed';
+    try{ localStorage.setItem('SHEDS_rx', JSON.stringify(prescriptions)); }catch(e){}
+    try{ localStorage.setItem('SHEDS_rx_sell', JSON.stringify({drug:rx.drug,dosage:rx.dosage,qty:rx.qty,notes:rx.notes,patient:rx.patient,id:rx.id})); }catch(e){}
+    renderRx();
+    showToast('Prescription queued for sale');
+    window.location.href='sales.html?rx=1';
+}
 function loadRx(){
     try{ prescriptions=JSON.parse(localStorage.getItem('SHEDS_rx')||'[]'); if(!Array.isArray(prescriptions)) prescriptions=[]; }catch(e){ prescriptions=[]; }
     renderRx();
@@ -181,6 +193,7 @@ function logAction(action, ref, note){
 }
 document.addEventListener('DOMContentLoaded', function(){ if(!POS.requireAuth()) return; loadRx(); });
 </script>
+  <script src="/offline.js"></script>
 </body>
 </html>
 
